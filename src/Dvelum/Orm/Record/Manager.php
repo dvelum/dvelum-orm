@@ -50,7 +50,7 @@ class Manager
             $list = [];
 
             /**
-             * @var \Dvelum\Orm\Service $ormService
+             * @var \Dvelum\Orm\Orm $ormService
              */
             $ormService = Service::get('orm');
             $cfgPath = $ormService->getConfigSettings()->get('configPath');

@@ -22,7 +22,7 @@ namespace Dvelum\Orm\Record;
 
 use Dvelum\Orm;
 use Dvelum\Security\CryptServiceInterface;
-use Dvelum\Service;
+
 use Dvelum\Config as Cfg;
 use Dvelum\Orm\Exception;
 
@@ -107,26 +107,6 @@ class Config
     protected $cryptServiceLoader = null;
 
     /**
-     * Instantiate data structure for the objects named $name
-     * @param string $name - object name
-     * @param bool $force - reload config
-     * @return Orm\Record\Config
-     * @throws Exception
-     */
-    static public function factory(string $name , bool $force = false) : Orm\Record\Config
-    {
-        /**
-         * Runtime call optimization
-         * @var \Dvelum\Orm\Service $service
-         */
-        static $service = false;
-        if(empty($service)){
-            $service = Service::get('orm');
-        }
-        return $service->config($name, $force);
-    }
-
-    /**
      * Reload object Properties
      */
     public function reloadProperties()
@@ -141,29 +121,10 @@ class Config
         $this->settings = $settings;
         $this->name = strtolower($name);
 
-        if(!self::configExists($name))
-            throw new Exception('Undefined object config '. $name);
-
         $path = $this->settings->get('configPath') . $name . '.php';
 
         $this->config = Cfg\Factory::storage()->get($path, !$force , false);
         $this->loadProperties();
-    }
-
-
-    /**
-     * Object config existence check
-     * @param string $name
-     * @return bool
-     * @throws \Exception
-     */
-    static public function configExists(string $name) : bool
-    {
-        /**
-         * @var \Dvelum\Orm\Service $service
-         */
-        $service = Service::get('orm');
-        return $service->configExists($name);
     }
 
 

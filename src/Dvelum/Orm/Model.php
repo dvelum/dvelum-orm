@@ -252,24 +252,6 @@ class Model
     }
 
     /**
-     * Factory method of model instantiation
-     * @param string $objectName — the name of the object in ORM
-     * @return Model
-     */
-    static public function factory(string $objectName): Model
-    {
-        /**
-         * Runtime call optimization
-         * @var \Dvelum\Orm\Service $service
-         */
-        static $service = false;
-        if(empty($service)){
-            $service = Service::get('orm');
-        }
-        return $service->model($objectName);
-    }
-
-    /**
      * Get the name of the object, which the model refers to
      * @return string
      */

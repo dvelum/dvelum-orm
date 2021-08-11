@@ -96,7 +96,7 @@ class Controller extends Backend\Controller
      */
     public function listBackend()
     {
-        $manager = new Manager();
+        $manager = $this->container->get(\Dvelum\App\Module\Manager::class);
         $data = $manager->getList();
 
         foreach ($data as $k => &$item) {
@@ -118,7 +118,7 @@ class Controller extends Backend\Controller
      */
     public function listFrontend()
     {
-        $manager = new Manager\Frontend();
+        $manager = $this->container->get(\Dvelum\App\Module\Manager::class);
         $data = $manager->getList();
         $this->response->success(array_values($data));
     }
@@ -208,7 +208,7 @@ class Controller extends Backend\Controller
      */
     protected function updateBackendRecord()
     {
-        $manager = new Manager();
+        $manager = $this->container->get(\Dvelum\App\Module\Manager::class);
         $moduleName = '';
 
         $id = $this->request->post('id', Filter::FILTER_STRING, false);
@@ -302,7 +302,7 @@ class Controller extends Backend\Controller
 
         switch ($type) {
             case 'backend':
-                $manager = new Manager();
+                $manager = $this->container->get(\Dvelum\App\Module\Manager::class);
                 $this->response->success($manager->getAvailableControllers());
                 break;
             case 'frontend':
@@ -438,7 +438,7 @@ class Controller extends Backend\Controller
             return;
         }
 
-        $modulesManager = new Manager();
+        $modulesManager = $this->container->get(\Dvelum\App\Module\Manager::class);
         $modulesManager->addModule($object, array(
             'class' => $class,
             'id' => $object,
@@ -479,7 +479,7 @@ class Controller extends Backend\Controller
 
         switch ($type) {
             case 'backend':
-                $manager = new Manager();
+                $manager = $this->container->get(\Dvelum\App\Module\Manager::class);
                 $this->response->success($manager->getModuleConfig($id));
                 break;
             case 'frontend':
@@ -525,7 +525,7 @@ class Controller extends Backend\Controller
      */
     protected function deleteFrontendModule()
     {
-        $manager = new Manager\Frontend();
+        $manager = $this->container->get(\Dvelum\App\Module\Manager::class);
         $code = $this->request->post('code', Filter::FILTER_STRING, false);
 
         if (!$code || !$manager->isValidModule($code)) {
@@ -587,7 +587,7 @@ class Controller extends Backend\Controller
         $module = $this->request->post('id', 'string', false);
         $removeRelated = $this->request->post('delete_related', 'boolean', false);
 
-        $manager = new Manager();
+        $manager = $this->container->get(\Dvelum\App\Module\Manager::class);
         $data = $manager->getList();
         if (!$module || !strlen($module) || !$manager->isValidModule($module) || !isset($data[$module])) {
             $this->response->error($this->lang->get('WRONG_REQUEST'));
