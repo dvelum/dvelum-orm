@@ -1,34 +1,24 @@
 {
-    "name": "dvelum/dvelum",
-    "version": "3.0.0-dev",
-    "type": "project",
-    "description": "PHP/ExtJS-based web development platform",
+    "name": "dvelum/dvelum-orm",
+    "version": "4.0.0-dev",
+    "type": "dvelum4-extension",
+    "description": "DVelum 4.x ORM",
     "keywords": [
         "dvelum",
         "php",
-        "extjs",
-        "IDE",
         "orm"
     ],
-    "homepage": "https://github.com/dvelum/dvelum",
-    "license": "GPL-3.0-only",
+    "homepage": "https://github.com/dvelum/dvelum-orm",
+    "license": "MIT",
     "authors": [
         {
             "name": "Kirill Yegorov",
             "role": "Founder, Developer"
-        },
-        {
-            "name": "Andrew Zamotaev",
-            "role": "Developer"
-        },
-        {
-            "name": "Sergey Leschenko",
-            "role": "Developer"
         }
     ],
     "support": {
-        "issues": "https://github.com/dvelum/dvelum/issues",
-        "source": "https://github.com/dvelum/dvelum"
+        "issues": "https://github.com/dvelum/dvelum-orm/issues",
+        "source": "https://github.com/dvelum/dvelum-orm"
     },
     "config": {
         "preferred-install": "dist",
@@ -37,60 +27,14 @@
     "require": {
         "php": ">=7.4.0",
         "ext-mysqli": "*",
-        "ext-gd": "*",
-        "ext-mbstring": "*",
-        "ext-json": "*",
         "composer/installers": "~1.9",
         "oomphinc/composer-installers-extender": "^2.0",
-        "psr/log": "^1.0",
-        "dvelum/dvelum-core": "^3.1",
-        "dvelum/extjs": "^6.2.0",
-        "dvelum/module-designer": "^1.6",
-        "matthiasmullie/minify": "~1.3"
-    },
-    "extra": {
-        "installer-types": [
-            "js-library",
-            "dvelum3-module",
-            "dvelum3-extension",
-            "project"
-        ],
-        "installer-paths": {
-            "www/js/lib/ckeditor": [
-                "ckeditor/ckeditor"
-            ],
-            "extensions/dvelum-core": [
-                "dvelum/dvelum-core"
-            ],
-            "www/js/lib/{$name}": [
-                "type:js-library"
-            ],
-            "modules/{$vendor}/{$name}": [
-                "type:dvelum3-module"
-            ],
-            "extensions/{$vendor}/{$name}": [
-                "type:dvelum3-extension"
-            ]
-        }
+        "psr/log": "^1.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^9",
         "phpstan/phpstan": "^0.12",
         "codacy/coverage": "dev-master",
         "composer/composer": "^2.0"
-    },
-    "repositories": {
-        "chosen": {
-            "type": "package",
-            "package": {
-                "name": "ckeditor/ckeditor",
-                "version": "4.9.2",
-                "type": "js-library",
-                "dist": {
-                    "url": "https://github.com/ckeditor/ckeditor4-releases/archive/full/4.9.2.zip",
-                    "type": "zip"
-                }
-            }
-        }
     }
 }
