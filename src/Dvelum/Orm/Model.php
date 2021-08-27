@@ -630,20 +630,6 @@ class Model
         return new Orm\Model\Insert($this);
     }
 
-    /**
-     * @var ContainerInterface
-     * @deprecated backward compatibility
-     */
-    private static ContainerInterface $container;
-
-    /**
-     * @param ContainerInterface $container
-     * @deprecated backward compatibility
-     */
-    public static function setContainer(ContainerInterface $container)
-    {
-        self::$container = $container;
-    }
 
     /**
      * @param string $name
@@ -652,6 +638,6 @@ class Model
      */
     public static function factory(string $name): self
     {
-        return self::$container->model($name);
+        return Orm::factory()->model($name);
     }
 }

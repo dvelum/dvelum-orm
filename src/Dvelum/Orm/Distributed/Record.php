@@ -31,15 +31,14 @@ class Record extends Orm\Record
      */
     protected $store;
 
-    public function __construct(string $name, $id = false, $shard = false)
+    public function __construct(Config $config, $id = false, $shard = false)
     {
         $this->shard = $shard;
-        $config = Config::factory($name);
         if ($config->getShardingType() === Config::SHARDING_TYPE_KEY_NO_INDEX && empty($shard) && !empty($id)) {
             throw new Orm\Exception('Sharded object with type of Config::SHARDING_TYPE_KEY_NO_INDEX requires shard to be defined at constructor');
         }
 
-        parent::__construct($name, $id);
+        parent::__construct($config, $id);
     }
 
     public function loadData(): void

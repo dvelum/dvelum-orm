@@ -247,26 +247,39 @@ class Orm
     /**
      * Factory method of object creation is preferable to use, cf. method  __construct() description
      * @param string $name
-     * @param int|int[]|bool $id , optional default false
+     * @param int|bool $id , optional default false
      * @param string|bool $shard . optional
-     * @return RecordInterface | RecordInterface[]
+     * @return RecordInterface
      * @throws \Exception
      */
-    public function record(string $name, $id = false, $shard = false)
+    public function record(string $name, $id = false, $shard = false) : RecordInterface
     {
         $recordClass = $this->config->get('record');
         $config = $this->config($name);
 
-        if (!is_array($id)) {
-            if (!$config->isDistributed()) {
-                return new $recordClass($name, $id);
-            } else {
-                if ($config->isShardRequired() && !empty($id) && empty($shard)) {
-                    throw new \Exception('Shard is required for Object ' . $name);
-                }
-                return new DistributedRecord($name, $id, $shard);
+        if (!$config->isDistributed()) {
+            return new $recordClass($config, $id);
+        } else {
+            if ($config->isShardRequired() && !empty($id) && empty($shard)) {
+                throw new \InvalidArgumentException('Shard is required for Object ' . $name);
             }
+            return new DistributedRecord($config, $id, $shard);
         }
+    }
+
+
+    /**
+     * Factory method of object creation is preferable to use, cf. method  __construct() description
+     * @param string $name
+     * @param int|int[]|bool $id , optional default false
+     * @param string|bool $shard . optional
+     * @return RecordInterface[]
+     * @throws \Exception
+     */
+    public function records(string $name, array $id, $shard = false) : array
+    {
+        $recordClass = $this->config->get('record');
+        $config = $this->config($name);
 
         $list = [];
         $model = $this->model($name);

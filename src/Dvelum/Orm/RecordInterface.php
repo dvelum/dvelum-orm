@@ -20,10 +20,12 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm;
 
+use Dvelum\Orm\Record\Config;
+
 interface RecordInterface
 {
 
-    public function __construct(string $name, $id = false);
+    public function __construct(Config $config, $id = false);
 
     /**
      * Set raw data from storage

@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -20,6 +21,8 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm;
 
+use Dvelum\Orm;
+use Dvelum\Orm\Record\Config;
 use Dvelum\Orm\Record\DataModel;
 use Dvelum\Service;
 use Dvelum\Utils;
@@ -75,18 +78,17 @@ class Record implements RecordInterface
      * there will be created a new object. If ORM lacks the object with the specified
      * identifier, an Exception will show up
      * Using this method is highly undesirable,
-     * the factory method Db_Object::factory() is more advisable to use
-     * @param string $name
+     * the $orm->record($name, $id) is more advisable to use
+     * @param Config $config
      * @param bool|int $id - optional
      * @throws Exception | \Exception
      */
-    public function __construct(string $name, $id = false)
+    public function __construct(Config $config, $id = false)
     {
-        $this->name = strtolower($name);
+        $this->config = $config;
+        $this->name = $config->getName();
         $this->id = $id;
-
-        $this->config = Record\Config::factory($name);
-        $this->primaryKey = $this->config->getPrimaryKey();
+        $this->primaryKey = $config->getPrimaryKey();
 
         if ($this->id) {
             $this->loadData();
@@ -106,8 +108,8 @@ class Record implements RecordInterface
 
     /**
      * Load object data
-     * @throws \Exception
      * @return void
+     * @throws \Exception
      */
     protected function loadData(): void
     {
@@ -135,7 +137,7 @@ class Record implements RecordInterface
         }
 
         foreach ($data as $field => &$value) {
-            $fieldObject = $this->getConfig()->getField((string) $field);
+            $fieldObject = $this->getConfig()->getField((string)$field);
 
             if ($fieldObject->isBoolean()) {
                 if ($value) {
@@ -278,7 +280,7 @@ class Record implements RecordInterface
     public function getLinkedObject(string $field): ?string
     {
         $link = $this->config->getField($field)->getLinkedObject();
-        if(empty($link)){
+        if (empty($link)) {
             return null;
         }
         return $link;
@@ -327,8 +329,8 @@ class Record implements RecordInterface
     /**
      * Set the object properties using the associative array of fields and values
      * @param array $values
-     * @throws Exception
      * @return void
+     * @throws Exception
      */
     public function setValues(array $values): void
     {
@@ -360,17 +362,24 @@ class Record implements RecordInterface
 
         // Validate value using special validator
         // Skip validation if value is null and object field can be null
-        if ($validator && (!$field->isNull() || !is_null($value)) && !call_user_func_array([$validator, 'validate'], [$value])) {
+        if ($validator && (!$field->isNull() || !is_null($value)) && !call_user_func_array(
+                [$validator, 'validate'],
+                [$value]
+            )) {
             throw new Exception('Invalid value for field ' . $name . ' (' . $this->getName() . ')');
         }
 
         $value = $field->filter($value);
         if (!$field->validate($value)) {
-            throw new Exception('Invalid value for field ' . $name . '. ' . $field->getValidationError() . ' (' . $this->getName() . ')');
+            throw new Exception(
+                'Invalid value for field ' . $name . '. ' . $field->getValidationError() . ' (' . $this->getName() . ')'
+            );
         }
 
         if (isset($propConf['db_len']) && $propConf['db_len']) {
-            if ($propConf['db_type'] == 'bit' && (strlen($value) > $propConf['db_len'] || strlen($value) < $propConf['db_len'])) {
+            if ($propConf['db_type'] == 'bit' && (strlen($value) > $propConf['db_len'] || strlen(
+                        $value
+                    ) < $propConf['db_len'])) {
                 throw new Exception('Invalid length for bit value [' . $name . ']  (' . $this->getName() . ')');
             }
         }
@@ -394,8 +403,8 @@ class Record implements RecordInterface
     /**
      * @param string $key
      * @param mixed $value
-     * @throws Exception
      * @return void
+     * @throws Exception
      */
     public function __set($key, $value): void
     {
@@ -421,8 +430,8 @@ class Record implements RecordInterface
 
     /**
      * @param string $key
-     * @throws Exception
      * @return mixed
+     * @throws Exception
      */
     public function __get($key)
     {
@@ -438,8 +447,8 @@ class Record implements RecordInterface
      * If field value was updated method returns new value
      * otherwise returns old value
      * @param string $name - field name
-     * @throws Exception
      * @return mixed
+     * @throws Exception
      */
     public function get(string $name)
     {
@@ -468,8 +477,8 @@ class Record implements RecordInterface
      * Get the initial object field value (received from the database)
      * whether the field value was updated or not
      * @param string $name - field name
-     * @throws Exception
      * @return mixed
+     * @throws Exception
      */
     public function getOld(string $name)
     {
@@ -610,16 +619,15 @@ class Record implements RecordInterface
      * @param string $name
      * @param int|int[]|bool $id , optional default false
      * @param string|bool $shard
+     * @return RecordInterface
      * @throws \Exception
-     * @return RecordInterface|RecordInterface[]
      */
-    static public function factory(string $name, $id = false, $shard = false)
+    static public function factory(string $name, $id = false, $shard = false) : RecordInterface
     {
         /**
          * @var \Dvelum\Orm\Orm $service
          */
-        $service = Service::get('orm');
-        return $service->record($name, $id, $shard);
+        return Orm::factory()->record($name, $id, $shard);
     }
 
 
@@ -654,7 +662,7 @@ class Record implements RecordInterface
     public function publish($version = null, $useTransaction = true): bool
     {
         $dataModel = $this->getDataModel();
-        if(empty($version)){
+        if (empty($version)) {
             $version = null;
         }
         return $dataModel->publish($this, $version, $useTransaction);
@@ -692,13 +700,13 @@ class Record implements RecordInterface
     /**
      * Save object as new version
      * @param bool $useTransaction — using a transaction when changing data is optional.
-     * @throws \Exception
      * @return bool
+     * @throws \Exception
      */
     public function saveVersion(bool $useTransaction = true): bool
     {
         if (!$this->config->isRevControl()) {
-            return (bool) $this->save($useTransaction);
+            return (bool)$this->save($useTransaction);
         }
         $dataModel = $this->getDataModel();
         return $dataModel->saveVersion($this, $useTransaction);
