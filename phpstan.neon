@@ -1,20 +1,10 @@
 includes:
-	- phar://phpstan.phar/conf/config.level1.neon
+	- phar://phpstan.phar/conf/config.levelmax.neon
 parameters:
 	bootstrapFiles:
-	    - %currentWorkingDirectory%/tests/phpstan/bootstrap.php
-	excludes_analyse:
-	    -  %currentWorkingDirectory%/application/templates
-	    -  %currentWorkingDirectory%/dvelum/templates
-	    -  %currentWorkingDirectory%/vendor
-	    -  %currentWorkingDirectory%/extensions/dvelum-core/src/Dvelum/Cache/Memcached.php
+
 	scanDirectories:
-	    -  %currentWorkingDirectory%/application
-	    -  %currentWorkingDirectory%/dvelum/src
-	    -  %currentWorkingDirectory%/tests/unit/dvelum/app
-	    -  %currentWorkingDirectory%/tests/unit/dvelum/library
-	    -  %currentWorkingDirectory%/tests/unit/dvelum2
-	    -  %currentWorkingDirectory%/tests/integration
+	    -  %currentWorkingDirectory%/src
 	autoload_files: []
 	polluteCatchScopeWithTryAssignments: true
 	reportUnmatchedIgnoredErrors: false
