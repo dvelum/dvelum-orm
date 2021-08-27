@@ -61,13 +61,6 @@ class Model
     protected $db;
 
     /**
-     * Slave DB connection
-     * @var Db\Adapter
-     * @deprecated
-     */
-    protected $dbSlave;
-
-    /**
      * Db_Object config
      * @var Orm\Record\Config | null
      */
@@ -105,7 +98,7 @@ class Model
 
     /**
      * Connection manager
-     * @var  \Dvelum\Db\ManagerInterface
+     * @var Db\OrmManager|Db\ManagerInterface
      */
     protected $dbManager;
 
@@ -163,10 +156,9 @@ class Model
         $conName = $this->lightConfig->get('connection');
 
         $this->db = $this->dbManager->getDbConnection($conName);
-        $this->dbSlave = $this->db;
 
         if ($this->lightConfig->get('use_db_prefix')) {
-            $this->dbPrefix = $this->dbManager->getDbConfig($conName)->get('prefix');
+            $this->dbPrefix = $this->dbManager->getDbConfig($conName)['prefix'];
         } else {
             $this->dbPrefix = '';
         }
@@ -530,7 +522,7 @@ class Model
         $this->db = $this->dbManager->getDbConnection($conName);
 
         if ($config->hasDbPrefix()) {
-            $this->dbPrefix = $this->dbManager->getDbConfig($conName)->get('prefix');
+            $this->dbPrefix = $this->dbManager->getDbConfig($conName)['prefix'];
         } else {
             $this->dbPrefix = '';
         }
