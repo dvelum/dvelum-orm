@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -26,6 +27,7 @@ use Dvelum\Orm;
 use Dvelum\Db;
 use Dvelum\Service;
 use Dvelum\Utils;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -151,7 +153,11 @@ class Model
 
         $this->dbManager = $settings->get('defaultDbManager');
 
-        $this->lightConfig = Config\Factory::storage()->get($ormConfig->get('object_configs') . $this->name . '.php', true, false);
+        $this->lightConfig = Config\Factory::storage()->get(
+            $ormConfig->get('object_configs') . $this->name . '.php',
+            true,
+            false
+        );
 
         $conName = $this->lightConfig->get('connection');
 
@@ -171,7 +177,7 @@ class Model
      * @return string
      * @throws \Exception
      */
-    public function getConnectionName() : string
+    public function getConnectionName(): string
     {
         return $this->lightConfig->get('connection');
     }
@@ -181,10 +187,10 @@ class Model
      * @param string $shard
      * @return Db\Adapter
      */
-    public function getDbShardConnection(string $shard) : Db\Adapter
+    public function getDbShardConnection(string $shard): Db\Adapter
     {
         $curName = $this->getDbConnectionName();
-        return $this->getDbManager()->getDbConnection($curName,null, $shard);
+        return $this->getDbManager()->getDbConnection($curName, null, $shard);
     }
 
     /**
@@ -217,9 +223,9 @@ class Model
      * Get connection name
      * @return string
      */
-    public function getDbConnectionName() : string
+    public function getDbConnectionName(): string
     {
-        return (string) $this->getObjectConfig()->get('connection');
+        return (string)$this->getObjectConfig()->get('connection');
     }
 
     /**
@@ -237,7 +243,7 @@ class Model
      */
     public function getStore(): Orm\Record\Store
     {
-        if(empty($this->store)){
+        if (empty($this->store)) {
             $this->store = $this->settings->get('storeLoader')();
         }
         return $this->store;
@@ -278,18 +284,18 @@ class Model
      * @return array
      * @throws \Exception
      */
-    public function getItem($id, $fields = ['*']) : array
+    public function getItem($id, $fields = ['*']): array
     {
         $primaryKey = $this->getPrimaryKey();
         $query = $this->query()
             ->filters([
-                $primaryKey  => $id
-            ])
+                          $primaryKey => $id
+                      ])
             ->fields($fields);
 
         $result = $query->fetchRow();
 
-        if(empty($result)){
+        if (empty($result)) {
             $result = [];
         }
         return $result;
@@ -302,7 +308,7 @@ class Model
      * @return array
      * @throws \Exception
      */
-    public function getCachedItem($id , $lifetime = false)
+    public function getCachedItem($id, $lifetime = false)
     {
         if (!$this->cache) {
             return $this->getItem($id);
@@ -325,10 +331,10 @@ class Model
      * Get data record by field value using cache. Returns first occurrence
      * @param string $field - field name
      * @param string $value - field value
-     * @throws \Exception
      * @return array
+     * @throws \Exception
      */
-    public function getCachedItemByField(string $field, $value) : array
+    public function getCachedItemByField(string $field, $value): array
     {
         $cacheKey = $this->getCacheKey(array('item', $field, $value));
         $data = false;
@@ -343,7 +349,7 @@ class Model
 
         $data = $this->getItemByField($field, $value);
 
-        if(empty($data)){
+        if (empty($data)) {
             $data = [];
         }
 
@@ -364,11 +370,11 @@ class Model
      */
     public function getItemByField(string $fieldName, $value, $fields = '*')
     {
-        try{
+        try {
             $sql = $this->db->select()->from($this->table(), $fields);
             $sql->where($this->db->quoteIdentifier($fieldName) . ' = ?', $value)->limit(1);
             return $this->db->fetchRow($sql);
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $this->logError($e->getMessage());
             throw $e;
         }
@@ -397,7 +403,6 @@ class Model
         }
 
         if ($data === false) {
-
             $sql = $this->db->select()
                 ->from($this->table(), $fields)
                 ->where($this->db->quoteIdentifier($this->getPrimaryKey()) . ' IN(' . Utils::listIntegers($ids) . ')');
@@ -411,7 +416,6 @@ class Model
             if ($useCache && $this->cache) {
                 $this->cache->save($data, $cacheKey, $this->cacheTime);
             }
-
         }
         return $data;
     }
@@ -431,7 +435,7 @@ class Model
      * @return string - object title
      * @throws \Exception
      */
-    public function getTitle(Orm\RecordInterface $object) : string
+    public function getTitle(Orm\RecordInterface $object): string
     {
         $objectConfig = $object->getConfig();
         $title = $objectConfig->getLinkTitle();
@@ -490,9 +494,9 @@ class Model
     {
         return !(boolean)$this->db->fetchOne(
             $this->db->select()
-            ->from($this->table(), ['count' => 'COUNT(*)'])
-            ->where($this->db->quoteIdentifier($this->getPrimaryKey()) . ' != ?', $recordId)
-            ->where($this->db->quoteIdentifier($fieldName) . ' =?', $fieldValue)
+                ->from($this->table(), ['count' => 'COUNT(*)'])
+                ->where($this->db->quoteIdentifier($this->getPrimaryKey()) . ' != ?', $recordId)
+                ->where($this->db->quoteIdentifier($fieldName) . ' =?', $fieldValue)
         );
     }
 
@@ -532,7 +536,7 @@ class Model
 
     /**
      * Set current log adapter
-     * @param \Psr\Log\LoggerInterface|false  $log
+     * @param \Psr\Log\LoggerInterface|false $log
      */
     public function setLog($log): void
     {
@@ -544,12 +548,12 @@ class Model
      * @return LoggerInterface|null
      * @throws \Exception
      */
-    public function getLogsAdapter() : ?LoggerInterface
+    public function getLogsAdapter(): ?LoggerInterface
     {
-        if($this->log === false){
-            if($this->settings->offsetExists('logLoader') && is_callable($this->settings->get('logLoader'))){
+        if ($this->log === false) {
+            if ($this->settings->offsetExists('logLoader') && is_callable($this->settings->get('logLoader'))) {
                 $this->log = $this->settings->get('logLoader')();
-            }else{
+            } else {
                 $this->log = null;
             }
         }
@@ -621,8 +625,33 @@ class Model
      * Get insert object
      * @return Model\InsertInterface
      */
-    public function insert() : Model\InsertInterface
+    public function insert(): Model\InsertInterface
     {
         return new Orm\Model\Insert($this);
+    }
+
+    /**
+     * @var ContainerInterface
+     * @deprecated backward compatibility
+     */
+    private static ContainerInterface $container;
+
+    /**
+     * @param ContainerInterface $container
+     * @deprecated backward compatibility
+     */
+    public static function setContainer(ContainerInterface $container)
+    {
+        self::$container = $container;
+    }
+
+    /**
+     * @param string $name
+     * @return static
+     * @deprecated backward compatibility
+     */
+    public static function factory(string $name): self
+    {
+        return self::$container->model($name);
     }
 }
