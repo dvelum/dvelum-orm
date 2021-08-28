@@ -30,19 +30,20 @@ class Translator
     protected $localesDir = '';
 
     protected $translation = false;
-    /**
-     * @var \Dvelum\Lang\Dictionary | false
-     */
-    protected $lang = false;
+
+    private StorageInterface $langStorage;
+    private Lang $lang;
 
     /**
      * @param string $commonPath - path to translation Array config
      * @param string $localesDir - locales directory (relative)
      */
-    public function __construct(string $commonPath, string $localesDir)
+    public function __construct(string $commonPath, string $localesDir , Lang $lang)
     {
         $this->commonPath = $commonPath;
         $this->localesDir = $localesDir;
+        $this->langStorage = $lang->getStorage();
+        $this->lang = $lang;
     }
 
     /**
@@ -54,14 +55,14 @@ class Translator
     public function getTranslation(string $objectName, $force = false): array
     {
         if (!$this->translation || $force) {
-            $this->translation = Lang::storage()->get($this->commonPath, true, true)->__toArray();
+            $this->translation = $this->langStorage->get($this->commonPath, true, true)->__toArray();
         }
 
         if (!isset($this->translation[$objectName])) {
             $localFile = $this->localesDir . strtolower($objectName) . '.php';
 
-            if (Lang::storage()->exists($localFile)) {
-                $this->translation[$objectName] = Lang::storage()->get($localFile, true, true)->__toArray();
+            if ($this->langStorage->exists($localFile)) {
+                $this->translation[$objectName] = $this->langStorage->get($localFile, true, true)->__toArray();
             }
         }
 
@@ -78,7 +79,7 @@ class Translator
      */
     public function getStorage(): StorageInterface
     {
-        return Lang::storage();
+        return $this->langStorage;
     }
 
     /**
@@ -115,13 +116,12 @@ class Translator
                 $objectConfig['title'] = $objectName;
         }
 
+        $dictionary = $this->lang->getDictionary();
+
         foreach ($objectConfig['fields'] as $k => &$v) {
             if (isset($v['lazyLang']) && $v['lazyLang']) {
-                if (!$this->lang)
-                    $this->lang = Lang::lang();
-
                 if (isset($v['title']))
-                    $v['title'] = $this->lang->get($v['title']);
+                    $v['title'] = $dictionary->get($v['title']);
                 else
                     $v['title'] = '';
             } elseif (isset($fieldTranslates[$k]) && strlen($fieldTranslates[$k])) {
@@ -143,13 +143,13 @@ class Translator
     {
         $localFile = $this->localesDir . strtolower($objectName) . '.php';
 
-        if (!Lang::storage()->exists($localFile)) {
-            if (!Lang::storage()->create($localFile)) {
+        if (!$this->langStorage->exists($localFile)) {
+            if (!$this->langStorage->create($localFile)) {
                 return false;
             }
         }
 
-        $configFile = Lang::storage()->get($localFile);
+        $configFile = $this->langStorage->get($localFile);
         $configFile->setData($translationData);
 
         if (empty($configFile)) {
@@ -160,7 +160,7 @@ class Translator
             return false;
         }
 
-        $common = Lang::storage()->get($this->commonPath, true, true);
+        $common = $this->langStorage->get($this->commonPath, true, true);
 
         if ($common->offsetExists($objectName)) {
             $common->offsetUnset($objectName);

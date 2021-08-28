@@ -21,7 +21,9 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm\Record;
 
+use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\File;
+use Dvelum\Orm\Orm;
 use Dvelum\Service;
 
 /**
@@ -37,6 +39,16 @@ class Manager
 {
     static protected $objects = null;
 
+    private StorageInterface $configStorage;
+    private Orm $orm;
+
+    public function __construct(StorageInterface $configStorage, Orm $orm)
+    {
+        $this->configStorage = $configStorage;
+        $this->orm = $orm;
+
+    }
+
     /**
      * Get list of registered objects (names only)
      * @return array
@@ -45,15 +57,10 @@ class Manager
     {
         if (is_null(self::$objects)) {
             self::$objects = [];
-            $paths = \Dvelum\Config::storage()->getPaths();
+            $paths = $this->configStorage->getPaths();
 
             $list = [];
-
-            /**
-             * @var \Dvelum\Orm\Orm $ormService
-             */
-            $ormService = Service::get('orm');
-            $cfgPath = $ormService->getConfigSettings()->get('configPath');
+            $cfgPath = $this->orm->getConfigSettings()->get('configPath');
 
             foreach ($paths as $path) {
                 if (!file_exists($path . $cfgPath)) {

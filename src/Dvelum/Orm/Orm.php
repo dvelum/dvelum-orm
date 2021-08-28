@@ -23,6 +23,7 @@ namespace Dvelum\Orm;
 use Dvelum\App\EventManager;
 use Dvelum\Cache\CacheInterface;
 use Dvelum\Config\ConfigInterface;
+use Dvelum\Lang;
 use Dvelum\Orm\Distributed\Record as DistributedRecord;
 use Dvelum\Db;
 use Dvelum\Security\CryptServiceInterface;
@@ -78,6 +79,8 @@ class Orm
 
     protected $store;
 
+    protected Lang $lang;
+
     /**
      * @param ConfigInterface $config
      * @param Db\ManagerInterface $dbManager
@@ -89,10 +92,12 @@ class Orm
         ConfigInterface $config,
         Db\ManagerInterface $dbManager,
         string $language,
-        CacheInterface $cache = null
+        CacheInterface $cache = null,
+        Lang $lang
     ) {
         $this->config = $config;
         $this->language = $language;
+        $this->lang = $lang;
         $this->eventManager = new EventManager();
 
         if ($cache) {
@@ -150,7 +155,7 @@ class Orm
         if (empty($this->translator)) {
             $commonFile = $this->language . '/objects.php';
             $objectsDir = $this->language . '/' . $this->getConfig()->get('translations_dir');
-            $this->translator = new Record\Config\Translator($commonFile, $objectsDir);
+            $this->translator = new Record\Config\Translator($commonFile, $objectsDir, $this->lang);
         }
         return $this->translator;
     }
