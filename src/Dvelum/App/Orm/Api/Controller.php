@@ -42,6 +42,10 @@ abstract class Controller
         $this->canEdit = $canEdit;
         $this->canDelete = $canDelete;
         $this->configStorage = $container->get(StorageInterface::class);
+         /*
+          * @todo remove bakward compat
+          */
+        \Dvelum\Orm::setContainer($container);
     }
 
     public function setRouter(RouterInterface $router): void

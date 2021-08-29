@@ -43,7 +43,7 @@ use Dvelum\App\Controller\EventManager;
 
 use Exception;
 
-class Controller
+abstract class Controller
 {
     protected Request $request;
     protected Response $response;
@@ -93,6 +93,9 @@ class Controller
      */
     protected $linkedInfoSeparator = '; ';
 
+
+    protected string $objectName;
+
     public function __construct(
         Request $request,
         Response $response,
@@ -113,8 +116,17 @@ class Controller
         $this->eventManager = new App\Controller\EventManager();
         $this->canViewObjects = \array_map('strtolower', $this->canViewObjects);
 
+        $this->objectName = $this->getObjectName();
+
+        /*
+         * @todo remove bakward compat
+         */
+        \Dvelum\Orm::setContainer($container);
+
         $this->initListeners();
     }
+
+    abstract public function getObjectName() : string;
 
     public function setRouter(RouterInterface $router): void
     {

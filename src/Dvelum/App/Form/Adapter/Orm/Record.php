@@ -62,7 +62,7 @@ class Record extends Form\Adapter
             /**
              * @var Orm\Record $obj
              */
-            $obj = Orm\Record::factory($this->config->get('orm_object'), $id, $shard);
+            $obj = Orm::factory()->record($this->config->get('orm_object'), $id, $shard);
         } catch (\Exception $e) {
             $this->errors[] = new Form\Error($this->lang->get('CANT_EXEC'), null, 'init_object');
             return false;
