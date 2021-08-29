@@ -1139,6 +1139,4 @@ abstract class Controller
 
         return true;
     }
-
-
 }

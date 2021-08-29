@@ -39,10 +39,8 @@ class Api
         $model = $this->orm->model($object);
 
         if ($ormObjectConfig->isDistributed() && empty($this->apiRequest->getShard())) {
-            $model = Model::factory($ormObjectConfig->getDistributedIndexObject());
+            $model = $this->orm->model($ormObjectConfig->getDistributedIndexObject());
         }
-
-        $filters = $this->apiRequest->getFilters();
 
         $this->dataQuery = $model->query()
             ->params($this->apiRequest->getPagination())
