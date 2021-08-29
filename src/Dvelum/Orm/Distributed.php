@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -60,9 +61,9 @@ class Distributed
      * Factory method
      * @return Distributed
      */
-    static public function factory() : self
+    static public function factory(): self
     {
-        if(!static::$instance){
+        if (!static::$instance) {
             static::$instance = new static();
         }
         return static::$instance;
@@ -72,14 +73,14 @@ class Distributed
     {
         $this->config = Config::storage()->get('sharding.php');
 
-        foreach ($this->config->get('sharding_types') as $type => $info){
+        foreach ($this->config->get('sharding_types') as $type => $info) {
             $adapterClass = $info['adapter'];
-            if(isset($info['adapterOptions'])){
+            if (isset($info['adapterOptions'])) {
                 $options = $info['adapterOptions'];
-            }else{
+            } else {
                 $options = [];
             }
-            $this->keyGenerators[$type] = new $adapterClass($this->config , $options);
+            $this->keyGenerators[$type] = new $adapterClass($this->config, $options);
         }
 
         $this->router = Router::factory();
@@ -87,13 +88,15 @@ class Distributed
         $this->shards = Utils::rekey(
             'id',
             Config::storage()->get(
-                $this->config->get('shards') ,  false, false
+                $this->config->get('shards'),
+                false,
+                false
             )->__toArray()
         );
 
         $this->weightMap = [];
-        foreach ($this->shards as $index=>$data){
-            $this->weightMap =  array_merge(array_fill(0, $data['weight'], (string) $index), $this->weightMap);
+        foreach ($this->shards as $index => $data) {
+            $this->weightMap = array_merge(array_fill(0, $data['weight'], (string)$index), $this->weightMap);
         }
     }
 
@@ -117,7 +120,7 @@ class Distributed
      * @return array
      * @throws \Exception
      */
-    public function findObjectsShards(string $objectName, array $distributedKeys) : array
+    public function findObjectsShards(string $objectName, array $distributedKeys): array
     {
         $config = Record\Config::factory($objectName);
         return $this->keyGenerators[$config->getShardingType()]->findObjectsShards($objectName, $distributedKeys);
@@ -129,17 +132,17 @@ class Distributed
      * @param RecordInterface $record
      * @return Reserved|null
      */
-    public function reserveIndex(RecordInterface $record) : ?Reserved
+    public function reserveIndex(RecordInterface $record): ?Reserved
     {
         $keyGen = $this->keyGenerators[$record->getConfig()->getShardingType()];
 
         $shard = $keyGen->detectShard($record);
 
-        if(empty($shard) && $this->router->hasRoutes($record->getName())){
+        if (empty($shard) && $this->router->hasRoutes($record->getName())) {
             $shard = $this->router->findShard($record);
         }
 
-        if(empty($shard)){
+        if (empty($shard)) {
             $shard = $this->randomShard();
         }
 
@@ -152,10 +155,11 @@ class Distributed
      * @param mixed $indexId
      * @return bool
      */
-    public function deleteIndex(RecordInterface $record, $indexId) : bool
+    public function deleteIndex(RecordInterface $record, $indexId): bool
     {
         return $this->keyGenerators[$record->getConfig()->getShardingType()]->deleteIndex($record, $indexId);
     }
+
     /**
      * Get shard info by id
      * @param mixed $id
@@ -163,9 +167,9 @@ class Distributed
      */
     public function getShardInfo($id)
     {
-        if(isset($this->shards[$id])){
+        if (isset($this->shards[$id])) {
             return $this->shards[$id];
-        }else{
+        } else {
             return false;
         }
     }
@@ -174,7 +178,7 @@ class Distributed
      * Get shards info
      * @return array
      */
-    public function getShards() : array
+    public function getShards(): array
     {
         return $this->shards;
     }
@@ -184,7 +188,7 @@ class Distributed
      * @return string
      * @throws \Exception
      */
-    public function getShardField() : string
+    public function getShardField(): string
     {
         return $this->config->get('shard_field');
     }
@@ -194,7 +198,7 @@ class Distributed
      * @return string
      * @throws \Exception
      */
-    public function getBucketField() : string
+    public function getBucketField(): string
     {
         return $this->config->get('bucket_field');
     }
@@ -202,9 +206,9 @@ class Distributed
     /**
      * Get random shard from list using weight
      */
-    public function randomShard() : string
+    public function randomShard(): string
     {
-       return $this->weightMap[array_rand($this->weightMap)];
+        return $this->weightMap[array_rand($this->weightMap)];
     }
 
     /**
@@ -212,11 +216,11 @@ class Distributed
      * @param array $except
      * @return null|string
      */
-    public function randomShardExcept(array $except) : ?string
+    public function randomShardExcept(array $except): ?string
     {
         $shards = $this->shards;
 
-        foreach($except as $shard) {
+        foreach ($except as $shard) {
             unset($shards[$shard]);
         }
         if (empty($shards)) {
@@ -224,8 +228,8 @@ class Distributed
         }
 
         $weightMap = [];
-        foreach ($shards as $index=>$data){
-            $weightMap =  array_merge(array_fill(0, $data['weight'], (string) $index), $weightMap);
+        foreach ($shards as $index => $data) {
+            $weightMap = array_merge(array_fill(0, $data['weight'], (string)$index), $weightMap);
         }
         return $weightMap[array_rand($weightMap)];
     }
@@ -236,12 +240,12 @@ class Distributed
      * @return GeneratorInterface
      * @throws Exception
      */
-    public function getKeyGenerator(string $objectName) : GeneratorInterface
+    public function getKeyGenerator(string $objectName): GeneratorInterface
     {
         $config = Record\Config::factory($objectName);
         $key = $config->getShardingType();
-        if(!isset($this->keyGenerators[$key])){
-            throw new Exception('Undefined key generator for '.$objectName);
+        if (!isset($this->keyGenerators[$key])) {
+            throw new Exception('Undefined key generator for ' . $objectName);
         }
         return $this->keyGenerators[$key];
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -37,12 +38,12 @@ class Model extends Orm\Model
      * @return array
      * @throws \Exception
      */
-    public function getItem($id, $fields = ['*']) : array
+    public function getItem($id, $fields = ['*']): array
     {
         $sharding = Orm\Distributed::factory();
         $shard = $sharding->findObjectShard($this->getObjectName(), $id);
 
-        if(empty($shard)){
+        if (empty($shard)) {
             return [];
         }
 
@@ -50,13 +51,13 @@ class Model extends Orm\Model
         $primaryKey = $this->getPrimaryKey();
         $query = $this->query()->setDbConnection($db)
             ->filters([
-                $primaryKey  => $id
-            ])
+                          $primaryKey => $id
+                      ])
             ->fields($fields);
 
         $result = $query->fetchRow();;
 
-        if(empty($result)){
+        if (empty($result)) {
             $result = [];
         }
         return $result;
@@ -69,19 +70,19 @@ class Model extends Orm\Model
      * @return array
      * @throws \Exception
      */
-    public function getItemFromShard($id, string $shard) : array
+    public function getItemFromShard($id, string $shard): array
     {
         $db = $this->getDbShardConnection($shard);
         $primaryKey = $this->getPrimaryKey();
 
         $query = $this->query()->setDbConnection($db)
             ->filters([
-                $primaryKey  => $id
-            ]);
+                          $primaryKey => $id
+                      ]);
 
         $result = $query->fetchRow();
 
-        if(empty($result)){
+        if (empty($result)) {
             $result = [];
         }
         return $result;
@@ -91,10 +92,10 @@ class Model extends Orm\Model
      * Get data record by field value using cache. Returns first occurrence
      * @param string $field - field name
      * @param string $value - field value
-     * @throws Exception
      * @return array
+     * @throws Exception
      */
-    public function getCachedItemByField(string $field, $value) : array
+    public function getCachedItemByField(string $field, $value): array
     {
         $cacheKey = $this->getCacheKey(array('item', $field, $value));
         $data = false;
@@ -109,7 +110,7 @@ class Model extends Orm\Model
 
         $data = $this->getItemByField($field, $value);
 
-        if(empty($data)){
+        if (empty($data)) {
             $data = [];
         }
 
@@ -121,22 +122,22 @@ class Model extends Orm\Model
     }
 
     /**
-    * Note check only IndexObject
-    * Get Item by field value. Returns first occurrence
-    * @param string $fieldName
-    * @param mixed $value
-    * @param string|array $fields
-    * @return array|null
-    * @throws Exception
-    */
+     * Note check only IndexObject
+     * Get Item by field value. Returns first occurrence
+     * @param string $fieldName
+     * @param mixed $value
+     * @param string|array $fields
+     * @return array|null
+     * @throws Exception
+     */
     public function getItemByField(string $fieldName, $value, $fields = '*')
     {
         $model = Model::factory($this->getObjectConfig()->getDistributedIndexObject());
         $item = $model->getItemByField($fieldName, $value);
 
-        if(!empty($item)){
-            return $this->getItem($item[$this->getPrimaryKey()],$fields);
-        }else{
+        if (!empty($item)) {
+            return $this->getItem($item[$this->getPrimaryKey()], $fields);
+        } else {
             return [];
         }
     }
@@ -164,29 +165,26 @@ class Model extends Orm\Model
         }
 
         if ($data === false) {
-
             $sharding = Orm\Distributed::factory();
             $shards = $sharding->findObjectsShards($this->getObjectName(), $ids);
 
             $data = [];
 
-            if(!empty($shards))
-            {
-                foreach ($shards as $shard=>$items)
-                {
+            if (!empty($shards)) {
+                foreach ($shards as $shard => $items) {
                     $db = $this->getDbShardConnection($shard);
 
                     $results = $this->query()
-                         ->setDbConnection($db)
-                         ->fields($fields)
-                         ->filters([$this->getPrimaryKey()=>$items])
-                         ->fetchAll();
+                        ->setDbConnection($db)
+                        ->fields($fields)
+                        ->filters([$this->getPrimaryKey() => $items])
+                        ->fetchAll();
 
-                    $data = array_merge($data , $results);
+                    $data = array_merge($data, $results);
                 }
             }
 
-            if(!empty($data)){
+            if (!empty($data)) {
                 $data = Utils::rekey($this->getPrimaryKey(), $data);
             }
 
@@ -204,7 +202,7 @@ class Model extends Orm\Model
      */
     public function query(): Orm\Model\Query
     {
-        return new Model\Query($this);
+        return new Model\Query($this->orm, $this);
     }
 
     /**
@@ -248,18 +246,18 @@ class Model extends Orm\Model
         $model = Model::factory($this->getObjectConfig()->getDistributedIndexObject());
 
         $filters = [
-             new Filter($this->getPrimaryKey(), $recordId,Filter::NOT),
-             $fieldName => $fieldValue
+            new Filter($this->getPrimaryKey(), $recordId, Filter::NOT),
+            $fieldName => $fieldValue
         ];
 
-        return !(boolean) $model->query()->fields(['count' => 'COUNT(*)'])->filters($filters)->fetchOne();
+        return !(boolean)$model->query()->fields(['count' => 'COUNT(*)'])->filters($filters)->fetchOne();
     }
 
     /**
      * Get insert object
      * @return Orm\Distributed\Model\Insert
      */
-    public function insert() : Orm\Model\InsertInterface
+    public function insert(): Orm\Model\InsertInterface
     {
         return new Orm\Distributed\Model\Insert($this);
     }

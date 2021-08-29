@@ -58,7 +58,7 @@ class Connections
 
         $dir = dirname($this->config[$devType]['dir'] . '/' . $dbPath);
 
-        if(!is_dir($dir)){
+        if (!is_dir($dir)) {
             return [];
         }
 

@@ -40,6 +40,13 @@ class Manager
     public const ERROR_INVALID_FIELD = 6;
     public const ERROR_HAS_LINKS = 7;
 
+    private Orm\Orm $orm;
+
+    public function __construct(Orm\Orm $orm)
+    {
+        $this->orm = $orm;
+    }
+
     /**
      * Remove object from ORM
      * @param string $name
@@ -52,7 +59,7 @@ class Manager
         //if(!empty($assoc))
         //	return self::ERROR_HAS_LINKS;
 
-        $objectConfig = Orm\Record\Config::factory($name);
+        $objectConfig = $this->orm->config($name);
 
         $relation = new Orm\Record\Config\Relation();
         $manyToMany = $relation->getManyToMany($objectConfig);
@@ -102,12 +109,12 @@ class Manager
         $path = $objectsWrite . Config::storage()->get('orm.php')->get('object_configs') . $name . '.php';
 
         try {
-            $cfg = Orm\Record\Config::factory($name);
+            $cfg = $this->orm->config($name);
         } catch (\Exception $e) {
             return self::ERROR_FS;
         }
 
-        $builder = Orm\Record\Builder::factory($name);
+        $builder = $this->orm->getBuilder($name);
 
         if ($deleteTable && !$cfg->isLocked() && !$cfg->isReadOnly()) {
             if (!$builder->remove()) {
@@ -170,7 +177,7 @@ class Manager
     public function getFieldConfig($object, $field)
     {
         try {
-            $cfg = Orm\Record\Config::factory($object);
+            $cfg = $this->orm->config($object);
         } catch (\Exception $e) {
             return false;
         }
@@ -210,7 +217,7 @@ class Manager
     public function getIndexConfig($object, $index)
     {
         try {
-            $cfg = Orm\Record\Config::factory($object);
+            $cfg = $this->orm->config($object);
         } catch (\Exception $e) {
             return false;
         }
@@ -234,7 +241,7 @@ class Manager
     public function removeField($objectName, $fieldName): int
     {
         try {
-            $objectCfg = Orm\Record\Config::factory($objectName);
+            $objectCfg = $this->orm->config($objectName);
         } catch (\Exception $e) {
             return self::ERROR_INVALID_OBJECT;
         }
@@ -341,7 +348,8 @@ class Manager
             return self::ERROR_EXEC;
         }
         // Rebuild database
-        $builder = Builder::factory($cfg->getName(), false);
+        $builder = $this->orm->getBuilder($cfg->getName());
+
         if (!$builder->renameField($oldName, $newName)) {
             return self::ERROR_EXEC;
         }
@@ -359,7 +367,7 @@ class Manager
      */
     public function renameObject($path, $oldName, $newName): int
     {
-        $objectConfig = Orm\Record\Config::factory($oldName);
+        $objectConfig = $this->orm->config($oldName);
         /*
          * Check fs write permissions for associated objects
          */
@@ -432,7 +440,7 @@ class Manager
                 $object = $config['object'];
                 $fields = $config['fields'];
 
-                $oConfig = Orm\Record\Config::factory($object);
+                $oConfig = $this->orm->config($object);
 
                 foreach ($fields as $fName => $fType) {
                     if ($oConfig->getField($fName)->isLink()) {
@@ -459,11 +467,11 @@ class Manager
      */
     public function syncDistributedIndex($objectName)
     {
-        $oConfig = Orm\Record\Config::factory($objectName);
+        $oConfig = $this->orm->config($objectName);
         $distIndexes = $oConfig->getDistributedIndexesConfig();
 
         $idObject = $oConfig->getDistributedIndexObject();
-        $idObjectConfig = Orm\Record\Config::factory($idObject);
+        $idObjectConfig = $this->orm->config($idObject);
 
         $indexManager = new Orm\Record\Config\IndexManager();
         $fieldManager = new Orm\Record\Config\FieldManager();

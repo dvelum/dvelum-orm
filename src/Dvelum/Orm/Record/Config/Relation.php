@@ -1,4 +1,5 @@
 <?php
+
 /*
  * DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
  * Copyright (C) 2011-2020  Kirill Yegorov
@@ -37,10 +38,10 @@ class Relation
      * @return bool
      * @throws Exception
      */
-    public function hasManyToMany(Config $config) : bool
+    public function hasManyToMany(Config $config): bool
     {
         $relations = $this->getManyToMany($config);
-        if(!empty($relations)){
+        if (!empty($relations)) {
             return true;
         }
         return false;
@@ -52,19 +53,18 @@ class Relation
      * @return array
      * @throws \Exception
      */
-    public function getManyToMany(Config $config) : array
+    public function getManyToMany(Config $config): array
     {
         $result = [];
         $fieldConfigs = $config->getFieldsConfig();
-        foreach($fieldConfigs as $field=>$cfg)
-        {
-            if(isset($cfg['type']) && $cfg['type']==='link'
+        foreach ($fieldConfigs as $field => $cfg) {
+            if (isset($cfg['type']) && $cfg['type'] === 'link'
                 && isset($cfg['link_config']['link_type'])
                 && $cfg['link_config']['link_type'] == Config::LINK_OBJECT_LIST
                 && isset($cfg['link_config']['object'])
                 && isset($cfg['link_config']['relations_type'])
                 && $cfg['link_config']['relations_type'] == Config::RELATION_MANY_TO_MANY
-            ){
+            ) {
                 $result[$cfg['link_config']['object']][$field] = Config::RELATION_MANY_TO_MANY;
             }
         }
@@ -82,14 +82,14 @@ class Relation
     {
         $cfg = $config->getFieldConfig($field);
 
-        if(isset($cfg['type']) && $cfg['type']==='link'
+        if (isset($cfg['type']) && $cfg['type'] === 'link'
             && isset($cfg['link_config']['link_type'])
             && $cfg['link_config']['link_type'] == Config::LINK_OBJECT_LIST
             && isset($cfg['link_config']['object'])
             && isset($cfg['link_config']['relations_type'])
             && $cfg['link_config']['relations_type'] == Config::RELATION_MANY_TO_MANY
-        ){
-            return $config->getName().'_'.$field.'_to_'.$cfg['link_config']['object'];
+        ) {
+            return $config->getName() . '_' . $field . '_to_' . $cfg['link_config']['object'];
         }
         return false;
     }
@@ -97,26 +97,32 @@ class Relation
     /**
      * Get a list of fields linking to external objects
      * @param Config $config
-     * @param array $linkTypes  - optional link type filter
+     * @param array $linkTypes - optional link type filter
      * @param boolean $groupByObject - group field by linked object, default true
      * @return array  [objectName=>[field => link_type]] | [field =>["object"=>objectName,"link_type"=>link_type]]
      * @throws \Exception
      */
-    public function getLinks(Config $config, $linkTypes = [Orm\Record\Config::LINK_OBJECT, Orm\Record\Config::LINK_OBJECT_LIST], $groupByObject = true) : array
-    {
+    public function getLinks(
+        Config $config,
+        $linkTypes = [Orm\Record\Config::LINK_OBJECT, Orm\Record\Config::LINK_OBJECT_LIST],
+        $groupByObject = true
+    ): array {
         $data = [];
         $fields = $config->getFieldsConfig(true);
-        foreach ($fields as $name=>$cfg)
-        {
-            if(isset($cfg['type']) && $cfg['type']==='link'
+        foreach ($fields as $name => $cfg) {
+            if (isset($cfg['type']) && $cfg['type'] === 'link'
                 && isset($cfg['link_config']['link_type'])
-                && in_array($cfg['link_config']['link_type'], $linkTypes , true)
+                && in_array($cfg['link_config']['link_type'], $linkTypes, true)
                 && isset($cfg['link_config']['object'])
-            ){
-                if($groupByObject)
+            ) {
+                if ($groupByObject) {
                     $data[$cfg['link_config']['object']][$name] = $cfg['link_config']['link_type'];
-                else
-                    $data[$name] = ['object'=>$cfg['link_config']['object'],'link_type'=>$cfg['link_config']['link_type']];
+                } else {
+                    $data[$name] = [
+                        'object' => $cfg['link_config']['object'],
+                        'link_type' => $cfg['link_config']['link_type']
+                    ];
+                }
             }
         }
         return $data;

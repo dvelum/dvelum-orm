@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2019  Kirill Yegorov
@@ -42,7 +43,7 @@ class DataModel
         $model = Model::factory($recordName);
 
         $store = $model->getStore();
-        if(empty($recordId)){
+        if (empty($recordId)) {
             throw new Exception('Undefined object id for ' . $recordName);
         }
 
@@ -70,11 +71,11 @@ class DataModel
                         $relationsData = $linksModel->query()
                             ->params(['sort' => 'order', 'dir' => 'ASC'])
                             ->filters([
-                                'src' => $recordName,
-                                'src_id' => $recordId,
-                                'src_field' => $field,
-                                'target' => $linkedObject
-                            ])
+                                          'src' => $recordName,
+                                          'src_id' => $recordId,
+                                          'src_field' => $field,
+                                          'target' => $linkedObject
+                                      ])
                             ->fields(['target_id'])
                             ->fetchAll();
                     }
@@ -93,7 +94,7 @@ class DataModel
      * @return bool
      * @throws Exception
      */
-    public function save(RecordInterface $record, bool $useTransaction) : bool
+    public function save(RecordInterface $record, bool $useTransaction): bool
     {
         $recordName = $record->getName();
         $recordConfig = $record->getConfig();
@@ -101,48 +102,48 @@ class DataModel
         $log = $model->getLogsAdapter();
         $store = $model->getStore();
 
-        if($log)
+        if ($log) {
             $store->setLog($log);
+        }
 
-        if($recordConfig->isReadOnly()) {
+        if ($recordConfig->isReadOnly()) {
             $message = ErrorMessage::factory()->readOnly($record);
             $record->addErrorMessage($message);
-            if($log){
+            if ($log) {
                 $log->log(LogLevel::ERROR, $message);
             }
             return false;
         }
 
-        if($recordConfig->hasEncrypted()){
+        if ($recordConfig->hasEncrypted()) {
             $ivField = $recordConfig->getIvField();
             $ivData = $record->get($ivField);
-            if(empty($ivData)){
-                $record->set($ivField , $recordConfig->getCryptService()->createVector());
+            if (empty($ivData)) {
+                $record->set($ivField, $recordConfig->getCryptService()->createVector());
             }
         }
 
         /**
          * @todo Remove dependency on user object
          */
-        if($recordConfig->isRevControl())
-        {
-            if(!$record->getId()){
+        if ($recordConfig->isRevControl()) {
+            if (!$record->getId()) {
                 $record->set('date_created', date('Y-m-d H:i:s'));
                 $record->set('date_updated', date('Y-m-d H:i:s'));
-                $record->set('published' , false);
-                $record->set('author_id',  User::factory()->getId());
-            }else{
+                $record->set('published', false);
+                $record->set('author_id', User::factory()->getId());
+            } else {
                 $record->set('date_updated', date('Y-m-d H:i:s'));
-                $record->set('editor_id',  User::factory()->getId());
+                $record->set('editor_id', User::factory()->getId());
             }
         }
 
         $emptyFields = $this->getEmptyRequired($record);
 
-        if(!empty($emptyFields)) {
+        if (!empty($emptyFields)) {
             $message = ErrorMessage::factory()->emptyFields($record, $emptyFields);
             $record->addErrorMessage($message);
-            if($log){
+            if ($log) {
                 $log->log(LogLevel::ERROR, $message);
             }
             return false;
@@ -150,36 +151,35 @@ class DataModel
 
         $values = $record->validateUniqueValues();
 
-        if(!empty($values))
-        {
-            foreach($values as $field => $value) {
+        if (!empty($values)) {
+            foreach ($values as $field => $value) {
                 $message = ErrorMessage::factory()->uniqueValue($field, $record->get($field));
                 $record->addErrorMessage($message);
             }
 
-            if($log){
-                $log->log(LogLevel::ERROR, implode(', ' , $record->getErrors()));
+            if ($log) {
+                $log->log(LogLevel::ERROR, implode(', ', $record->getErrors()));
             }
             return false;
         }
 
         try {
-            if(!$record->getId()){
-                $id = $store->insert($record , $useTransaction);
-                if(empty($id)){
+            if (!$record->getId()) {
+                $id = $store->insert($record, $useTransaction);
+                if (empty($id)) {
                     return false;
                 }
                 $record->setId($id);
-            }else{
-                if(!$store->update($record , $useTransaction)){
+            } else {
+                if (!$store->update($record, $useTransaction)) {
                     return false;
                 }
             }
             $record->commitChanges();
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $message = $e->getMessage();
             $record->addErrorMessage($message);
-            if($log){
+            if ($log) {
                 $log->log(LogLevel::ERROR, $message);
             }
             return false;
@@ -193,27 +193,29 @@ class DataModel
      * @return array
      * @throws \Exception
      */
-    protected function getEmptyRequired(RecordInterface $record) : array
+    protected function getEmptyRequired(RecordInterface $record): array
     {
         $emptyFields = [];
         $fields = $record->getFields();
         $config = $record->getConfig();
 
-        foreach ($fields as $name)
-        {
+        foreach ($fields as $name) {
             $field = $config->getField($name);
-            if(!$field->isRequired() || $field->isSystem())
+            if (!$field->isRequired() || $field->isSystem()) {
                 continue;
+            }
 
             $val = $record->get($name);
-            if(!strlen((string)$val))
-                $emptyFields[]= $name;
+            if (!strlen((string)$val)) {
+                $emptyFields[] = $name;
+            }
         }
 
-        if(empty($emptyFields))
+        if (empty($emptyFields)) {
             return [];
-        else
+        } else {
             return $emptyFields;
+        }
     }
 
     /**
@@ -222,7 +224,7 @@ class DataModel
      * @return bool
      * @throws Exception
      */
-    public function saveVersion(RecordInterface $record, bool $useTransaction = true) : bool
+    public function saveVersion(RecordInterface $record, bool $useTransaction = true): bool
     {
         $recordName = $record->getName();
         $recordConfig = $record->getConfig();
@@ -231,16 +233,16 @@ class DataModel
         $store = $model->getStore();
 
 
-        if($recordConfig->hasEncrypted()){
+        if ($recordConfig->hasEncrypted()) {
             $ivField = $recordConfig->getIvField();
             $ivData = $record->get($ivField);
-            if(empty($ivData)){
-                $record->set($ivField , $recordConfig->getCryptService()->createVector());
+            if (empty($ivData)) {
+                $record->set($ivField, $recordConfig->getCryptService()->createVector());
             }
         }
 
-        if(!$record->getId()) {
-            if(!$this->save($record, $useTransaction)){
+        if (!$record->getId()) {
+            if (!$this->save($record, $useTransaction)) {
                 return false;
             }
         }
@@ -248,12 +250,12 @@ class DataModel
         $record->set('date_updated', date('Y-m-d H:i:s'));
         $record->set('editor_id', User::factory()->getId());
 
-        if($log){
+        if ($log) {
             $store->setLog($log);
         }
 
-        $version = $store->addVersion($record , $useTransaction);
-        if($version){
+        $version = $store->addVersion($record, $useTransaction);
+        if ($version) {
             $record->setVersion($version);
             $record->commitChanges();
             return true;
@@ -262,7 +264,7 @@ class DataModel
     }
 
 
-    public function unpublish(RecordInterface $record, bool $useTransaction) : bool
+    public function unpublish(RecordInterface $record, bool $useTransaction): bool
     {
         $recordName = $record->getName();
         $model = Model::factory($recordName);
@@ -277,11 +279,11 @@ class DataModel
          * @todo refactor
          */
         $record->setValues([
-            'published_version' => 0,
-            'published' => false,
-            'date_updated' => date('Y-m-d H:i:s'),
-            'editor_id' => User::factory()->getId()
-        ]);
+                               'published_version' => 0,
+                               'published' => false,
+                               'date_updated' => date('Y-m-d H:i:s'),
+                               'editor_id' => User::factory()->getId()
+                           ]);
 
         return $store->unpublish($record, $useTransaction);
     }
@@ -293,7 +295,7 @@ class DataModel
      * @return bool
      * @throws \Exception
      */
-    public function loadVersion(RecordInterface $record, int $vers) : bool
+    public function loadVersion(RecordInterface $record, int $vers): bool
     {
         $recordName = $record->getName();
         $model = Model::factory($recordName);
@@ -304,7 +306,7 @@ class DataModel
         $versionObject = $model->getStore()->getVersionObjectName();
 
         $recordId = $record->getId();
-        if(!$recordId){
+        if (!$recordId) {
             return false;
         }
         /**
@@ -325,7 +327,7 @@ class DataModel
         if (empty($data)) {
             $message = ErrorMessage::factory()->cantLoadVersion($record, $vers);
             $record->addErrorMessage($message);
-            if($log){
+            if ($log) {
                 $log->log(LogLevel::ERROR, $message);
             }
             return false;
@@ -342,7 +344,6 @@ class DataModel
         foreach ($data as $k => $v) {
             if ($record->fieldExists((string)$k)) {
                 try {
-
                     if ($recordConfig->getField((string)$k)->isEncrypted()) {
                         $v = (string)$v;
                         if (is_string($iv) && strlen($v) && strlen($iv)) {
@@ -353,11 +354,10 @@ class DataModel
                     if ($k !== $recordConfig->getPrimaryKey() && !$recordConfig->isVcField((string)$k)) {
                         $record->set((string)$k, $v);
                     }
-
                 } catch (Exception $e) {
                     $message = ErrorMessage::factory()->cantLoadVersionIncompatible($record, $vers, $e->getMessage());
                     $record->addErrorMessage($message);
-                    if($log){
+                    if ($log) {
                         $log->log(LogLevel::ERROR, $message);
                     }
                     return false;
@@ -389,7 +389,7 @@ class DataModel
         }
 
         if (!empty($version) && $version !== $record->getVersion()) {
-            if(!$this->loadVersion($record, $version)){
+            if (!$this->loadVersion($record, $version)) {
                 return false;
             }
         }
@@ -397,11 +397,11 @@ class DataModel
          * @todo refactor
          */
         $record->setValues([
-            'published' => true,
-            'date_updated' => date('Y-m-d H:i:s'),
-            'editor_id' => User::factory()->getId(),
-            'published_version' => $record->getVersion()
-        ]);
+                               'published' => true,
+                               'date_updated' => date('Y-m-d H:i:s'),
+                               'editor_id' => User::factory()->getId(),
+                               'published_version' => $record->getVersion()
+                           ]);
 
         if (empty($record->get('date_published'))) {
             $record->set('date_published', date('Y-m-d H:i:s'));

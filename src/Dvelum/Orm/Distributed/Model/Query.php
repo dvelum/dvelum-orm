@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -19,22 +20,24 @@
 declare(strict_types=1);
 
 namespace Dvelum\Orm\Distributed\Model;
+
 use Dvelum\Orm\Distributed\Model;
 use Dvelum\Orm;
 
 class Query extends Orm\Model\Query
 {
-    public function __construct(Model $model)
+    public function __construct(Orm\Orm $orm, Model $model)
     {
-        parent::__construct($model);
+        parent::__construct($orm, $model);
         unset($this->db);
     }
+
     /**
      * Set Shard
      * @param string $shard
      * @return Query
      */
-    public function setShard(string $shard) : Query
+    public function setShard(string $shard): Query
     {
         $this->db = $this->model->getDbShardConnection($shard);
         return $this;

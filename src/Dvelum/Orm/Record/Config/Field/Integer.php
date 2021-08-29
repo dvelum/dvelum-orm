@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -20,6 +21,7 @@
 declare(strict_types=1);
 
 namespace Dvelum\Orm\Record\Config\Field;
+
 use Dvelum\Orm\Record\Config\Field;
 
 class Integer extends Field
@@ -31,7 +33,7 @@ class Integer extends Field
      */
     public function filter($value)
     {
-        if(!is_null($value)){
+        if (!is_null($value)) {
             return (integer)$value;
         }
         return $value;

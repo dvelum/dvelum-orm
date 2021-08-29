@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2018  Kirill Yegorov
@@ -58,11 +59,11 @@ class VirtualBucket extends UserKeyNoID
      * @return MapperInterface
      * @throws \Exception
      */
-    public function getNumericMapper():MapperInterface
+    public function getNumericMapper(): MapperInterface
     {
-        if(empty($this->numericMapper)){
+        if (empty($this->numericMapper)) {
             $numericAdapter = $this->config->get('keyToBucket')['number'];
-            $this->numericMapper =   new $numericAdapter();
+            $this->numericMapper = new $numericAdapter();
         }
         return $this->numericMapper;
     }
@@ -71,11 +72,11 @@ class VirtualBucket extends UserKeyNoID
      * @return MapperInterface
      * @throws \Exception
      */
-    public function getStringMapper():MapperInterface
+    public function getStringMapper(): MapperInterface
     {
-        if(empty($this->stringMapper)){
+        if (empty($this->stringMapper)) {
             $numericAdapter = $this->config->get('keyToBucket')['string'];
-            $this->stringMapper =   new $numericAdapter();
+            $this->stringMapper = new $numericAdapter();
         }
         return $this->stringMapper;
     }
@@ -91,7 +92,7 @@ class VirtualBucket extends UserKeyNoID
         $config = $object->getConfig();
         $keyField = $config->getBucketMapperKey();
 
-        if(empty($keyField)){
+        if (empty($keyField)) {
             return null;
         }
 
@@ -99,9 +100,9 @@ class VirtualBucket extends UserKeyNoID
 
         $bucket = null;
 
-        if($keyField == $config->getPrimaryKey()){
+        if ($keyField == $config->getPrimaryKey()) {
             $value = $object->getInsertId();
-        }else{
+        } else {
             $value = $object->get($keyField);
         }
 
@@ -143,23 +144,24 @@ class VirtualBucket extends UserKeyNoID
             $mapper = $this->getNumericMapper();
         } elseif ($fieldObject->isText(true)) {
             $mapper = $this->getStringMapper();
-        }else{
-            throw new Exception('Undefined key mapper for '.$objectName);
+        } else {
+            throw new Exception('Undefined key mapper for ' . $objectName);
         }
 
         $bucket = $mapper->keyToBucket($distributedKey);
         $indexObject = $config->getDistributedIndexObject();
         $indexModel = Model::factory($indexObject);
         $shard = $indexModel->query()
-            ->filters([$this->bucketField=>$bucket->getId()])
+            ->filters([$this->bucketField => $bucket->getId()])
             ->fields([$this->shardField])
             ->fetchOne();
 
-        if(empty($shard)){
+        if (empty($shard)) {
             return null;
         }
         return $shard;
     }
+
     /**
      * Get shards for list of objects
      * @param string $objectName
@@ -167,7 +169,7 @@ class VirtualBucket extends UserKeyNoID
      * @return array  [shard_id=>[key1,key2,key3], shard_id2=>[...]]
      * @throws \Exception
      */
-    public function findObjectsShards(string $objectName, array $distributedKeys) : array
+    public function findObjectsShards(string $objectName, array $distributedKeys): array
     {
         $config = Config::factory($objectName);
         $keyField = $config->getBucketMapperKey();
@@ -177,8 +179,8 @@ class VirtualBucket extends UserKeyNoID
             $mapper = $this->getNumericMapper();
         } elseif ($fieldObject->isText(true)) {
             $mapper = $this->getStringMapper();
-        }else{
-            throw new Exception('Undefined key mapper for '.$objectName);
+        } else {
+            throw new Exception('Undefined key mapper for ' . $objectName);
         }
 
         $indexObject = $config->getDistributedIndexObject();
@@ -187,30 +189,28 @@ class VirtualBucket extends UserKeyNoID
         $result = [];
         $search = [];
 
-        foreach ($distributedKeys as $key)
-        {
+        foreach ($distributedKeys as $key) {
             $bucket = $mapper->keyToBucket($key);
             $search[$bucket->getId()][] = $key;
         }
 
         $shardData = $indexModel->query()
-            ->filters([$this->bucketField=>array_keys($search)])
-            ->fields([$this->shardField,$this->bucketField])
+            ->filters([$this->bucketField => array_keys($search)])
+            ->fields([$this->shardField, $this->bucketField])
             ->fetchAll();
 
-        if(empty($shardData)){
+        if (empty($shardData)) {
             return [];
         }
 
-        foreach ($shardData as $row)
-        {
+        foreach ($shardData as $row) {
             $shardId = $row[$this->shardField];
             $bucketId = $row[$this->bucketField];
-            if(!isset($result[$shardId])){
+            if (!isset($result[$shardId])) {
                 $result[$shardId] = [];
             }
-            if(isset($search[$bucketId])){
-                $result[$shardId]  = array_merge($result[$shardId],$search[$bucketId]);
+            if (isset($search[$bucketId])) {
+                $result[$shardId] = array_merge($result[$shardId], $search[$bucketId]);
             }
         }
         return $result;

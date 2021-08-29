@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -36,7 +37,7 @@ class Insert extends Orm\Model\Insert
      * Set Shard
      * @param string $shard
      */
-    public function setShard(string $shard) : void
+    public function setShard(string $shard): void
     {
         $this->db = $this->model->getDbShardConnection($shard);
     }

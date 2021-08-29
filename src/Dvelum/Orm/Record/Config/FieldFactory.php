@@ -1,4 +1,5 @@
 <?php
+
 /*
  * DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
  * Copyright (C) 2011-2020  Kirill Yegorov
@@ -33,7 +34,7 @@ class FieldFactory
     {
         $fields = $config->getConfig()->get('fields');
 
-        if(!isset($fields[$fieldName])){
+        if (!isset($fields[$fieldName])) {
             throw new Orm\Exception('Undefined field ' . $config->getName() . '.' . $fieldName);
         }
 
@@ -42,7 +43,7 @@ class FieldFactory
         $fieldClass = 'Field';
 
         //detect field type
-        if(!isset($configData['db_type'])){
+        if (!isset($configData['db_type'])) {
             throw new Orm\Exception('Undefined db_type for field ' . $config->getName() . '.' . $fieldName);
         }
         $dbType = $configData['db_type'];

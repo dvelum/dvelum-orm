@@ -23,16 +23,12 @@ declare(strict_types=1);
 namespace Dvelum\App\Orm\Api\Controller;
 
 use Dvelum\App\Orm\Api\Controller;
-use Dvelum\App\Backend\Orm\Manager;
+use Dvelum\App\Orm\Api\Manager;
 use Dvelum\Orm;
 use Dvelum\Orm\Exception;
 
 class Field extends Controller
 {
-    public function getModule(): string
-    {
-        return 'Orm';
-    }
 
     public function indexAction()
     {
@@ -75,7 +71,7 @@ class Field extends Controller
             /**
              * @var Orm\Record\Config
              */
-            $objectCfg = Orm\Record\Config::factory($object);
+            $objectCfg = $this->ormService->config($object);
         } catch (Exception $e) {
             $this->response->error($this->lang->get('WRONG_REQUEST') . ' code 2');
             return;
@@ -132,7 +128,7 @@ class Field extends Controller
                 }
 
                 try {
-                    Orm\Record\Config::factory($linkedObject);
+                    $this->ormService->config($linkedObject);
                 } catch (Exception $e) {
                     $this->response->error(
                         $this->lang->get('FILL_FORM'),
@@ -286,7 +282,7 @@ class Field extends Controller
             /**
              * @todo refactor
              */
-            $builder = Orm\Record\Builder::factory($object);
+            $builder = $this->ormService->getBuilder($object);
             $builder->build();
             $this->response->success();
         } else {

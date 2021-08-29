@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -23,9 +24,13 @@ namespace Dvelum\Orm;
 use Dvelum\App\EventManager;
 use Dvelum\Cache\CacheInterface;
 use Dvelum\Config\ConfigInterface;
+use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Lang;
+use Dvelum\Lang\Dictionary;
 use Dvelum\Orm\Distributed\Record as DistributedRecord;
 use Dvelum\Db;
+use Dvelum\Orm\Record\Builder;
+use Dvelum\Orm\Record\Manager;
 use Dvelum\Security\CryptServiceInterface;
 use Dvelum\Utils;
 use Dvelum\Config;
@@ -81,6 +86,8 @@ class Orm
 
     protected Lang $lang;
 
+    protected Config\Storage\StorageInterface $configStorage;
+
     /**
      * @param ConfigInterface $config
      * @param Db\ManagerInterface $dbManager
@@ -93,12 +100,14 @@ class Orm
         Db\ManagerInterface $dbManager,
         string $language,
         CacheInterface $cache = null,
-        Lang $lang
+        Lang $lang,
+        Config\Storage\StorageInterface $configStorage
     ) {
         $this->config = $config;
         $this->language = $language;
         $this->lang = $lang;
         $this->eventManager = new EventManager();
+        $this->configStorage = $configStorage;
 
         if ($cache) {
             $this->eventManager->setCache($cache);
@@ -107,13 +116,13 @@ class Orm
         $orm = $this;
 
         $this->modelSettings = Config\Factory::create([
-            'hardCacheTime' => $config->get('hard_cache'),
-            'dataCache' => $cache,
-            'defaultDbManager' => $dbManager,
-            'logLoader' => function () use ($orm) {
-                return $orm->getLog();
-            }
-        ]);
+                                                          'hardCacheTime' => $config->get('hard_cache'),
+                                                          'dataCache' => $cache,
+                                                          'defaultDbManager' => $dbManager,
+                                                          'logLoader' => function () use ($orm) {
+                                                              return $orm->getLog();
+                                                          }
+                                                      ]);
 
         /*
          * Prepare Db_Object
@@ -121,13 +130,13 @@ class Orm
         Record\Builder::useForeignKeys($config->get('foreign_keys'));
 
         $this->configSettings = Config\Factory::create([
-            'configPath' => $config->get('object_configs'),
-            'translatorLoader' => function () use ($orm) {
-                return $orm->getTranslator();
-            },
-            'useForeignKeys' => $config->get('foreign_keys'),
-            'ivField' => $config->get('iv_field'),
-        ]);
+                                                           'configPath' => $config->get('object_configs'),
+                                                           'translatorLoader' => function () use ($orm) {
+                                                               return $orm->getTranslator();
+                                                           },
+                                                           'useForeignKeys' => $config->get('foreign_keys'),
+                                                           'ivField' => $config->get('iv_field'),
+                                                       ]);
 
         $this->storeLoader = function () use ($orm) {
             return $orm->storage();
@@ -257,7 +266,7 @@ class Orm
      * @return RecordInterface
      * @throws \Exception
      */
-    public function record(string $name, $id = false, $shard = false) : RecordInterface
+    public function record(string $name, $id = false, $shard = false): RecordInterface
     {
         $recordClass = $this->config->get('record');
         $config = $this->config($name);
@@ -281,7 +290,7 @@ class Orm
      * @return RecordInterface[]
      * @throws \Exception
      */
-    public function records(string $name, array $id, $shard = false) : array
+    public function records(string $name, array $id, $shard = false): array
     {
         $recordClass = $this->config->get('record');
         $config = $this->config($name);
@@ -302,20 +311,20 @@ class Orm
                     $fieldObject = $config->getField($field);
                     if ($fieldObject->isManyToManyLink()) {
                         $relationsObject = $config->getRelationsObject($field);
-                        if(empty($relationsObject)){
+                        if (empty($relationsObject)) {
                             throw new \Exception('Undefined relations object for field ' . $field);
                         }
                         $relationsData = $this->model((string)$relationsObject)->query()
                             ->params([
-                                'sort' => 'order_no',
-                                'dir' => 'ASC'
-                            ])
+                                         'sort' => 'order_no',
+                                         'dir' => 'ASC'
+                                     ])
                             ->filters(['source_id' => $id])
                             ->fields(['target_id', 'source_id'])
                             ->fetchAll();
                     } else {
                         $linkedObject = $fieldObject->getLinkedObject();
-                        if(empty($linkedObject)){
+                        if (empty($linkedObject)) {
                             throw new \Exception('Undefined linked object object for field ' . $field);
                         }
                         $linksObject = $this->model($linkedObject)->getStore()->getLinksObjectName();
@@ -323,11 +332,11 @@ class Orm
                         $relationsData = $linksModel->query()
                             ->params(['sort' => 'order', 'dir' => 'ASC'])
                             ->filters([
-                                'src' => $name,
-                                'src_id' => $id,
-                                'src_field' => $field,
-                                'target' => $linkedObject
-                            ])
+                                          'src' => $name,
+                                          'src_id' => $id,
+                                          'src_field' => $field,
+                                          'target' => $linkedObject
+                                      ])
                             ->fields(['target_id', 'source_id' => 'src_id'])
                             ->fetchAll();
                     }
@@ -473,5 +482,31 @@ class Orm
             }
         }
         return $this->models[$listName];
+    }
+
+    /**
+     * Get Db statistics adapter
+     * @return Stat
+     * @throws \Exception
+     */
+    public function stat(): Stat
+    {
+        return new Stat($this->configStorage, $this, $this->lang->getDictionary());
+    }
+
+    /**
+     * Get ORM object structure builder (sync db structure)
+     * @param string $objectName
+     * @return Builder\AbstractAdapter
+     * @throws Exception
+     */
+    public function getBuilder(string $objectName): Builder\AbstractAdapter
+    {
+        return Builder::factory($this, $this->configStorage, $this->lang->getDictionary(), $objectName);
+    }
+
+    public function getRecordManager(): Manager
+    {
+        return new Manager($this->configStorage, $this);
     }
 }

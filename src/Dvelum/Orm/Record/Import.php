@@ -59,7 +59,7 @@ class Import
 
         $column = $meta->getAdapter()->getColumn($primary, $table);
         $dataType = $column->getDataType();
-        if(empty($dataType)){
+        if (empty($dataType)) {
             return false;
         }
         $dataType = strtolower($dataType);
@@ -80,12 +80,12 @@ class Import
     }
 
     /**
-     * @todo cleanup the code
      * @param Db\Adapter $dbAdapter
      * @param string $tableName
      * @param mixed $adapterPrefix , optional default - false
-     * @throws Exception
      * @return array
+     * @throws Exception
+     * @todo cleanup the code
      */
     public function createConfigByTable(Db\Adapter $dbAdapter, string $tableName, $adapterPrefix = false)
     {
@@ -112,8 +112,9 @@ class Import
         $meta = $dbAdapter->getMeta();
         $primary = $meta->findPrimaryKey($tableName);
 
-        if (empty($primary))
+        if (empty($primary)) {
             return [];
+        }
 
         $config['primary_key'] = $primary;
         $config['link_title'] = $primary;
@@ -137,31 +138,36 @@ class Import
 
             $hash = $meta->indexHashByColumns($v->getColumns());
 
-            if (strtolower($hash) == $config['primary_key'])
+            if (strtolower($hash) == $config['primary_key']) {
                 continue;
+            }
 
             $flag = false;
-            if (!empty($index))
+            if (!empty($index)) {
                 foreach ($index as $key => &$val) {
                     if ($key == $hash) {
                         $val['columns'][] = $hash;
                         $flag = true;
 
-                        if ($v->isUnique())
+                        if ($v->isUnique()) {
                             $indexGroups[$hash][] = $hash;
+                        }
 
                         break;
                     }
                 }
+            }
 
             unset($val);
-            if ($flag)
+            if ($flag) {
                 continue;
+            }
 
-            if ($v->getType() == 'FULLTEXT')
+            if ($v->getType() == 'FULLTEXT') {
                 $index[$hash]['fulltext'] = true;
-            else
+            } else {
                 $index[$hash]['fulltext'] = false;
+            }
 
             /**
              * Non_unique
@@ -184,8 +190,9 @@ class Import
              * @var \Laminas\Db\Metadata\Object\ColumnObject $v
              */
             $name = $v->getName();
-            if (strtolower($name) == $config['primary_key'])
+            if (strtolower($name) == $config['primary_key']) {
                 continue;
+            }
 
             $objectFields[$name] = array(
                 'title' => $name,
@@ -194,11 +201,13 @@ class Import
 
             $fieldLink = &$objectFields[$name];
 
-            if (!empty($v->getCharacterMaximumLength()))
+            if (!empty($v->getCharacterMaximumLength())) {
                 $fieldLink['db_len'] = $v->getCharacterMaximumLength();
+            }
 
-            if ($v->getColumnDefault() !== null)
+            if ($v->getColumnDefault() !== null) {
                 $fieldLink['db_default'] = $v->getColumnDefault();
+            }
 
             if ($v->getIsNullable()) {
                 $fieldLink['db_isNull'] = true;
@@ -208,17 +217,21 @@ class Import
                 $fieldLink['required'] = true;
             }
 
-            if ($v->getNumericUnsigned())
+            if ($v->getNumericUnsigned()) {
                 $fieldLink['db_unsigned'] = true;
+            }
 
-            if (!empty($v->getNumericPrecision()))
+            if (!empty($v->getNumericPrecision())) {
                 $fieldLink['db_scale'] = $v->getNumericPrecision();
+            }
 
-            if (!empty($v->getNumericScale()))
+            if (!empty($v->getNumericScale())) {
                 $fieldLink['db_precision'] = $v->getNumericScale();
+            }
 
-            if (array_key_exists($name, $indexGroups))
+            if (array_key_exists($name, $indexGroups)) {
                 $fieldLink['unique'] = $indexGroups[$name];
+            }
 
 //            if($v['IDENTITY'])
 //               $fieldLink['auto_increment'] = true;
@@ -229,8 +242,9 @@ class Import
         $config['engine'] = $engine['Engine'];
         $config['fields'] = $objectFields;
 
-        if (!empty($index))
+        if (!empty($index)) {
             $config['indexes'] = $index;
+        }
 
         return $config;
     }

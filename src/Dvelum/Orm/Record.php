@@ -622,7 +622,7 @@ class Record implements RecordInterface
      * @return RecordInterface
      * @throws \Exception
      */
-    static public function factory(string $name, $id = false, $shard = false) : RecordInterface
+    static public function factory(string $name, $id = false, $shard = false): RecordInterface
     {
         /**
          * @var \Dvelum\Orm\Orm $service

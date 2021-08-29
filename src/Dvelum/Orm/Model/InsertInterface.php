@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -33,7 +34,7 @@ interface InsertInterface
     /**
      * Insert multiple rows (not safe but fast)
      * @param array $records
-     * @param int $chunkSize, optional default 500
+     * @param int $chunkSize , optional default 500
      * @param bool $ignore - optional default false Ignore errors
      * @return bool
      */

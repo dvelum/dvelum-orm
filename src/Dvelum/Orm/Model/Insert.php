@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -43,11 +44,11 @@ class Insert implements InsertInterface
     /**
      * Insert multiple rows (not safe but fast)
      * @param array $records
-     * @param int $chunkSize, optional default 500
+     * @param int $chunkSize , optional default 500
      * @param bool $ignore - optional default false Ignore errors
      * @return bool
      */
-    public function bulkInsert(array $records, int $chunkSize = 500, bool $ignore = false) : bool
+    public function bulkInsert(array $records, int $chunkSize = 500, bool $ignore = false): bool
     {
         if (empty($records)) {
             return true;
@@ -86,8 +87,10 @@ class Insert implements InsertInterface
                 $sql .= 'IGNORE ';
             }
 
-            $sql .= 'INTO ' . $this->model->table() . ' (' . $keys . ') ' . "\n" . ' VALUES ' . "\n" . '(' . implode(')' . "\n" . ',(',
-                    array_values($rowset)) . ') ' . "\n" . '';
+            $sql .= 'INTO ' . $this->model->table() . ' (' . $keys . ') ' . "\n" . ' VALUES ' . "\n" . '(' . implode(
+                    ')' . "\n" . ',(',
+                    array_values($rowset)
+                ) . ') ' . "\n" . '';
 
             try {
                 $this->db->query($sql);
@@ -119,18 +122,20 @@ class Insert implements InsertInterface
 
         $values = array_values($data);
         foreach ($values as &$val) {
-            if(is_bool($val)){
+            if (is_bool($val)) {
                 $val = intval($val);
-            }elseif (is_null($val)){
+            } elseif (is_null($val)) {
                 $val = 'NULL';
-            }else{
+            } else {
                 $val = $this->db->quote($val);
             }
         }
         unset($val);
 
-        $sql = 'INSERT INTO ' . $this->db->quoteIdentifier($this->model->table()) . ' (' . implode(',',
-                $keys) . ') VALUES (' . implode(',', $values) . ') ON DUPLICATE KEY UPDATE ';
+        $sql = 'INSERT INTO ' . $this->db->quoteIdentifier($this->model->table()) . ' (' . implode(
+                ',',
+                $keys
+            ) . ') VALUES (' . implode(',', $values) . ') ON DUPLICATE KEY UPDATE ';
 
         $updates = [];
         foreach ($keys as $key) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2018  Kirill Yegorov
@@ -46,7 +47,7 @@ interface GeneratorInterface
      * @param mixed $distributedKey
      * @return bool
      */
-    public function deleteIndex(RecordInterface $record, $distributedKey) : bool;
+    public function deleteIndex(RecordInterface $record, $distributedKey): bool;
 
     /**
      * Get object shard id
@@ -55,13 +56,14 @@ interface GeneratorInterface
      * @return mixed
      */
     public function findObjectShard(string $objectName, $distributedKey);
+
     /**
      * Get shards for list of objects
      * @param string $objectName
      * @param array $distributedKeys
      * @return array  [shard_id=>[key1,key2,key3], shard_id2=>[...]]
      */
-    public function findObjectsShards(string $objectName, array $distributedKeys) : array;
+    public function findObjectsShards(string $objectName, array $distributedKeys): array;
 
     /**
      * Detect object shard by own rules

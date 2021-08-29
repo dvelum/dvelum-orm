@@ -21,6 +21,7 @@
 declare(strict_types=1);
 
 namespace Dvelum\Orm\Record\Config\Field;
+
 use Dvelum\Orm\Record\Config\Field;
 
 class Boolean extends Field
@@ -32,6 +33,6 @@ class Boolean extends Field
      */
     public function filter($value)
     {
-        return intval(\Dvelum\Filter::filterValue('boolean' , $value));
+        return intval(\Dvelum\Filter::filterValue('boolean', $value));
     }
 }

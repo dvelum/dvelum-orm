@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -35,7 +36,9 @@ class Record extends Orm\Record
     {
         $this->shard = $shard;
         if ($config->getShardingType() === Config::SHARDING_TYPE_KEY_NO_INDEX && empty($shard) && !empty($id)) {
-            throw new Orm\Exception('Sharded object with type of Config::SHARDING_TYPE_KEY_NO_INDEX requires shard to be defined at constructor');
+            throw new Orm\Exception(
+                'Sharded object with type of Config::SHARDING_TYPE_KEY_NO_INDEX requires shard to be defined at constructor'
+            );
         }
 
         parent::__construct($config, $id);
@@ -49,7 +52,7 @@ class Record extends Orm\Record
         parent::loadData();
     }
 
-    public function getShard() : string
+    public function getShard(): string
     {
         return $this->get(Orm\Distributed::factory()->getShardField());
     }

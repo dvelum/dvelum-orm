@@ -29,24 +29,19 @@ class Uml extends Controller
 {
     protected $mapConfig = 'umlMap.php';
 
-    public function getModule(): string
-    {
-        return 'Orm';
-    }
-
     /**
      * Get data for UML diagram
      */
     public function loadMapAction()
     {
-        $ormConfig = Config::storage()->get('orm.php');
-        $config = Config::storage()->get($ormConfig->get('uml_map_data'), true, false);
+        $ormConfig = $this->configStorage->get('orm.php');
+        $config = $this->configStorage->get($ormConfig->get('uml_map_data'), true, false);
 
         $items = $config->get('items');
 
         $data = [];
 
-        $manager = new Orm\Record\Manager();
+        $manager = $this->ormService->getRecordManager();
 
         $names = $manager->getRegisteredObjects();
 
@@ -74,7 +69,7 @@ class Uml extends Controller
         $defaultY = 10;
 
         foreach ($names as $index => $objectName) {
-            $objectConfig = Orm\Record\Config::factory($objectName);
+            $objectConfig = $this->ormService->config($objectName);
             if (!empty($objectConfig->isRelationsObject()) || !in_array($objectName, $showObj)) {
                 unset($names[$index]);
                 continue;
@@ -83,7 +78,7 @@ class Uml extends Controller
             $data[$objectName]['links'] = $objectConfig->getLinks();
             $data[$objectName]['fields'] = [];
 
-            $objectConfig = Orm\Record\Config::factory($objectName);
+            $objectConfig = $this->ormService->config($objectName);
             $fields = $objectConfig->getFieldsConfig();
 
             foreach ($fields as $fieldName => $fieldData) {
@@ -158,13 +153,13 @@ class Uml extends Controller
 
         $data = json_decode($map, true);
 
-        $ormConfig = Config::storage()->get('orm.php');
+        $ormConfig = $this->configStorage->get('orm.php');
 
-        $config = Config::storage()->get($ormConfig->get('uml_map_data'), true, false);
+        $config = $this->configStorage->get($ormConfig->get('uml_map_data'), true, false);
 
         $saved = $config->get('items');
 
-        $manager = new Orm\Record\Manager();
+        $manager = $this->ormService->getRecordManager();
         $registered = $manager->getRegisteredObjects();
         if (empty($registered)) {
             $registered = [];
@@ -193,7 +188,7 @@ class Uml extends Controller
 
         $config->set('items', $data);
 
-        if (Config::storage()->save($config)) {
+        if ($this->configStorage->save($config)) {
             $this->response->success();
         } else {
             $this->response->error($this->lang->get('CANT_WRITE_FS'));

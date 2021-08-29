@@ -46,7 +46,6 @@ class Manager
     {
         $this->configStorage = $configStorage;
         $this->orm = $orm;
-
     }
 
     /**
@@ -91,7 +90,7 @@ class Manager
     public function objectExists(string $name): bool
     {
         $list = $this->getRegisteredObjects();
-        if(empty($list)){
+        if (empty($list)) {
             return false;
         }
         return in_array(strtolower($name), $list, true);

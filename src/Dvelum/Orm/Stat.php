@@ -25,19 +25,21 @@ use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Db\Adapter;
 use Dvelum\Lang;
 use Dvelum\Orm;
-use Dvelum\Service;
+
 use Dvelum\Utils;
 
 class Stat
 {
     private Orm\Orm $orm;
     private StorageInterface $configStorage;
+    private Lang\Dictionary $lang;
 
 
-    public function __construct( StorageInterface $configStorage, Orm\Orm $orm)
+    public function __construct(StorageInterface $configStorage, Orm\Orm $orm, Lang\Dictionary $lang)
     {
         $this->configStorage = $configStorage;
         $this->orm = $orm;
+        $this->lang = $lang;
     }
 
     /**
@@ -51,8 +53,7 @@ class Stat
         /*
          * Getting list of objects
          */
-        $manager = new Orm\Record\Manager($this->configStorage, $this->orm);
-
+        $manager = $this->orm->getRecordManager();
         $names = $manager->getRegisteredObjects();
 
         if (empty($names)) {
@@ -234,12 +235,8 @@ class Stat
      */
     public function validate(string $objectName): array
     {
-        /**
-         * @var Lang\Dictionary $lang
-         */
-        $lang = Service::get('lang')->getDictionary();
-        $config = Record\Config::factory($objectName);
-        $builder = Orm\Record\Builder::factory($objectName);
+        $config = $this->orm->config($objectName);
+        $builder = $this->orm->getBuilder($objectName);
 
         $hasBroken = false;
 
@@ -254,9 +251,9 @@ class Stat
         }
 
         if ($hasBroken || !$valid) {
-            $group = $lang->get('INVALID_STRUCTURE');
+            $group = $this->lang->get('INVALID_STRUCTURE');
         } else {
-            $group = $lang->get('VALID_STRUCTURE');
+            $group = $this->lang->get('VALID_STRUCTURE');
         }
         $result = [
             'title' => $config->getTitle(),
@@ -279,13 +276,9 @@ class Stat
      */
     public function validateDistributed(string $objectName, string $shard): array
     {
-        /**
-         * @var  Lang $lang
-         */
-        $lang = Service::get('lang')->getDictionary();
-        $config = Record\Config::factory($objectName);
-        $builder = Orm\Record\Builder::factory($objectName);
-        $model = Model::factory($objectName);
+        $config = $this->orm->config($objectName);
+        $builder = $this->orm->getBuilder($objectName);
+        $model = $this->orm->model($objectName);
         $connectionName = $model->getConnectionName();
 
         $sharding = Distributed::factory();

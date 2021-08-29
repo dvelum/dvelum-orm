@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Dvelum\Orm\Record\Field;
@@ -23,44 +24,44 @@ class Property
      * @var array
      */
     public static $acceptedData = [
-            'name',
-            'title' , 
-            'required' , 
-            'allow_html' , 
-            'db_type' , 
-            'db_len' , 
-            'db_isNull' , 
-            'db_default' , 
-            'db_unsigned' , 
-            'db_scale' , 
-            'db_precision' , 
-            'db_auto_increment' , 
-            'type' , 
-            'link_config' , 
-            'is_search' , 
-            'unique' , 
-            'validator' , 
-            'system' , 
-            'lazyLang',
-            'locked',
-            'readonly',
-            'connection',
-            'use_db_prefix',
-            'hidden',
-            'relations_type',
-            'sharding',
-            'data_object',
-            'parent_object'
+        'name',
+        'title',
+        'required',
+        'allow_html',
+        'db_type',
+        'db_len',
+        'db_isNull',
+        'db_default',
+        'db_unsigned',
+        'db_scale',
+        'db_precision',
+        'db_auto_increment',
+        'type',
+        'link_config',
+        'is_search',
+        'unique',
+        'validator',
+        'system',
+        'lazyLang',
+        'locked',
+        'readonly',
+        'connection',
+        'use_db_prefix',
+        'hidden',
+        'relations_type',
+        'sharding',
+        'data_object',
+        'parent_object'
     ];
 
     public static $numberLength = [
-            'tinyint' => 3 , 
-            'smallint' => 5 , 
-            'mediumint' => 8 , 
-            'int' => 10 , 
-            'bigint' => 20
+        'tinyint' => 3,
+        'smallint' => 5,
+        'mediumint' => 8,
+        'int' => 10,
+        'bigint' => 20
     ];
-    
+
     /**
      * Properties data
      * @var array
@@ -76,17 +77,17 @@ class Property
     /**
      * Set property data
      * @param array $data
-     * @throws \Exception
      * @return void
+     * @throws \Exception
      */
     public function setData(array $data)
     {
-        foreach($data as $key => $value)
-        {
-            if(in_array($key , self::$acceptedData))
+        foreach ($data as $key => $value) {
+            if (in_array($key, self::$acceptedData)) {
                 $this->data[$key] = $value;
-            else
+            } else {
                 throw new Exception('Invalid property name "' . $key . '"');
+            }
         }
     }
 
@@ -102,15 +103,16 @@ class Property
     /**
      * Getter
      * @param string $key
-     * @throws \Exception
      * @return mixed
+     * @throws \Exception
      */
     public function __get($key)
     {
-        if(isset($this->data[$key]))
+        if (isset($this->data[$key])) {
             return $this->data[$key];
-        else
+        } else {
             throw new Exception('Invalid property name "' . $key . '"');
+        }
     }
 
     public function __isset($key)
@@ -122,15 +124,14 @@ class Property
      * Get SQL part
      * @return string
      */
-    public function __toSql() : string
+    public function __toSql(): string
     {
         $s = '';
         $isNumber = false;
 
         $dbType = strtolower($this->data['db_type']);
 
-        switch($dbType)
-        {
+        switch ($dbType) {
             case 'boolean' :
                 $this->data['db_isNull'] = false;
                 $s .= '`' . $this->name . '` ' . $dbType . ' ';
@@ -144,11 +145,15 @@ class Property
 
                 $s .= '`' . $this->name . '` ' . $dbType . ' (' . $this->data['db_len'] . ')';
 
-                if(isset($this->data['db_unsigned']) && $this->data['db_unsigned'] && strtolower($dbType) != 'boolean')
+                if (isset($this->data['db_unsigned']) && $this->data['db_unsigned'] && strtolower(
+                        $dbType
+                    ) != 'boolean') {
                     $s .= ' UNSIGNED ';
+                }
 
-                if($dbType !== 'boolean' && isset($this->data['db_auto_increment']) && $this->data['db_auto_increment'])
+                if ($dbType !== 'boolean' && isset($this->data['db_auto_increment']) && $this->data['db_auto_increment']) {
                     $s .= ' AUTO_INCREMENT ';
+                }
 
                 $isNumber = true;
                 break;
@@ -156,8 +161,11 @@ class Property
             case 'bit' :
                 $s .= '`' . $this->name . '` ' . $dbType . ' ';
 
-                if(isset($this->data['db_unsigned']) && $this->data['db_unsigned'] && strtolower($dbType) != 'boolean')
+                if (isset($this->data['db_unsigned']) && $this->data['db_unsigned'] && strtolower(
+                        $dbType
+                    ) != 'boolean') {
                     $s .= ' UNSIGNED ';
+                }
 
                 $isNumber = true;
                 break;
@@ -168,8 +176,9 @@ class Property
 
                 $s .= '`' . $this->name . '` ' . $dbType . '(' . $this->data['db_scale'] . ',' . $this->data['db_precision'] . ') ';
 
-                if(isset($this->data['db_unsigned']) && $this->data['db_unsigned'])
+                if (isset($this->data['db_unsigned']) && $this->data['db_unsigned']) {
                     $s .= ' UNSIGNED ';
+                }
 
                 $isNumber = true;
                 break;
@@ -196,7 +205,7 @@ class Property
             case 'time' :
             case 'timestamp' :
             case 'datetime' :
-                if(isset($this->data['db_default']) && !strlen((string)$this->data['db_default'])){
+                if (isset($this->data['db_default']) && !strlen((string)$this->data['db_default'])) {
                     unset($this->data['db_default']);
                 }
                 $s = '`' . $this->name . '` ' . $dbType . ' ';
@@ -207,33 +216,32 @@ class Property
             case 'longtext' :
 
                 $s = '`' . $this->name . '` ' . $dbType . ' ';
-                if(isset($this->data['db_default']))
+                if (isset($this->data['db_default'])) {
                     unset($this->data['db_default']);
-                if(!isset($this->data['required']) || !$this->data['required'])
+                }
+                if (!isset($this->data['required']) || !$this->data['required']) {
                     $this->data['db_isNull'] = true;
+                }
 
                 break;
         }
 
-        if(!$this->data['db_isNull'])
-        {
+        if (!$this->data['db_isNull']) {
             $s .= 'NOT NULL ';
 
-            if(isset($this->data['db_default']) && $this->data['db_default'] !== false)
-            {
-                if($isNumber)
+            if (isset($this->data['db_default']) && $this->data['db_default'] !== false) {
+                if ($isNumber) {
                     $s .= " DEFAULT " . $this->data['db_default'] . " ";
-                else
+                } else {
                     $s .= " DEFAULT '" . $this->data['db_default'] . "' ";
+                }
             }
-        }
-        else
-        {
+        } else {
             $s .= ' NULL ';
         }
 
-        if(isset($this->data['db_auto_increment']) && $this->data['db_auto_increment']){
-            $s.=' AUTO_INCREMENT ';
+        if (isset($this->data['db_auto_increment']) && $this->data['db_auto_increment']) {
+            $s .= ' AUTO_INCREMENT ';
         }
 
         $s .= " COMMENT '" . addslashes($this->data['title']) . "' ";
@@ -243,51 +251,51 @@ class Property
     /**
      * Setter
      * @param string $key
-     * @throws \Exception
      * @param mixed $value
+     * @throws \Exception
      */
-    public function __set($key , $value)
+    public function __set($key, $value)
     {
-        if(in_array($key, self::$acceptedData,true ))
+        if (in_array($key, self::$acceptedData, true)) {
             $this->data[$key] = $value;
-        else
+        } else {
             throw new \Exception('Invalid property name');
+        }
     }
 
     /**
-       * Property filter
-       * @param array $fieldInfo - property config data
-       * @param mixed $value
-       * @throws \Exception
-       * @return mixed
-       */
-    static public function filter($fieldInfo , $value)
+     * Property filter
+     * @param array $fieldInfo - property config data
+     * @param mixed $value
+     * @return mixed
+     * @throws \Exception
+     */
+    static public function filter($fieldInfo, $value)
     {
-        switch(strtolower($fieldInfo['db_type']))
-        {
+        switch (strtolower($fieldInfo['db_type'])) {
             case 'tinyint' :
             case 'smallint' :
             case 'mediumint' :
             case 'int' :
             case 'bigint' :
-                $value = \Dvelum\Filter::filterValue('int' , $value);
+                $value = \Dvelum\Filter::filterValue('int', $value);
                 break;
-            
+
             case 'float' :
             case 'double' :
             case 'decimal' :
-                $value = \Dvelum\Filter::filterValue('float' , $value);
-                
+                $value = \Dvelum\Filter::filterValue('float', $value);
+
                 break;
             case 'bool' :
             case 'boolean' :
-                $value = \Dvelum\Filter::filterValue('boolean' , $value);
+                $value = \Dvelum\Filter::filterValue('boolean', $value);
                 break;
             case 'date' :
             case 'time' :
             case 'timestamp' :
             case 'datetime' :
-                $value = \Dvelum\Filter::filterValue('string' , $value);
+                $value = \Dvelum\Filter::filterValue('string', $value);
                 break;
             case 'tinytext' :
             case 'text' :
@@ -296,8 +304,9 @@ class Property
             case 'longtext' :
             case 'char' :
             case 'varchar' :
-                if(!isset($fieldInfo['allow_html']) || !$fieldInfo['allow_html'])
-                    $value = \Dvelum\Filter::filterValue('string' , $value);
+                if (!isset($fieldInfo['allow_html']) || !$fieldInfo['allow_html']) {
+                    $value = \Dvelum\Filter::filterValue('string', $value);
+                }
                 break;
                 //  case 'bit':
                 //		$value = preg_replace ('/[^01]*/', '', $value);

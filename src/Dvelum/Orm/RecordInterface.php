@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -109,8 +110,8 @@ interface RecordInterface
     /**
      * Set the object properties using the associative array of fields and values
      * @param array $values
-     * @throws Exception
      * @return void
+     * @throws Exception
      */
     public function setValues(array $values): void;
 
@@ -128,8 +129,8 @@ interface RecordInterface
      * If field value was updated method returns new value
      * otherwise returns old value
      * @param string $name - field name
-     * @throws Exception
      * @return mixed
+     * @throws Exception
      */
     public function get(string $name);
 
@@ -137,8 +138,8 @@ interface RecordInterface
      * Get the initial object field value (received from the database)
      * whether the field value was updated or not
      * @param string $name - field name
-     * @throws Exception
      * @return mixed
+     * @throws Exception
      */
     public function getOld(string $name);
 
@@ -172,8 +173,8 @@ interface RecordInterface
     /**
      * Validate unique fields, object field groups
      * Returns array of errors  or null .
-     * @property boolean $new
      * @return array | null
+     * @property boolean $new
      */
     public function validateUniqueValues(): ?array;
 
@@ -219,10 +220,10 @@ interface RecordInterface
     /**
      * Load version
      * @param int $vers
-     * @throws Exception
      * @return bool
+     * @throws Exception
      */
-    public function loadVersion(int $vers): bool ;
+    public function loadVersion(int $vers): bool;
 
     /**
      * Reject changes

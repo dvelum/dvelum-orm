@@ -1,4 +1,5 @@
 <?php
+
 /*
  * DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
  * Copyright (C) 2011-2020  Kirill Yegorov
@@ -31,16 +32,17 @@ class FieldManager
      * @param string $name
      * @throws \Exception
      */
-    public function removeField(Config $config, string $name) : void
+    public function removeField(Config $config, string $name): void
     {
         $fields = $config->getFieldsConfig();
 
-        if(!isset($fields[$name]))
+        if (!isset($fields[$name])) {
             return;
+        }
 
         unset($fields[$name]);
 
-        $config->getConfig()->set('fields' , $fields);
+        $config->getConfig()->set('fields', $fields);
 
         $indexManager = new IndexManager();
         $indexManager->removeFieldIndexes($config, $name);
@@ -54,11 +56,11 @@ class FieldManager
      * @return void
      * @throws \Exception
      */
-    public function renameField(Config $config, string $oldName , string $newName) : void
+    public function renameField(Config $config, string $oldName, string $newName): void
     {
         $fields = $config->getFieldsConfig();
 
-        if(!isset($fields[$oldName])){
+        if (!isset($fields[$oldName])) {
             throw new Exception('Undefined field ' . $config->getName() . '.' . $oldName);
         }
 
@@ -77,9 +79,9 @@ class FieldManager
      * @param string $field
      * @param array $data
      */
-    public function setFieldConfig(Config $config, string $field , array $data) : void
+    public function setFieldConfig(Config $config, string $field, array $data): void
     {
-        $cfg = & $config->getConfig()->dataLink();
+        $cfg = &$config->getConfig()->dataLink();
         $cfg['fields'][$field] = $data;
     }
 
@@ -91,12 +93,13 @@ class FieldManager
      * @return bool
      * @throws \Exception
      */
-    public function setFieldLink(Config $config, string $field , string $linkedObject) : bool
+    public function setFieldLink(Config $config, string $field, string $linkedObject): bool
     {
-        if(!$config->getField($field)->isLink())
+        if (!$config->getField($field)->isLink()) {
             return false;
+        }
 
-        $cfg = & $config->getConfig()->dataLink();
+        $cfg = &$config->getConfig()->dataLink();
         $cfg['fields'][$field]['link_config']['object'] = $linkedObject;
         return true;
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -38,7 +39,7 @@ class Translator
      * @param string $commonPath - path to translation Array config
      * @param string $localesDir - locales directory (relative)
      */
-    public function __construct(string $commonPath, string $localesDir , Lang $lang)
+    public function __construct(string $commonPath, string $localesDir, Lang $lang)
     {
         $this->commonPath = $commonPath;
         $this->localesDir = $localesDir;
@@ -97,33 +98,37 @@ class Translator
      * @param array $objectConfig
      * @throws \Exception
      */
-    public function translate(string $objectName, & $objectConfig)
+    public function translate(string $objectName, &$objectConfig)
     {
         $translation = $this->getTranslation($objectName);
 
         if (!empty($translation)) {
-            if (isset($translation['title']) && strlen($translation['title']))
+            if (isset($translation['title']) && strlen($translation['title'])) {
                 $objectConfig['title'] = $translation['title'];
-            else
+            } else {
                 $objectConfig['title'] = $objectName;
+            }
 
-            if (isset($translation['fields']) && is_array($translation['fields']))
+            if (isset($translation['fields']) && is_array($translation['fields'])) {
                 $fieldTranslates = $translation['fields'];
+            }
         } else {
-            if (isset($translation['title']) && strlen($translation['title']))
+            if (isset($translation['title']) && strlen($translation['title'])) {
                 $objectConfig['title'] = $translation['title'];
-            else
+            } else {
                 $objectConfig['title'] = $objectName;
+            }
         }
 
         $dictionary = $this->lang->getDictionary();
 
         foreach ($objectConfig['fields'] as $k => &$v) {
             if (isset($v['lazyLang']) && $v['lazyLang']) {
-                if (isset($v['title']))
+                if (isset($v['title'])) {
                     $v['title'] = $dictionary->get($v['title']);
-                else
+                } else {
                     $v['title'] = '';
+                }
             } elseif (isset($fieldTranslates[$k]) && strlen($fieldTranslates[$k])) {
                 $v['title'] = $fieldTranslates[$k];
             } elseif (!isset($v['title']) || !strlen($v['title'])) {

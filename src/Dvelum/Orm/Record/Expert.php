@@ -16,6 +16,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 namespace Dvelum\Orm\Record;
 
 use Dvelum\Orm\Model;
@@ -32,12 +33,13 @@ class Expert
 
     static protected function buildAssociations()
     {
-        if (!is_null(self::$objectAssociations))
+        if (!is_null(self::$objectAssociations)) {
             return;
+        }
 
         $manager = new Manager();
         $objects = $manager->getRegisteredObjects();
-        if(!empty($objects)){
+        if (!empty($objects)) {
             foreach ($objects as $name) {
                 $config = Record\Config::factory($name);
                 $links = $config->getLinks();
@@ -72,17 +74,20 @@ class Expert
         $objectName = $object->getName();
         $objectId = $object->getId();
 
-        if (!isset(self::$objectAssociations[$objectName]))
+        if (!isset(self::$objectAssociations[$objectName])) {
             return array();
+        }
 
         foreach (self::$objectAssociations as $testObject => $links) {
-            if (!isset($links[$objectName]))
+            if (!isset($links[$objectName])) {
                 continue;
+            }
 
             $sLinks = self::getSingleLinks($objectId, $testObject, $links[$objectName]);
 
-            if (!empty($sLinks))
+            if (!empty($sLinks)) {
                 $linkedObjects['single'][$testObject] = $sLinks;
+            }
         }
 
         $linkedObjects['multi'] = self::getMultiLinks($objectName, $objectId);
@@ -104,21 +109,23 @@ class Expert
      *  )
      * @return array
      */
-    static protected function getSingleLinks($objectId, $relatedObject, $links) : array
+    static protected function getSingleLinks($objectId, $relatedObject, $links): array
     {
         $relatedConfig = Config::factory($relatedObject);
         $relatedObjectModel = Model::factory($relatedObject);
         $fields = [];
 
         foreach ($links as $field => $type) {
-            if ($type !== 'object')
+            if ($type !== 'object') {
                 continue;
+            }
 
             $fields[] = $field;
         }
 
-        if (empty($fields))
+        if (empty($fields)) {
             return [];
+        }
 
         $db = $relatedObjectModel->getDbConnection();
         $sql = $db->select()->from($relatedObjectModel->table(), array($relatedConfig->getPrimaryKey()));
@@ -128,17 +135,18 @@ class Expert
         $first = true;
         foreach ($fields as $field) {
             if ($first) {
-                $sql->where($db->quoteIdentifier((string) $field) . ' =?', $objectId);
+                $sql->where($db->quoteIdentifier((string)$field) . ' =?', $objectId);
             } else {
-                $sql->orWhere($db->quoteIdentifier((string) $field) . ' =?', $objectId);
+                $sql->orWhere($db->quoteIdentifier((string)$field) . ' =?', $objectId);
                 $first = false;
             }
         }
         $data = $db->fetchAll($sql);
 
 
-        if (empty($data))
+        if (empty($data)) {
             return [];
+        }
 
         return Utils::fetchCol($relatedConfig->getPrimaryKey(), $data);
     }
@@ -150,7 +158,7 @@ class Expert
      * @param mixed $objectId
      * @return array
      */
-    static protected function getMultiLinks($objectName, $objectId) : array
+    static protected function getMultiLinks($objectName, $objectId): array
     {
         $ormConfig = \Dvelum\Config::storage()->get('orm.php');
         $linksModel = Model::factory($ormConfig->get('links_object'));
@@ -165,9 +173,11 @@ class Expert
 
         $data = [];
 
-        if (!empty($links))
-            foreach ($links as $record)
+        if (!empty($links)) {
+            foreach ($links as $record) {
                 $data[$record['object']][] = $record['id'];
+            }
+        }
 
         return $data;
     }
@@ -183,18 +193,21 @@ class Expert
 
         self::buildAssociations();
 
-        if (empty(self::$objectAssociations))
+        if (empty(self::$objectAssociations)) {
             return array();
+        }
 
         $associations = array();
 
         foreach (self::$objectAssociations as $object => $data) {
-            if (empty($data))
+            if (empty($data)) {
                 continue;
+            }
 
             foreach ($data as $oName => $fields) {
-                if ($oName !== $objectName)
+                if ($oName !== $objectName) {
                     continue;
+                }
 
                 $associations[] = array(
                     'object' => $object,

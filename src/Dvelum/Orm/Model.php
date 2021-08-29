@@ -139,8 +139,12 @@ class Model
      * @param Config\ConfigInterface $ormConfig
      * @throws \Exception
      */
-    public function __construct(string $objectName, Config\ConfigInterface $settings, Config\ConfigInterface $ormConfig, \Dvelum\Orm\Orm $orm)
-    {
+    public function __construct(
+        string $objectName,
+        Config\ConfigInterface $settings,
+        Config\ConfigInterface $ormConfig,
+        \Dvelum\Orm\Orm $orm
+    ) {
         $this->settings = $settings;
         $this->orm = $orm;
 
@@ -429,7 +433,7 @@ class Model
      */
     public function query(): Model\Query
     {
-        return new Model\Query($this);
+        return new Model\Query($this->orm, $this);
     }
 
     /**

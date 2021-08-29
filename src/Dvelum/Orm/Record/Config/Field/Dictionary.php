@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -30,7 +31,7 @@ class Dictionary extends \Dvelum\Orm\Record\Config\Field
      */
     public function filter($value)
     {
-        if(empty($value)){
+        if (empty($value)) {
             return null;
         }
         return (string)$value;
@@ -41,15 +42,15 @@ class Dictionary extends \Dvelum\Orm\Record\Config\Field
      * @param mixed $value
      * @return bool
      */
-    public function validate($value) : bool
+    public function validate($value): bool
     {
-        if(!parent::validate($value)){
+        if (!parent::validate($value)) {
             return false;
         }
 
-        if(!empty($value)){
+        if (!empty($value)) {
             $dictionary = \Dvelum\App\Dictionary::factory($this->config['link_config']['object']);
-            if(!$dictionary->isValidKey($value)){
+            if (!$dictionary->isValidKey($value)) {
                 $this->validationError = 'Invalid dictionary value';
                 return false;
             }

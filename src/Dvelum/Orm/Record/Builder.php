@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2018  Kirill Yegorov
@@ -43,12 +44,15 @@ class Builder
 
     /**
      * @param string $objectName
-     * @param bool $forceConfig
-     * @throws Orm\Exception
      * @return Builder\AbstractAdapter
+     * @throws Orm\Exception
      */
-    static public function factory(Orm\Orm $orm, StorageInterface $configStorage, Dictionary $lang, string $objectName, bool $forceConfig = true): Builder\AbstractAdapter
-    {
+    static public function factory(
+        Orm\Orm $orm,
+        StorageInterface $configStorage,
+        Dictionary $lang,
+        string $objectName
+    ): Builder\AbstractAdapter {
         $objectConfig = $orm->config($objectName);
 
         $adapter = 'Builder_Generic';
@@ -57,17 +61,19 @@ class Builder
 
         $log = false;
         if (static::$writeLog) {
-            $log = new \Dvelum\Log\File\Sql(static::$logsPath . $objectConfig->get('connection') . '-' . static::$logPrefix . '-build.sql');
+            $log = new \Dvelum\Log\File\Sql(
+                static::$logsPath . $objectConfig->get('connection') . '-' . static::$logPrefix . '-build.sql'
+            );
         }
 
         $ormConfig = $configStorage->get('orm.php');
 
         $config->setData([
-            'objectName' => $objectName,
-            'configPath' => $ormConfig->get('object_configs'),
-            'log' => $log,
-            'useForeignKeys' => static::$foreignKeys
-        ]);
+                             'objectName' => $objectName,
+                             'configPath' => $ormConfig->get('object_configs'),
+                             'log' => $log,
+                             'useForeignKeys' => static::$foreignKeys
+                         ]);
 
         $model = $orm->model($objectName);
         $platform = $model->getDbConnection()->getAdapter()->getPlatform();
@@ -76,7 +82,7 @@ class Builder
         $builderAdapter = static::class . '\\' . $platform;
 
         if (class_exists($builderAdapter)) {
-            return new $builderAdapter($config, $orm , $configStorage, $lang);
+            return new $builderAdapter($config, $orm, $configStorage, $lang);
         }
 
         $builderAdapter = static::class . '\\Generic\\' . $platform;

@@ -335,7 +335,7 @@ abstract class AbstractAdapter implements BuilderInterface
         }
 
         $keyManager = new Config\ForeignKey();
-        $data = $keyManager->getForeignKeys($this->objectConfig);
+        $data = $keyManager->getForeignKeys($this->objectConfig, $this->orm);
         $keys = [];
 
         if (!empty($data)) {
@@ -596,7 +596,7 @@ abstract class AbstractAdapter implements BuilderInterface
             /*
              * Build database
              */
-            $builder = Builder::factory($this->orm, $this->configStorage, $this->lang, $newObjectName, true);
+            $builder = $this->orm->getBuilder($newObjectName);
             if (!$builder->build()) {
                 return false;
             }
@@ -612,7 +612,7 @@ abstract class AbstractAdapter implements BuilderInterface
      */
     protected function updateRelations(array $list): bool
     {
-        $lang = Lang::lang();
+        $lang = $this->lang;
         /**
          * @var bool $usePrefix
          */
@@ -625,10 +625,9 @@ abstract class AbstractAdapter implements BuilderInterface
 
         $oConfigPath = $this->objectConfig->getConfigPath();
 
-        $configDir = Cfg::storage()->getWrite() . $oConfigPath;
-
-        $fieldList = Cfg::storage()->get('objects/relations/fields.php');
-        $indexesList = Cfg::storage()->get('objects/relations/indexes.php');
+        $configDir = $this->configStorage->getWrite() . $oConfigPath;
+        $fieldList = $this->configStorage->get('objects/relations/fields.php');
+        $indexesList = $this->configStorage->get('objects/relations/indexes.php');
 
         if (empty($fieldList)) {
             throw new Exception('Cannot get relation fields: ' . 'objects/relations/fields.php');
@@ -700,12 +699,12 @@ abstract class AbstractAdapter implements BuilderInterface
             /*
              * Write object config
              */
-            if (!Cfg::storage()->save($cfg)) {
+            if (!$this->configStorage->save($cfg)) {
                 $this->errors[] = $lang->get('CANT_WRITE_FS') . ' ' . $configDir . $newObjectName . '.php';
                 return false;
             }
 
-            $cfg = Orm\Record\Config::factory($newObjectName);
+            $cfg = $this->orm->config($newObjectName);
             $cfg->setObjectTitle(
                 $lang->get('RELATIONSHIP_MANY_TO_MANY') . ' ' . $this->objectName . ' & ' . $linkedObject
             );
@@ -718,7 +717,7 @@ abstract class AbstractAdapter implements BuilderInterface
             /*
              * Build database
             */
-            $builder = Builder::factory($newObjectName, true);
+            $builder = $this->orm->getBuilder($newObjectName);
             if (!$builder->build()) {
                 return false;
             }
@@ -738,12 +737,12 @@ abstract class AbstractAdapter implements BuilderInterface
         $updates = [];
 
         $idObject = $this->objectConfig->getDistributedIndexObject();
-        if (!Orm\Record\Config::configExists($idObject)) {
+        if (!$this->orm->configExists($idObject)) {
             $updates[] = ['name' => $idObject, 'action' => 'add'];
             return $updates;
         }
 
-        $objectConfig = Config::factory($idObject);
+        $objectConfig = $this->orm->config($idObject);
 
         $fields = $this->objectConfig->getDistributedIndexesConfig();
 
@@ -797,7 +796,7 @@ abstract class AbstractAdapter implements BuilderInterface
             if (!empty($fields)) {
                 foreach ($fields as $fieldName => $linkType) {
                     $relationObjectName = $this->objectConfig->getRelationsObject($fieldName);
-                    if (!is_string($relationObjectName) || !Orm\Record\Config::configExists($relationObjectName)) {
+                    if (!is_string($relationObjectName) || !$this->orm->configExists($relationObjectName)) {
                         $updates[$fieldName] = ['name' => $relationObjectName, 'action' => 'add'];
                     }
                 }

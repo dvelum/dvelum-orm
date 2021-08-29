@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -29,7 +30,11 @@ class Models extends Console\Action
 {
     public function action(): bool
     {
-        $dbObjectManager = new Orm\Record\Manager();
+        /**
+         * @var Orm\Orm $orm
+         */
+        $orm = $this->diContainer->get(Orm\Orm::class);
+        $dbObjectManager = $orm->getRecordManager();
         $modelPath = Config::storage()->get('main.php')->get('local_models');
 
         echo 'GENERATE MODELS' . PHP_EOL;
@@ -40,7 +45,7 @@ class Models extends Console\Action
             $class = 'Model_' . implode('_', $list);
 
             $path = str_replace(['_', '\\'], '/', $class);
-            $namespace = str_replace('/', '\\' , dirname($path));
+            $namespace = str_replace('/', '\\', dirname($path));
             $fileName = basename($path);
 
             $path = $modelPath . $path . '.php';

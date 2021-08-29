@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -28,48 +29,49 @@ class ObjectItem extends \Dvelum\Orm\Record\Config\Field
     /**
      * Apply value filter
      * @param mixed $value
-     * @throws \Exception
      * @return mixed
+     * @throws \Exception
      */
     public function filter($value)
     {
-        if(is_object($value))
-        {
-            if($value instanceof Orm\Record)
-            {
-                if(!$value->isInstanceOf((string)$this->getLinkedObject())){
-                    throw new \Exception('Invalid value type for field '. $this->getName().' expects ' . $this->getLinkedObject() . ', ' . $value->getName() . ' passed');
+        if (is_object($value)) {
+            if ($value instanceof Orm\Record) {
+                if (!$value->isInstanceOf((string)$this->getLinkedObject())) {
+                    throw new \Exception(
+                        'Invalid value type for field ' . $this->getName() . ' expects ' . $this->getLinkedObject(
+                        ) . ', ' . $value->getName() . ' passed'
+                    );
                 }
                 $value = $value->getId();
-            }else{
-                if(method_exists($value,'__toString')){
+            } else {
+                if (method_exists($value, '__toString')) {
                     $value = $value->__toString();
-                }else{
+                } else {
                     $value = null;
                 }
             }
         }
 
-        if(empty($value)){
+        if (empty($value)) {
             return null;
         }
 
         return (integer)$value;
     }
+
     /**
      * Validate value
      * @param mixed $value
      * @return bool
      */
-    public function validate($value) : bool
+    public function validate($value): bool
     {
-        if(!parent::validate($value)){
+        if (!parent::validate($value)) {
             return false;
         }
 
-        if(!empty($value)) {
-
-            if(!is_int($value)){
+        if (!empty($value)) {
+            if (!is_int($value)) {
                 return false;
             }
             return Orm\Record::objectExists($this->config['link_config']['object'], $value);

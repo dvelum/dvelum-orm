@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2019  Kirill Yegorov
@@ -72,8 +73,8 @@ class Config
     protected $distributedFields;
 
     /**
-     * @var string $name
      * @return Orm\Record\Config
+     * @var string $name
      */
     protected $name;
 
@@ -116,14 +117,14 @@ class Config
     }
 
 
-    public function __construct($name , Cfg\ConfigInterface $settings, $force = false)
+    public function __construct($name, Cfg\ConfigInterface $settings, $force = false)
     {
         $this->settings = $settings;
         $this->name = strtolower($name);
 
         $path = $this->settings->get('configPath') . $name . '.php';
 
-        $this->config = Cfg\Factory::storage()->get($path, !$force , false);
+        $this->config = Cfg\Factory::storage()->get($path, !$force, false);
         $this->loadProperties();
     }
 
@@ -133,7 +134,7 @@ class Config
      * @return string
      * @throws \Exception
      */
-    public function getConfigPath() : string
+    public function getConfigPath(): string
     {
         return $this->settings->get('configPath');
     }
@@ -152,12 +153,13 @@ class Config
      */
     protected function prepareTranslation()
     {
-        if($this->translated)
+        if ($this->translated) {
             return;
+        }
 
-        $dataLink = & $this->config->dataLink();
+        $dataLink = &$this->config->dataLink();
         $translator = $this->getTranslator();
-        $translator->translate($this->name , $dataLink);
+        $translator->translate($this->name, $dataLink);
         $this->translated = true;
     }
 
@@ -166,24 +168,24 @@ class Config
      */
     protected function loadProperties()
     {
-        $dataLink = & $this->config->dataLink();
+        $dataLink = &$this->config->dataLink();
         $pKeyName = $this->getPrimaryKey();
 
-        if(!isset($dataLink['distributed']))
+        if (!isset($dataLink['distributed'])) {
             $dataLink['distributed'] = false;
+        }
 
 
         $keyConfig = 'system/pk_field.php';
 
-        if($this->isDistributed()){
+        if ($this->isDistributed()) {
             $shardingType = $this->getShardingType();
-            switch ($shardingType)
-            {
+            switch ($shardingType) {
                 case self::SHARDING_TYPE_KEY_NO_INDEX:
                     break;
                 case self::SHARDING_TYPE_VIRTUAL_BUCKET:
                     // not using auto increment
-                    if($this->getBucketMapperKey() == $pKeyName){
+                    if ($this->getBucketMapperKey() == $pKeyName) {
                         $keyConfig = 'distributed/pk_field.php';
                     }
                     break;
@@ -201,35 +203,37 @@ class Config
          * System index init
          */
         $dataLink['indexes']['PRIMARY'] = array(
-            'columns'=>[$pKeyName],
-            'fulltext'=>false,
-            'unique'=>true,
-            'primary'=>true,
-            'system'=> true,
+            'columns' => [$pKeyName],
+            'fulltext' => false,
+            'unique' => true,
+            'primary' => true,
+            'system' => true,
             // distributed objects does not use auto increment index
-            'db_auto_increment'=>$dataLink['fields'][$pKeyName]['db_auto_increment'],
-            'is_search' =>true,
-            'lazyLang'=>true
+            'db_auto_increment' => $dataLink['fields'][$pKeyName]['db_auto_increment'],
+            'is_search' => true,
+            'lazyLang' => true
         );
 
         /*
          * Load additional fields for object under revision control
          */
-        if(isset($dataLink['rev_control']) && $dataLink['rev_control'])
-            $dataLink['fields'] = array_merge($dataLink['fields'] , $this->getVcFields());
+        if (isset($dataLink['rev_control']) && $dataLink['rev_control']) {
+            $dataLink['fields'] = array_merge($dataLink['fields'], $this->getVcFields());
+        }
 
         /**
          * Load additional encryption fields
          */
-        if($this->hasEncrypted())
-            $dataLink['fields'] = array_merge($dataLink['fields'] , $this->getEncryptionFields());
+        if ($this->hasEncrypted()) {
+            $dataLink['fields'] = array_merge($dataLink['fields'], $this->getEncryptionFields());
+        }
 
 
-        if((isset($dataLink['distributed']) && $dataLink['distributed']) || $this->isIndexObject()){
+        if ((isset($dataLink['distributed']) && $dataLink['distributed']) || $this->isIndexObject()) {
             $dataLink['fields'] = array_merge($dataLink['fields'], $this->getDistributedFields());
         }
 
-        if($this->isIndexObject()){
+        if ($this->isIndexObject()) {
             $dataLink['indexes'] = $this->initIndexIndexes();
         }
     }
@@ -239,10 +243,13 @@ class Config
      * @return array
      * @throws \Exception
      */
-    protected function getVcFields() : array
+    protected function getVcFields(): array
     {
-        if(!isset(self::$vcFields))
-            self::$vcFields = Cfg\Factory::storage()->get($this->settings->get('configPath').'vc/vc_fields.php')->__toArray();
+        if (!isset(self::$vcFields)) {
+            self::$vcFields = Cfg\Factory::storage()->get(
+                $this->settings->get('configPath') . 'vc/vc_fields.php'
+            )->__toArray();
+        }
 
         return self::$vcFields;
     }
@@ -252,10 +259,13 @@ class Config
      * @return array
      * @throws \Exception
      */
-    protected function getEncryptionFields() : array
+    protected function getEncryptionFields(): array
     {
-        if(!isset(self::$cryptFields))
-            self::$cryptFields = Cfg\Factory::storage()->get($this->settings->get('configPath').'enc/fields.php')->__toArray();
+        if (!isset(self::$cryptFields)) {
+            self::$cryptFields = Cfg\Factory::storage()->get(
+                $this->settings->get('configPath') . 'enc/fields.php'
+            )->__toArray();
+        }
 
         return self::$cryptFields;
     }
@@ -265,14 +275,16 @@ class Config
      * @return array
      * @throws \Exception
      */
-    public function getSearchFields() : array
+    public function getSearchFields(): array
     {
         $fields = [];
         $fieldsConfig = $this->get('fields');
 
-        foreach ($fieldsConfig as $k=>$v)
-            if($this->getField($k)->isSearch())
+        foreach ($fieldsConfig as $k => $v) {
+            if ($this->getField($k)->isSearch()) {
                 $fields[] = $k;
+            }
+        }
         return $fields;
     }
 
@@ -284,8 +296,9 @@ class Config
      */
     public function get(string $key)
     {
-        if($key === 'fields' || $key === 'title')
+        if ($key === 'fields' || $key === 'title') {
             $this->prepareTranslation();
+        }
 
         return $this->config->get($key);
     }
@@ -295,7 +308,7 @@ class Config
      * @return bool
      * @throws \Exception
      */
-    public function isRevControl() : bool
+    public function isRevControl(): bool
     {
         return ($this->config->offsetExists('rev_control') && $this->config->get('rev_control'));
     }
@@ -306,12 +319,12 @@ class Config
      * @return array
      * @throws \Exception
      */
-    public function getIndexesConfig($includeSystem = true) : array
+    public function getIndexesConfig($includeSystem = true): array
     {
         $list = [];
-        if($this->config->offsetExists('indexes')) {
-            foreach ($this->config->get('indexes') as $k=>$v){
-                if(!$includeSystem && isset($v['system']) && $v['system']){
+        if ($this->config->offsetExists('indexes')) {
+            foreach ($this->config->get('indexes') as $k => $v) {
+                if (!$includeSystem && isset($v['system']) && $v['system']) {
                     continue;
                 }
                 $list[$k] = $v;
@@ -323,15 +336,16 @@ class Config
     /**
      * Get the field configuration
      * @param string $field
-     * @throws Exception
      * @return array
+     * @throws Exception
      */
-    public function getFieldConfig(string $field) : array
+    public function getFieldConfig(string $field): array
     {
         $this->prepareTranslation();
 
-        if(!isset($this->config['fields'][$field]))
+        if (!isset($this->config['fields'][$field])) {
             throw new Exception('Invalid field name: ' . $field);
+        }
 
         return $this->config['fields'][$field];
     }
@@ -339,15 +353,16 @@ class Config
     /**
      * Get index config
      * @param string $index
-     * @throws Exception
      * @return array
+     * @throws Exception
      */
-    public function getIndexConfig($index) : array
+    public function getIndexConfig($index): array
     {
         $this->prepareTranslation();
 
-        if(!isset($this->config['indexes'][$index]))
+        if (!isset($this->config['indexes'][$index])) {
             throw new Exception('indexes Index name: ' . $index);
+        }
 
         return $this->config['indexes'][$index];
     }
@@ -358,18 +373,19 @@ class Config
      * @return array
      * @throws \Exception
      */
-    public function getFieldsConfig($includeSystem = true) : array
+    public function getFieldsConfig($includeSystem = true): array
     {
         $this->prepareTranslation();
 
-        if($includeSystem)
+        if ($includeSystem) {
             return $this->config['fields'];
+        }
 
         $fields = $this->config['fields'];
         unset($fields[$this->getPrimaryKey()]);
 
-        foreach($fields as $k=>$field){
-            if(isset($field['system']) && $field['system']){
+        foreach ($fields as $k => $field) {
+            if (isset($field['system']) && $field['system']) {
                 unset($fields[$k]);
             }
         }
@@ -381,11 +397,11 @@ class Config
      * @return Config\Field[]
      * @throws \Exception
      */
-    public function getFields() : array
+    public function getFields(): array
     {
         $result = [];
         $config = $this->getFieldsConfig();
-        foreach ($config as $name=>$cfg){
+        foreach ($config as $name => $cfg) {
             $result[$name] = $this->getField($name);
         }
         return $result;
@@ -396,17 +412,19 @@ class Config
      * @return array
      * @throws \Exception
      */
-    public function getSystemFieldsConfig() : array
+    public function getSystemFieldsConfig(): array
     {
         $this->prepareTranslation();
         $primaryKey = $this->getPrimaryKey();
         $fields = [];
 
-        if($this->isRevControl())
+        if ($this->isRevControl()) {
             $fields = $this->getVcFields();
+        }
 
-        if($this->hasEncrypted())
-            $fields = array_merge($fields , $this->getEncryptionFields());
+        if ($this->hasEncrypted()) {
+            $fields = array_merge($fields, $this->getEncryptionFields());
+        }
 
         $fields[$primaryKey] = $this->config['fields'][$primaryKey];
 
@@ -415,13 +433,15 @@ class Config
 
     /**
      * Get a list of fields linking to external objects
-     * @param array $linkTypes  - optional link type filter
+     * @param array $linkTypes - optional link type filter
      * @param boolean $groupByObject - group field by linked object, default true
      * @return array  [objectName=>[field => link_type]] | [field =>["object"=>objectName,"link_type"=>link_type]]
      * @throws \Exception
      */
-    public function getLinks($linkTypes = [Orm\Record\Config::LINK_OBJECT, Orm\Record\Config::LINK_OBJECT_LIST], $groupByObject = true) : array
-    {
+    public function getLinks(
+        $linkTypes = [Orm\Record\Config::LINK_OBJECT, Orm\Record\Config::LINK_OBJECT_LIST],
+        $groupByObject = true
+    ): array {
         $relation = new Orm\Record\Config\Relation();
         return $relation->getLinks($this, $linkTypes, $groupByObject);
     }
@@ -431,12 +451,13 @@ class Config
      * @return bool
      * @throws \Exception
      */
-    public function hasHistory() : bool
+    public function hasHistory(): bool
     {
-        if($this->config->offsetExists('save_history') && $this->config->get('save_history'))
+        if ($this->config->offsetExists('save_history') && $this->config->get('save_history')) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -444,7 +465,7 @@ class Config
      * @return bool
      * @throws \Exception
      */
-    public function hasExtendedHistory() : bool
+    public function hasExtendedHistory(): bool
     {
         if (
             $this->config->offsetExists('save_history')
@@ -454,9 +475,9 @@ class Config
             $this->config->offsetExists('log_detalization')
             &&
             $this->config->get('log_detalization') === 'extended'
-        ){
+        ) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -466,7 +487,7 @@ class Config
      * @return bool
      * @throws \Exception
      */
-    public function hasDbPrefix() : bool
+    public function hasDbPrefix(): bool
     {
         return $this->config->get('use_db_prefix');
     }
@@ -476,33 +497,35 @@ class Config
      * @param string $field
      * @return bool
      */
-    public function fieldExists(string $field) : bool
+    public function fieldExists(string $field): bool
     {
         return isset($this->config['fields'][$field]);
     }
 
     /**
      * Get the name of the class, which is the field validator
-     * @param string  $field
-     * @throws Exception
+     * @param string $field
      * @return mixed  string class name / boolean false
+     * @throws Exception
      */
     public function getValidator($field)
     {
-        if(!$this->fieldExists($field))
+        if (!$this->fieldExists($field)) {
             throw new Exception('Invalid property name');
+        }
 
-        if(isset($this->config['fields'][$field]['validator']) && !empty($this->config['fields'][$field]['validator']))
+        if (isset($this->config['fields'][$field]['validator']) && !empty($this->config['fields'][$field]['validator'])) {
             return $this->config['fields'][$field]['validator'];
-        else
+        } else {
             return false;
+        }
     }
 
     /**
      * Convert into array
      * @return array
      */
-    public function __toArray() : array
+    public function __toArray(): array
     {
         $this->prepareTranslation();
         return $this->config->__toArray();
@@ -512,7 +535,7 @@ class Config
      * Get the title for the object
      * @return string
      */
-    public function getTitle() : string
+    public function getTitle(): string
     {
         $this->prepareTranslation();
         return $this->config['title'];
@@ -523,7 +546,7 @@ class Config
      * @param string $title
      * @return void
      */
-    public function setObjectTitle($title) : void
+    public function setObjectTitle($title): void
     {
         $this->prepareTranslation();
         $this->config['title'] = $title;
@@ -534,21 +557,23 @@ class Config
      * @return string
      * @throws \Exception
      */
-    public function getLinkTitle() : string
+    public function getLinkTitle(): string
     {
         $this->prepareTranslation();
 
-        if(isset($this->config['link_title']) && !empty($this->config['link_title']))
+        if (isset($this->config['link_title']) && !empty($this->config['link_title'])) {
             return $this->config['link_title'];
-        else
+        } else {
             return $this->getPrimaryKey();
+        }
     }
+
     /**
      * Check if object is readonly
      * @return bool
      * @throws \Exception
      */
-    public function isReadOnly() : bool
+    public function isReadOnly(): bool
     {
         return $this->config->get('readonly');
     }
@@ -558,7 +583,7 @@ class Config
      * @return bool
      * @throws \Exception
      */
-    public function isLocked() : bool
+    public function isLocked(): bool
     {
         return $this->config->get('locked');
     }
@@ -568,18 +593,19 @@ class Config
      * @return bool
      * @throws \Exception
      */
-    public function isTransact() : bool
+    public function isTransact(): bool
     {
-        if(strtolower($this->config->get('engine'))=='innodb')
+        if (strtolower($this->config->get('engine')) == 'innodb') {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
      * Save the object configuration
      */
-    public function save() : bool
+    public function save(): bool
     {
         $fields = $this->getFieldsConfig(false);
         $indexes = $this->getIndexesConfig(false);
@@ -590,22 +616,23 @@ class Config
         $translation = $translator->getTranslation($this->getName(), true);
         $translation['title'] = $this->config->get('title');
 
-        foreach ($fields as $field =>& $cfg) {
+        foreach ($fields as $field => & $cfg) {
             $translation['fields'][$field] = $cfg['title'];
             unset($cfg['title']);
-        } unset($cfg);
+        }
+        unset($cfg);
 
         $config->set('fields', $fields);
-        $config->set('indexes' , $indexes);
+        $config->set('indexes', $indexes);
         $config->offsetUnset('title');
 
-        if($this->isDistributed()){
-            $config->set('distributed_indexes',  $this->getDistributedIndexesConfig(false));
+        if ($this->isDistributed()) {
+            $config->set('distributed_indexes', $this->getDistributedIndexesConfig(false));
         }
 
-        try{
-            $translator->save($this->getName() , $translation);
-        }catch (\Exception $e){
+        try {
+            $translator->save($this->getName(), $translation);
+        } catch (\Exception $e) {
             return false;
         }
         return Cfg::storage()->save($config);
@@ -616,7 +643,7 @@ class Config
      * @param array $data
      * @return void
      */
-    public function setData(array $data) : void
+    public function setData(array $data): void
     {
         $this->config->setData($data);
     }
@@ -625,7 +652,7 @@ class Config
      * Get configuration as array
      * @return array
      */
-    public function getData() : array
+    public function getData(): array
     {
         return $this->config->__toArray();
     }
@@ -635,86 +662,87 @@ class Config
      * @return array
      * @throws \Exception
      */
-    protected function initIndexIndexes() : array
+    protected function initIndexIndexes(): array
     {
         $list = $this->config->get('indexes');
         $shardingField = Cfg::storage()->get('sharding.php')->get('shard_field');
 
         $list[$shardingField] = [
-            'columns'=>[$shardingField],
-            'fulltext'=>false,
-            'unique'=>false,
-            'primary'=>false,
-            'db_auto_increment'=> false,
-            'is_search' =>false,
-            'lazyLang'=>false,
-            'system'=>true
+            'columns' => [$shardingField],
+            'fulltext' => false,
+            'unique' => false,
+            'primary' => false,
+            'db_auto_increment' => false,
+            'is_search' => false,
+            'lazyLang' => false,
+            'system' => true
         ];
 
         $dataObject = Config::factory($this->getDataObject());
         $dataIndexes = $dataObject->getIndexesConfig();
         $currentFields = $this->getFields();
 
-        foreach ($currentFields as $field)
-        {
+        foreach ($currentFields as $field) {
             $fieldName = $field->getName();
-            if(isset($list[$fieldName]) || $fieldName ==$this->getPrimaryKey()){
+            if (isset($list[$fieldName]) || $fieldName == $this->getPrimaryKey()) {
                 continue;
             }
-            if(isset($dataIndexes[$fieldName]) && count($dataIndexes[$fieldName]['columns']) == 1 && $dataIndexes[$fieldName]['columns'][0]==$fieldName){
+            if (isset($dataIndexes[$fieldName]) && count(
+                    $dataIndexes[$fieldName]['columns']
+                ) == 1 && $dataIndexes[$fieldName]['columns'][0] == $fieldName) {
                 $list[$fieldName] = $dataIndexes[$fieldName];
-            }else{
-                $list[$fieldName] =  [
-                    'columns'=>[$fieldName],
-                    'fulltext'=>false,
-                    'unique'=>false,
-                    'primary'=>false,
-                    'db_auto_increment'=> false,
-                    'is_search' =>true,
-                    'lazyLang'=>false,
-                    'system'=>true
+            } else {
+                $list[$fieldName] = [
+                    'columns' => [$fieldName],
+                    'fulltext' => false,
+                    'unique' => false,
+                    'primary' => false,
+                    'db_auto_increment' => false,
+                    'is_search' => true,
+                    'lazyLang' => false,
+                    'system' => true
                 ];
             }
             $list[$fieldName]['system'] = true;
         }
         return $list;
     }
+
     /**
      * Get list of distributed indexes
      * @param bool $includeSystem
      * @return array
      * @throws \Exception
      */
-    public function getDistributedIndexesConfig(bool $includeSystem = true) : array
+    public function getDistributedIndexesConfig(bool $includeSystem = true): array
     {
-        if(!$this->isDistributed()) {
+        if (!$this->isDistributed()) {
             return [];
         }
 
         $list = [];
 
-        if($this->config->offsetExists('distributed_indexes')){
+        if ($this->config->offsetExists('distributed_indexes')) {
             $list = $this->config->get('distributed_indexes');
         }
 
         // Set Required Indexes
-        if($includeSystem)
-        {
+        if ($includeSystem) {
             $shardingField = Cfg::storage()->get('sharding.php')->get('shard_field');
             $primaryKey = $this->getPrimaryKey();
             $list[$primaryKey] = [
-                'field'=> $primaryKey,
-                'is_system'=> true,
+                'field' => $primaryKey,
+                'is_system' => true,
             ];
-            $list[$shardingField] = ['field'=>$shardingField,'is_system'=>true];
+            $list[$shardingField] = ['field' => $shardingField, 'is_system' => true];
             $distributedKey = $this->getShardingKey();
-            if(!empty($distributedKey) && $distributedKey!== $primaryKey){
+            if (!empty($distributedKey) && $distributedKey !== $primaryKey) {
                 $unique = false;
                 $type = $this->getShardingType();
-                if($type === self::SHARDING_TYPE_KEY_NO_INDEX || $type === self::SHARDING_TYPE_VIRTUAL_BUCKET){
+                if ($type === self::SHARDING_TYPE_KEY_NO_INDEX || $type === self::SHARDING_TYPE_VIRTUAL_BUCKET) {
                     $unique = true;
                 }
-                $list[$distributedKey] = ['field'=>$distributedKey,'is_system'=>true,'unique'=>$unique];
+                $list[$distributedKey] = ['field' => $distributedKey, 'is_system' => true, 'unique' => $unique];
             }
         }
         return $list;
@@ -724,7 +752,7 @@ class Config
      * Get Config object
      * @return Cfg\ConfigInterface
      */
-    public function getConfig() : Cfg\ConfigInterface
+    public function getConfig(): Cfg\ConfigInterface
     {
         return $this->config;
     }
@@ -733,13 +761,14 @@ class Config
      * Check if object is system defined
      * @return bool
      */
-    public function isSystem() : bool
+    public function isSystem(): bool
     {
-        $link = & $this->config->dataLink();
-        if(isset($link['system']) && $this->config['system'])
+        $link = &$this->config->dataLink();
+        if (isset($link['system']) && $this->config['system']) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -747,18 +776,19 @@ class Config
      * @return string
      * @throws \Exception
      */
-    public function getPrimaryKey() : string
+    public function getPrimaryKey(): string
     {
-        if(isset($this->localCache['primary_key']))
+        if (isset($this->localCache['primary_key'])) {
             return $this->localCache['primary_key'];
+        }
 
         $key = 'id';
 
-        if($this->config->offsetExists('primary_key'))
-        {
+        if ($this->config->offsetExists('primary_key')) {
             $cfgKey = $this->config->get('primary_key');
-            if(!empty($cfgKey))
+            if (!empty($cfgKey)) {
                 $key = $cfgKey;
+            }
         }
 
         $this->localCache['primary_key'] = $key;
@@ -771,7 +801,7 @@ class Config
      * @param Config\Translator $translator
      * @return void
      */
-    public function setTranslator(Config\Translator $translator) :void
+    public function setTranslator(Config\Translator $translator): void
     {
         $this->translator = $translator;
     }
@@ -781,9 +811,9 @@ class Config
      * @return Config\Translator
      * @throws \Exception
      */
-    public function getTranslator() : Config\Translator
+    public function getTranslator(): Config\Translator
     {
-        if(empty($this->translator)){
+        if (empty($this->translator)) {
             $this->translator = $this->settings->get('translatorLoader')();
         }
 
@@ -794,11 +824,12 @@ class Config
      * Check for encoded fields
      * @return bool
      */
-    public function hasEncrypted() : bool
+    public function hasEncrypted(): bool
     {
-        foreach ($this->config['fields'] as $config){
-            if(isset($config['type']) && $config['type']=='encrypted')
+        foreach ($this->config['fields'] as $config) {
+            if (isset($config['type']) && $config['type'] == 'encrypted') {
                 return true;
+            }
         }
         return false;
     }
@@ -808,14 +839,16 @@ class Config
      * @return array
      * @throws \Exception
      */
-    public function getEncryptedFields() : array
+    public function getEncryptedFields(): array
     {
         $fields = [];
         $fieldsConfig = $this->get('fields');
 
-        foreach ($fieldsConfig as $k=>$v)
-            if(isset($v['type']) && $v['type']==='encrypted')
+        foreach ($fieldsConfig as $k => $v) {
+            if (isset($v['type']) && $v['type'] === 'encrypted') {
                 $fields[] = $k;
+            }
+        }
 
         return $fields;
     }
@@ -826,7 +859,7 @@ class Config
      * @return string
      * @throws \Exception
      */
-    public function getIvField() : string
+    public function getIvField(): string
     {
         return $this->settings->get('ivField');
     }
@@ -849,7 +882,7 @@ class Config
      * @return bool
      * @throws \Exception
      */
-    public function isVcField($field) : bool
+    public function isVcField($field): bool
     {
         $vcFields = $this->getVcFields();
         return isset($vcFields[$field]);
@@ -860,11 +893,15 @@ class Config
      * @return bool
      * @throws \Exception
      */
-    public function isRelationsObject() : bool
+    public function isRelationsObject(): bool
     {
-        if($this->isSystem() && $this->config->offsetExists('parent_object') && !empty($this->config->get('parent_object'))){
+        if ($this->isSystem() && $this->config->offsetExists('parent_object') && !empty(
+            $this->config->get(
+                'parent_object'
+            )
+            )) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -874,8 +911,8 @@ class Config
      */
     public function isIndexObject()
     {
-        $link = & $this->config->dataLink();
-        if(
+        $link = &$this->config->dataLink();
+        if (
             isset($link['system'])
             &&
             $link['system']
@@ -885,22 +922,22 @@ class Config
             !empty($link['data_object'])
             &&
             Config::factory($link['data_object'])->isDistributed()
-        ){
+        ) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }
 
     /**
      * Get Data object for index
-     * @throws Exception
      * @return string
+     * @throws Exception
      */
-    public function getDataObject() : string
+    public function getDataObject(): string
     {
-        if(!$this->isIndexObject()){
-            throw new Exception('Cannot get data object. '.$this->getName().' is not index object');
+        if (!$this->isIndexObject()) {
+            throw new Exception('Cannot get data object. ' . $this->getName() . ' is not index object');
         }
         return $this->config->get('data_object');
     }
@@ -911,10 +948,10 @@ class Config
      * @return Config\Field
      * @throws \Exception
      */
-    public function getField($name) : Config\Field
+    public function getField($name): Config\Field
     {
-       $name = (string) $name;
-       return \Dvelum\Orm\Record\Config\FieldFactory::getField($this, $name);
+        $name = (string)$name;
+        return \Dvelum\Orm\Record\Config\FieldFactory::getField($this, $name);
     }
 
     /**
@@ -930,7 +967,7 @@ class Config
      * Set encryption service adapter
      * @param CryptServiceInterface $service
      */
-    public function setCryptService(CryptServiceInterface $service) : void
+    public function setCryptService(CryptServiceInterface $service): void
     {
         $this->cryptService = $service;
     }
@@ -939,9 +976,9 @@ class Config
      * Get encryption service adapter
      * @return CryptServiceInterface
      */
-    public function getCryptService() : CryptServiceInterface
+    public function getCryptService(): CryptServiceInterface
     {
-        if(empty($this->cryptService)){
+        if (empty($this->cryptService)) {
             /**
              * @var callable $service
              */
@@ -955,13 +992,13 @@ class Config
      * Check if object uses sharding strategy
      * @return bool
      */
-    public function isDistributed() : bool
+    public function isDistributed(): bool
     {
-        $link = & $this->config->dataLink();
+        $link = &$this->config->dataLink();
 
-        if(isset($link['distributed']) && $link['distributed']){
+        if (isset($link['distributed']) && $link['distributed']) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -971,13 +1008,13 @@ class Config
      * @return bool
      * @throws \Exception
      */
-    public function isShardRequired() : bool
+    public function isShardRequired(): bool
     {
-        if(!$this->isDistributed()){
+        if (!$this->isDistributed()) {
             return false;
         }
 
-        switch ($this->getShardingType()){
+        switch ($this->getShardingType()) {
             case self::SHARDING_TYPE_VIRTUAL_BUCKET:
             case self::SHARDING_TYPE_KEY_NO_INDEX:
                 return true;
@@ -993,9 +1030,9 @@ class Config
      */
     public function getDistributedIndexObject()
     {
-        if($this->isDistributed()){
+        if ($this->isDistributed()) {
             return $this->getName() . Cfg::storage()->get('sharding.php')->get('dist_index_postfix');
-        }else{
+        } else {
             throw new Exception('Object has no distribution');
         }
     }
@@ -1005,9 +1042,9 @@ class Config
      */
     public function hasDistributedIndexRecord()
     {
-        if($this->isDistributed()){
+        if ($this->isDistributed()) {
             $sharding = $this->getShardingType();
-            if(in_array($sharding,[self::SHARDING_TYPE_GLOABAL_ID, self::SHARDING_TYPE_KEY])){
+            if (in_array($sharding, [self::SHARDING_TYPE_GLOABAL_ID, self::SHARDING_TYPE_KEY])) {
                 return true;
             }
         }
@@ -1019,26 +1056,32 @@ class Config
      * @return array
      * @throws \Exception
      */
-    public function getDistributedFields() : array
+    public function getDistributedFields(): array
     {
-        if(!isset($this->distributedFields)){
-            $this->distributedFields = Cfg::storage()->get($this->settings->get('configPath') . 'distributed/fields.php')->__toArray();
+        if (!isset($this->distributedFields)) {
+            $this->distributedFields = Cfg::storage()->get(
+                $this->settings->get('configPath') . 'distributed/fields.php'
+            )->__toArray();
         }
 
         $type = $this->getShardingType();
-        if($type == self::SHARDING_TYPE_KEY_NO_INDEX || $type === self::SHARDING_TYPE_KEY){
+        if ($type == self::SHARDING_TYPE_KEY_NO_INDEX || $type === self::SHARDING_TYPE_KEY) {
             $key = $this->getShardingKey();
-            if(!empty($key)){
+            if (!empty($key)) {
                 $this->distributedFields[$key] = $this->getField($key)->getConfig();
-                if($this->isIndexObject()){
+                if ($this->isIndexObject()) {
                     $this->distributedFields[$key]['system'] = true;
                 }
             }
         }
 
-        if($type == self::SHARDING_TYPE_VIRTUAL_BUCKET || ($this->isIndexObject() && self::factory($this->getDataObject())->getShardingType() == self::SHARDING_TYPE_VIRTUAL_BUCKET)){
-            $bucketFields = Cfg::storage()->get($this->settings->get('configPath') . 'distributed/bucket_fields.php')->__toArray();
-            foreach ($bucketFields as $k=>$v){
+        if ($type == self::SHARDING_TYPE_VIRTUAL_BUCKET || ($this->isIndexObject() && self::factory(
+                    $this->getDataObject()
+                )->getShardingType() == self::SHARDING_TYPE_VIRTUAL_BUCKET)) {
+            $bucketFields = Cfg::storage()->get(
+                $this->settings->get('configPath') . 'distributed/bucket_fields.php'
+            )->__toArray();
+            foreach ($bucketFields as $k => $v) {
                 $this->distributedFields[$k] = $v;
             }
         }
@@ -1050,34 +1093,35 @@ class Config
      * @return null|string
      * @throws \Exception
      */
-    public function getShardingType() : ?string
+    public function getShardingType(): ?string
     {
-        if(!$this->config->offsetExists('sharding_type')){
+        if (!$this->config->offsetExists('sharding_type')) {
             return null;
         }
         return $this->config->get('sharding_type');
     }
+
     /**
      * Get distributed key field
      * @return null|string
      * @throws \Exception
      */
-    public function getShardingKey() : ?string
+    public function getShardingKey(): ?string
     {
         $type = $this->getShardingType();
 
-        if(!$this->isDistributed() || empty($type)){
+        if (!$this->isDistributed() || empty($type)) {
             return null;
         }
 
         $key = null;
-        switch ($type){
+        switch ($type) {
             case self::SHARDING_TYPE_GLOABAL_ID:
                 $key = $this->getPrimaryKey();
                 break;
             case self::SHARDING_TYPE_KEY:
             case self::SHARDING_TYPE_KEY_NO_INDEX :
-                if($this->config->offsetExists('sharding_key')){
+                if ($this->config->offsetExists('sharding_key')) {
                     $key = $this->config->get('sharding_key');
                 }
                 break;
@@ -1094,16 +1138,16 @@ class Config
      * @return string|null
      * @throws \Exception
      */
-    public function getBucketMapperKey() : ?string
+    public function getBucketMapperKey(): ?string
     {
         $type = $this->getShardingType();
 
-        if(!$this->isDistributed() || empty($type) || $type!=self::SHARDING_TYPE_VIRTUAL_BUCKET){
+        if (!$this->isDistributed() || empty($type) || $type != self::SHARDING_TYPE_VIRTUAL_BUCKET) {
             return null;
         }
 
         $key = null;
-        if($this->config->offsetExists('sharding_key')){
+        if ($this->config->offsetExists('sharding_key')) {
             $key = $this->config->get('sharding_key');
         }
 

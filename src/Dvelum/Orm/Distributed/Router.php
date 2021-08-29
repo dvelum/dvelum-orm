@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -70,7 +71,7 @@ class Router
 
     /**
      * Check routes for ORM object
-     * @param  string $objectName
+     * @param string $objectName
      * @return bool
      */
     public function hasRoutes(string $objectName): bool
@@ -99,7 +100,10 @@ class Router
             /**
              * @var \Dvelum\Orm\Distributed\Router\RouteInterface $adapter
              */
-            $adapterConfig = Config\Factory::create($config['config'][$objectName], 'ROUTER_' . $config['id'] .'_'. $objectName);
+            $adapterConfig = Config\Factory::create(
+                $config['config'][$objectName],
+                'ROUTER_' . $config['id'] . '_' . $objectName
+            );
             $adapter = new $adapterClass(Distributed::factory(), $adapterConfig);
             return $adapter->getShard($record);
         }

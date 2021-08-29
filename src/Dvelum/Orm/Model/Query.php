@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -24,6 +25,7 @@ use Dvelum\Db\Adapter;
 use Dvelum\Db;
 use Dvelum\Db\Select\Filter;
 use Dvelum\Orm\Model;
+use Dvelum\Orm\Orm;
 use Dvelum\Orm\Stat;
 
 class Query
@@ -49,8 +51,11 @@ class Query
     protected $table = null;
     protected $tableAlias = null;
 
-    public function __construct(Model $model)
+    protected Orm $orm;
+
+    public function __construct(Orm $orm, Model $model)
     {
+        $this->orm = $orm;
         $this->table = $model->table();
         $this->model = $model;
         $this->db = $model->getDbConnection();
@@ -61,7 +66,7 @@ class Query
      * @param Adapter $connection
      * @return Query
      */
-    public function setDbConnection(Adapter $connection) : self
+    public function setDbConnection(Adapter $connection): self
     {
         $this->db = $connection;
         return $this;
@@ -208,7 +213,6 @@ class Query
                         $q[] = $alias . "." . $v . " LIKE(" . $this->db->quote('%' . $query) . ")";
                         break;
                 }
-
             }
             $sql->where('(' . implode(' OR ', $q) . ')');
         }
@@ -258,7 +262,6 @@ class Query
     {
         foreach ($joins as $config) {
             switch ($config['joinType']) {
-
                 case 'joinLeft' :
                 case 'left':
                     $sql->join($config['table'], $config['condition'], $config['fields'], Db\Select::JOIN_LEFT);
@@ -284,7 +287,6 @@ class Query
     {
         $fields = $this->model->getLightConfig()->get('fields');
         foreach ($filters as $field => $val) {
-
             if ($val === false && isset($fields[$field]) && isset($fields[$field]['db_type']) && $fields[$field]['db_type'] === 'boolean') {
                 $filters[$field] = \Dvelum\Filter::filterValue(\Dvelum\Filter::FILTER_BOOLEAN, $val);
                 continue;
@@ -433,26 +435,25 @@ class Query
         }
         $count = 0;
 
-        if($approximateValue && empty($filters) && empty($query)) {
-            $stat = new Stat();
+        if ($approximateValue && empty($filters) && empty($query)) {
+            $stat = $this->orm->stat();
             $config = $this->model->getObjectConfig();
             $data = $stat->getDetails($config->getName(), $this->db);
-            if(!empty($data) && isset($data[0]) && isset($data[0]['records'])){
-                $count = (int) str_replace(' ', '', $data[0]['records']);
+            if (!empty($data) && isset($data[0]) && isset($data[0]['records'])) {
+                $count = (int)str_replace(' ', '', $data[0]['records']);
             }
         }
 
         // get exact count
-        if($count < 10000)
-        {
-            $sqlQuery = new Model\Query($this->model);
+        if ($count < 10000) {
+            $sqlQuery = new Model\Query($this->orm, $this->model);
             $sqlQuery->setDbConnection($this->db);
             $sqlQuery->fields(['count' => 'COUNT(*)'])->tableAlias($tableAlias)
                 ->filters($filters)->search($query, $searchType)
                 ->joins($joins);
 
-            if(!empty($this->tableAlias)){
-                $sqlQuery->tableAlias((string) $this->tableAlias);
+            if (!empty($this->tableAlias)) {
+                $sqlQuery->tableAlias((string)$this->tableAlias);
             }
 
             $count = $sqlQuery->fetchOne();

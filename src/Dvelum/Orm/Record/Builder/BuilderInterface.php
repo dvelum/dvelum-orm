@@ -18,6 +18,7 @@
  */
 
 namespace Dvelum\Orm\Record\Builder;
+
 use Dvelum\Config\ConfigInterface;
 use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Lang\Dictionary;
@@ -46,25 +47,25 @@ interface BuilderInterface
      * Check for broken object links
      * @return array
      */
-    public function getBrokenLinks() : array;
+    public function getBrokenLinks(): array;
 
     /**
      * Check if DB table has correct structure
      * @return bool
      */
-    public function validate() : bool;
+    public function validate(): bool;
 
     /**
      * Get object foreign keys
      * @return array
      */
-    public function getOrmForeignKeys() : array;
+    public function getOrmForeignKeys(): array;
 
     /**
      * Get updates information
      * @return array
      */
-    public function getRelationUpdates() : array;
+    public function getRelationUpdates(): array;
 
     /**
      * Check for broken object links
@@ -78,18 +79,19 @@ interface BuilderInterface
      * @param bool $buildShards
      * @return boolean
      */
-    public function build(bool $buildForeignKeys = true, bool $buildShards = false) : bool;
+    public function build(bool $buildForeignKeys = true, bool $buildShards = false): bool;
+
     /**
      * Build Foreign Keys
      * @param bool $remove - remove keys
      * @param bool $create - create keys
      * @return boolean
      */
-    public function buildForeignKeys($remove = true , $create = true) : bool;
+    public function buildForeignKeys($remove = true, $create = true): bool;
 
     /**
      * Remove object
      * @return bool
      */
-    public function remove():bool;
+    public function remove(): bool;
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -34,36 +35,37 @@ class ObjectList extends Field
      */
     public function filter($value)
     {
-        if(is_object($value))
-        {
-            if($value instanceof Orm\Record)
-            {
-                if(!$value->isInstanceOf((string) $this->getLinkedObject())){
-                    throw new \Exception('Invalid value type for field '. $this->getName().' expects ' . $this->getLinkedObject() . ', ' . $value->getName() . ' passed');
+        if (is_object($value)) {
+            if ($value instanceof Orm\Record) {
+                if (!$value->isInstanceOf((string)$this->getLinkedObject())) {
+                    throw new \Exception(
+                        'Invalid value type for field ' . $this->getName() . ' expects ' . $this->getLinkedObject(
+                        ) . ', ' . $value->getName() . ' passed'
+                    );
                 }
                 $value = $value->getId();
-            }else{
-                if(method_exists($value,'__toString')){
+            } else {
+                if (method_exists($value, '__toString')) {
                     $value = intval($value->__toString());
-                }else{
+                } else {
                     $value = [];
                 }
             }
         }
 
-        if(is_array($value)){
+        if (is_array($value)) {
             $linked = $this->getLinkedObject();
-            if(!empty($linked)){
+            if (!empty($linked)) {
                 $linkedObjectConfig = Orm\Record\Config::factory($linked);
                 // convert numeric values for primary keys
-                if($linkedObjectConfig->getField($linkedObjectConfig->getPrimaryKey())->isInteger()){
+                if ($linkedObjectConfig->getField($linkedObjectConfig->getPrimaryKey())->isInteger()) {
                     $value = array_map('intval', $value);
                 }
-            }else{
+            } else {
                 // undefined linked object, reset value
                 $value = [];
             }
-        }else{
+        } else {
             $value = [];
         }
 
@@ -75,17 +77,17 @@ class ObjectList extends Field
      * @param mixed $value
      * @return bool
      */
-    public function validate($value) : bool
+    public function validate($value): bool
     {
-        if(!parent::validate($value)){
+        if (!parent::validate($value)) {
             return false;
         }
 
-        if(!is_array($value)){
+        if (!is_array($value)) {
             return false;
         }
 
-        if(!empty($value[0])) {
+        if (!empty($value[0])) {
             return Orm\Record::objectExists($this->config['link_config']['object'], $value);
         }
         return true;

@@ -65,7 +65,7 @@ class Distributed extends Controller
         $indexManager = new Record\Config\IndexManager();
         $indexManager->setDistributedIndexConfig($objectConfig, $field, ['field' => $field, 'is_system' => false]);
 
-        $manager = new Manager();
+        $manager = new Manager($this->ormService);
 
         if ($objectConfig->save()) {
             try {
@@ -138,7 +138,7 @@ class Distributed extends Controller
         $indexManager = new Record\Config\IndexManager();
         $indexManager->removeDistributedIndex($objectCfg, $index);
 
-        $manager = new Manager();
+        $manager = new Manager($this->ormService);
         if ($objectCfg->save() && $manager->syncDistributedIndex($object)) {
             $this->response->success();
         } else {

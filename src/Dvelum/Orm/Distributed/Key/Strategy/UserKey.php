@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2018  Kirill Yegorov
@@ -41,7 +42,7 @@ class UserKey extends UniqueID
 
         $shardingKey = $objectConfig->getShardingKey();
 
-        if(empty($shardingKey)){
+        if (empty($shardingKey)) {
             return null;
         }
 

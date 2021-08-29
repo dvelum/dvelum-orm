@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2018  Kirill Yegorov
@@ -23,18 +24,19 @@ namespace Dvelum\Orm\Distributed\Key\Strategy\VirtualBucket;
 class IntToBucket implements MapperInterface
 {
     private const BUCKET_SIZE = 2000;
+
     /**
      * Map key to bucket
      * @param mixed $key
      * @return Bucket
      */
-    public function keyToBucket($key) : Bucket
+    public function keyToBucket($key): Bucket
     {
-        $key = (int) $key;
-        $index  = (int)($key / IntToBucket::BUCKET_SIZE);
+        $key = (int)$key;
+        $index = (int)($key / IntToBucket::BUCKET_SIZE);
         $id = $index + 1;
         $start = $index * IntToBucket::BUCKET_SIZE;
-        $end = $start + IntToBucket::BUCKET_SIZE-1;
+        $end = $start + IntToBucket::BUCKET_SIZE - 1;
         $bucket = new Bucket();
         $bucket->setId($id);
         $bucket->setStart($start);

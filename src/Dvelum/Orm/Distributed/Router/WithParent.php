@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -46,18 +47,18 @@ class WithParent implements RouteInterface
      * @param RecordInterface $record
      * @return null|string
      */
-    public function getShard(RecordInterface $record) : ?string
+    public function getShard(RecordInterface $record): ?string
     {
         $parentObject = $this->config->get('parent');
         $parentField = $this->config->get('parent_field');
         $parentId = $record->get($parentField);
         $objectShard = '';
 
-        if(!empty($parentId)){
-            $objectShard = $this->sharding->findObjectShard($parentObject , $parentId);
+        if (!empty($parentId)) {
+            $objectShard = $this->sharding->findObjectShard($parentObject, $parentId);
         }
 
-        if(empty($objectShard)){
+        if (empty($objectShard)) {
             $objectShard = null;
         }
 

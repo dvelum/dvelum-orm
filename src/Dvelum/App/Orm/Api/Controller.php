@@ -27,8 +27,13 @@ abstract class Controller
     protected bool $canDelete;
     protected StorageInterface $configStorage;
 
-    public function __construct(Request $request, Response $response, ContainerInterface $container, bool $canEdit = true, bool $canDelete = true)
-    {
+    public function __construct(
+        Request $request,
+        Response $response,
+        ContainerInterface $container,
+        bool $canEdit = true,
+        bool $canDelete = true
+    ) {
         $this->request = $request;
         $this->response = $response;
         $this->container = $container;
@@ -39,12 +44,12 @@ abstract class Controller
         $this->configStorage = $container->get(StorageInterface::class);
     }
 
-    public function setRouter(RouterInterface $router) : void
+    public function setRouter(RouterInterface $router): void
     {
         $this->router = $router;
     }
 
-    public function checkCanEdit() : bool
+    public function checkCanEdit(): bool
     {
         return $this->canEdit;
     }
@@ -52,10 +57,5 @@ abstract class Controller
     public function checkCanDelete(): bool
     {
         return $this->canDelete;
-    }
-
-    public function getObjectBuilder(string $objectName, bool $forceConfig = true): AbstractAdapter
-    {
-        return Builder::factory($this->ormService, $this->configStorage, $this->lang, $objectName, $forceConfig);
     }
 }

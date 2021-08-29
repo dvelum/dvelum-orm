@@ -1,4 +1,5 @@
 <?php
+
 /*
  * DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
  * Copyright (C) 2011-2020  Kirill Yegorov
@@ -21,6 +22,7 @@ declare(strict_types=1);
 namespace Dvelum\Orm\Record\Config;
 
 use Dvelum\Orm\Model;
+use Dvelum\Orm\Orm;
 use Dvelum\Orm\Record\Config;
 
 /**
@@ -34,32 +36,35 @@ class ForeignKey
      * @return bool
      * @throws \Exception
      */
-    public function canUseForeignKeys(Config $config) : bool
+    public function canUseForeignKeys(Config $config): bool
     {
         $configData = $config->getConfig();
-        if($configData->offsetExists('disable_keys') && $configData->get('disable_keys'))
+        if ($configData->offsetExists('disable_keys') && $configData->get('disable_keys')) {
             return false;
+        }
 
-        if(!$config->isTransact())
+        if (!$config->isTransact()) {
             return false;
+        }
 
         return true;
     }
+
     /**
      * Get list of foreign keys
      * @param Config $config
      * @return array
      * array(
-     * 	array(
+     *    array(
      *      'curDb' => string,
-     * 		'curObject' => string,
-     * 		'curTable' => string,
-     *		'curField'=> string,
-     *		'isNull'=> boolean,
-     *		'toDb'=> string,
-     *		'toObject'=> string,
-     *		'toTable'=> string,
-     *		'toField'=> string,
+     *        'curObject' => string,
+     *        'curTable' => string,
+     *        'curField'=> string,
+     *        'isNull'=> boolean,
+     *        'toDb'=> string,
+     *        'toObject'=> string,
+     *        'toTable'=> string,
+     *        'toField'=> string,
      *      'onUpdate'=> string
      *      'onDelete'=> string
      *   ),
@@ -67,29 +72,29 @@ class ForeignKey
      *  )
      * @throws \Exception
      */
-    public function getForeignKeys(Config $config) : array
+    public function getForeignKeys(Config $config, Orm $orm): array
     {
-        if(!$this->canUseForeignKeys($config)){
+        if (!$this->canUseForeignKeys($config)) {
             return [];
         }
 
-        $curModel = Model::factory($config->getName());
+        $curModel = $orm->model($config->getName());
         $curDb = $curModel->getDbConnection();
         $curDbCfg = $curDb->getConfig();
 
         $links = $config->getLinks([Config::LINK_OBJECT]);
 
-        if(empty($links))
+        if (empty($links)) {
             return [];
+        }
 
         $keys = [];
-        foreach ($links as $object=>$fields)
-        {
+        foreach ($links as $object => $fields) {
             $oConfig = Config::factory($object);
             /*
              *  Only InnoDb implements Foreign Keys
              */
-            if(!$oConfig->isTransact()){
+            if (!$oConfig->isTransact()) {
                 continue;
             }
 
@@ -98,7 +103,7 @@ class ForeignKey
             /*
              * Foreign keys are only available for objects with the same database connection
              */
-            if($curDb !== $oModel->getDbConnection()){
+            if ($curDb !== $oModel->getDbConnection()) {
                 continue;
             }
 

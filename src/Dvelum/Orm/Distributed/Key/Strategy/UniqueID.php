@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2018  Kirill Yegorov
@@ -39,25 +40,26 @@ class UniqueID implements GeneratorInterface
     public function __construct(ConfigInterface $config)
     {
         $this->config = $config;
-        $this->shardField =  $config->get('shard_field');
+        $this->shardField = $config->get('shard_field');
     }
+
     /**
      * Delete reserved index
      * @param RecordInterface $object
      * @param mixed $indexId
      * @return bool
      */
-    public function deleteIndex(RecordInterface $object, $indexId) : bool
+    public function deleteIndex(RecordInterface $object, $indexId): bool
     {
         $objectConfig = $object->getConfig();
         $indexObject = $objectConfig->getDistributedIndexObject();
         $model = Model::factory($indexObject);
         $db = $model->getDbConnection();
-        try{
-            $db->delete($model->table(), $db->quoteIdentifier($model->getPrimaryKey()).' = '.$db->quote($indexId));
+        try {
+            $db->delete($model->table(), $db->quoteIdentifier($model->getPrimaryKey()) . ' = ' . $db->quote($indexId));
             return true;
-        }catch (Exception $e){
-            $model->logError('Sharding::reserveIndex '.$e->getMessage());
+        } catch (Exception $e) {
+            $model->logError('Sharding::reserveIndex ' . $e->getMessage());
             return false;
         }
     }
@@ -69,7 +71,7 @@ class UniqueID implements GeneratorInterface
      * @return Reserved|null
      * @throws Exception
      */
-    public function reserveIndex(RecordInterface $object , string $shard) : ?Reserved
+    public function reserveIndex(RecordInterface $object, string $shard): ?Reserved
     {
         $objectConfig = $object->getConfig();
         $indexObject = $objectConfig->getDistributedIndexObject();
@@ -86,26 +88,28 @@ class UniqueID implements GeneratorInterface
         /**
          * @var Record\Config\Field $field
          */
-        foreach ($fieldList as $field){
+        foreach ($fieldList as $field) {
             $fieldName = $field->getName();
 
-            if($fieldName == $primary || $fieldName == $this->shardField){
+            if ($fieldName == $primary || $fieldName == $this->shardField) {
                 continue;
             }
 
-            try{
+            try {
                 $indexData[$fieldName] = $object->get($fieldName);
-            }catch (Exception $e){
-                $model->logError('Sharding Invalid index structure for  '.$objectConfig->getName().' '.$e->getMessage());
+            } catch (Exception $e) {
+                $model->logError(
+                    'Sharding Invalid index structure for  ' . $objectConfig->getName() . ' ' . $e->getMessage()
+                );
                 return null;
             }
         }
 
-        try{
+        try {
             $db->beginTransaction();
-            $db->insert($model->table(),$indexData);
+            $db->insert($model->table(), $indexData);
 
-            $id = $db->lastInsertId($model->table(),$objectConfig->getPrimaryKey());
+            $id = $db->lastInsertId($model->table(), $objectConfig->getPrimaryKey());
             $db->commit();
 
             $result = new Reserved();
@@ -113,9 +117,9 @@ class UniqueID implements GeneratorInterface
             $result->setShard($shard);
 
             return $result;
-        }catch (Exception $e){
+        } catch (Exception $e) {
             $db->rollback();
-            $model->logError('Sharding::reserveIndex '.$e->getMessage());
+            $model->logError('Sharding::reserveIndex ' . $e->getMessage());
             return null;
         }
     }
@@ -136,7 +140,7 @@ class UniqueID implements GeneratorInterface
 
         $shardData = $query->fetchRow();
 
-        if(empty($shardData)){
+        if (empty($shardData)) {
             return false;
         }
         return $shardData[$this->shardField];
@@ -149,7 +153,7 @@ class UniqueID implements GeneratorInterface
      * @return array  [shard_id=>[key1,key2,key3], shard_id2=>[...]]
      * @throws Exception
      */
-    public function findObjectsShards(string $objectName, array $distributedKeys) : array
+    public function findObjectsShards(string $objectName, array $distributedKeys): array
     {
         $objectConfig = Record\Config::factory($objectName);
         $indexObject = $objectConfig->getDistributedIndexObject();
@@ -159,12 +163,12 @@ class UniqueID implements GeneratorInterface
 
         $shardData = $query->fetchAll();
 
-        if(empty($shardData)){
+        if (empty($shardData)) {
             return [];
         }
         $result = [];
         $idField = $model->getObjectConfig()->getPrimaryKey();
-        foreach ($shardData as $item){
+        foreach ($shardData as $item) {
             $result[$item[$this->shardField]][] = $item[$idField];
         }
         return $result;

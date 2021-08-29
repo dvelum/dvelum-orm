@@ -43,8 +43,13 @@ class Connections extends Controller
      */
     protected $connections;
 
-    public function __construct(Request $request, Response $response, ContainerInterface $container, bool $canEdit = true, bool $canDelete = true)
-    {
+    public function __construct(
+        Request $request,
+        Response $response,
+        ContainerInterface $container,
+        bool $canEdit = true,
+        bool $canDelete = true
+    ) {
         parent::__construct($request, $response, $container, $canEdit, $canDelete);
         $this->connections = new \Dvelum\App\Orm\Api\Connections($container->get('config.main')->get('db_configs'));
     }
@@ -419,7 +424,7 @@ class Connections extends Controller
 
         $data = [];
 
-        $manager = new Manager();
+        $manager = $this->ormService->getRecordManager();
         $objects = $manager->getRegisteredObjects();
 
         $tablesObjects = [];
@@ -505,7 +510,7 @@ class Connections extends Controller
             return;
         }
 
-        $manager = new Manager();
+        $manager = $this->ormService->getRecordManager();
         $newObjectName = strtolower(str_replace('_', '', $table));
 
         if ($manager->objectExists($newObjectName)) {

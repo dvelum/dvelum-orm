@@ -44,7 +44,11 @@ class Record extends Controller
             return;
         }
 
-        $stat = new Orm\Stat();
+        /**
+         * @var Orm\Stat $stat
+         */
+        $stat = $this->container->get(\Dvelum\Orm\Stat::class);
+
         $config = $this->ormService->config($object);
 
 //        $validateShard = false;
@@ -87,7 +91,7 @@ class Record extends Controller
             return;
         }
 
-        $builder = $this->getObjectBuilder($name);
+        $builder = $this->ormService->getBuilder($name);
 
 
         $colUpd = [];
@@ -138,16 +142,16 @@ class Record extends Controller
         $template = \Dvelum\View::factory();
         $template->disableCache();
         $template->setData([
-           'engineUpdate' => $engineUpdate,
-           'columns' => $colUpd,
-           'indexes' => $indUpd,
-           'objects' => $objects,
-           'keys' => $keyUpd,
-           'tableExists' => $tableExists,
-           'tableName' => $this->ormService->model($name)->table(),
-           'lang' => $this->lang,
-           'shardObjects' => $shardObjects
-        ]);
+                               'engineUpdate' => $engineUpdate,
+                               'columns' => $colUpd,
+                               'indexes' => $indUpd,
+                               'objects' => $objects,
+                               'keys' => $keyUpd,
+                               'tableExists' => $tableExists,
+                               'tableName' => $this->ormService->model($name)->table(),
+                               'lang' => $this->lang,
+                               'shardObjects' => $shardObjects
+                           ]);
         $cfgBackend = $this->configStorage->get('backend.php');
         $templatesPath = 'system/' . $cfgBackend->get('theme') . '/';
         $msg = $template->render($templatesPath . 'orm_validate_msg.php');
@@ -178,7 +182,7 @@ class Record extends Controller
             return;
         }
 
-        $builder = $this->getObjectBuilder($name);
+        $builder = $this->ormService->getBuilder($name);
         $config = $this->ormService->config($name);
 
         $buildShard = false;
@@ -215,7 +219,7 @@ class Record extends Controller
             return;
         }
 
-        $builder = $this->getObjectBuilder($object);
+        $builder = $this->ormService->getBuilder($object);
         $brokenFields = $builder->hasBrokenLinks();
 
         $fieldsCfg = $objectConfig->getFieldsConfig();
@@ -309,7 +313,7 @@ class Record extends Controller
             return;
         }
 
-        $manager = new Manager();
+        $manager = new Manager($this->ormService);
 
         $result = $manager->removeObject($objectName, $deleteTable);
 
@@ -339,7 +343,7 @@ class Record extends Controller
     /**
      * Load Db Object info
      */
-    public function loadAction() : void
+    public function loadAction(): void
     {
         $object = $this->request->post('object', 'string', false);
 
@@ -368,7 +372,7 @@ class Record extends Controller
     /*
      * Create / Update Db object
      */
-    public function saveAction() : void
+    public function saveAction(): void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -569,7 +573,7 @@ class Record extends Controller
             /*
              * Build database
             */
-            $builder = $this->getObjectBuilder($name);
+            $builder = $this->ormService->getBuilder($name);
             $builder->build();
         } catch (\Exception $e) {
             $this->response->error($this->lang->get('CANT_EXEC') . 'code 2');
@@ -611,7 +615,7 @@ class Record extends Controller
         /**
          * @var Orm\Record\Builder\MySQL $builder
          */
-        $builder = $this->getObjectBuilder($name);
+        $builder = $this->ormService->getBuilder($name);
 
         /*
          * Rename Db Table
@@ -679,7 +683,7 @@ class Record extends Controller
             return;
         }
 
-        $manager = new Manager();
+        $manager = new Manager($this->ormService);
         $renameResult = $manager->renameObject($ormConfig->get('object_configs'), $oldName, $newName);
 
         switch ($renameResult) {

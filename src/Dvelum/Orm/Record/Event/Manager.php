@@ -16,6 +16,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 namespace Dvelum\Orm\Record\Event;
 
 use Dvelum\Orm;
@@ -29,28 +30,28 @@ use Dvelum\Orm;
  */
 abstract class Manager
 {
-	const BEFORE_ADD = 'onBeforeAdd';
-	const BEFORE_UPDATE = 'onBeforeUpdate';
-	const BEFORE_DELETE = 'onBeforeDelete';
-	const BEFORE_UNPUBLISH = 'onBeforeUnpublish';
-	const BEFORE_PUBLISH = 'onBeforePublish';
-	const BEFORE_ADD_VERSION = 'onBeforeAddVersion';
-	const AFTER_ADD = 'onAfterAdd';
-	const AFTER_ADD_VERSION = 'onAfterAddVersion';
-	const AFTER_UPDATE = 'onAfterUpdate';
-	const AFTER_DELETE = 'onAfterDelete';
-	const AFTER_UNPUBLISH = 'onAfterUnpublish';
-	const AFTER_PUBLISH = 'onAfterPublish';
-	const AFTER_UPDATE_BEFORE_COMMIT = 'onAfterUpdateBeforeCommit';
+    const BEFORE_ADD = 'onBeforeAdd';
+    const BEFORE_UPDATE = 'onBeforeUpdate';
+    const BEFORE_DELETE = 'onBeforeDelete';
+    const BEFORE_UNPUBLISH = 'onBeforeUnpublish';
+    const BEFORE_PUBLISH = 'onBeforePublish';
+    const BEFORE_ADD_VERSION = 'onBeforeAddVersion';
+    const AFTER_ADD = 'onAfterAdd';
+    const AFTER_ADD_VERSION = 'onAfterAddVersion';
+    const AFTER_UPDATE = 'onAfterUpdate';
+    const AFTER_DELETE = 'onAfterDelete';
+    const AFTER_UNPUBLISH = 'onAfterUnpublish';
+    const AFTER_PUBLISH = 'onAfterPublish';
+    const AFTER_UPDATE_BEFORE_COMMIT = 'onAfterUpdateBeforeCommit';
     const AFTER_INSERT_BEFORE_COMMIT = 'onAfterInsertBeforeCommit';
     const AFTER_DELETE_BEFORE_COMMIT = 'onAfterDeleteBeforeCommit';
 
-	/**
-	 * Find and run event triggers
-	 * Note that onBeforeDelete and onAfterDelete events provide "SpacialCase" empty Db_Object
-	 * id property exists
-	 * @param string $code  (action constant)
-	 * @param Orm\RecordInterface $object
-	 */
-	abstract public function fireEvent(string $code , Orm\RecordInterface $object);
+    /**
+     * Find and run event triggers
+     * Note that onBeforeDelete and onAfterDelete events provide "SpacialCase" empty Db_Object
+     * id property exists
+     * @param string $code (action constant)
+     * @param Orm\RecordInterface $object
+     */
+    abstract public function fireEvent(string $code, Orm\RecordInterface $object);
 }

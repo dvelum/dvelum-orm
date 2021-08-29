@@ -29,11 +29,6 @@ use Dvelum\File;
 
 class Log extends Controller
 {
-    public function getModule(): string
-    {
-        return 'Orm';
-    }
-
     public function indexAction()
     {
     }
@@ -62,6 +57,11 @@ class Log extends Controller
     {
         $ormConfig = Config::storage()->get('orm.php');
         $logPath = $ormConfig->get('log_path');
+
+        if (!is_dir($logPath)) {
+            $this->response->success([]);
+            return;
+        }
 
         $files = File::scanFiles($logPath, ['.sql'], false);
         $data = [];

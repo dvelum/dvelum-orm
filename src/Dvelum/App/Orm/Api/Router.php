@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api;
 
-use Dvelum\App\Backend\Orm\Connections;
+use Dvelum\App\Orm\Api\Connections;
 use Dvelum\Config;
 use Dvelum\File;
 use Dvelum\Orm;
@@ -108,10 +108,10 @@ class Router implements RouterInterface
      */
     public function listAction()
     {
-        $stat = new Orm\Stat(
-            $this->container->get(Config\Storage\StorageInterface::class),
-            $this->container->get(\Dvelum\Orm\Orm::class)
-        );
+        /**
+         * @var Orm\Stat $stat
+         */
+        $stat = $this->container->get(\Dvelum\Orm\Stat::class);
         $data = $stat->getInfo();
 
         if ($this->request->post('hideSysObj', 'boolean', false)) {
@@ -141,10 +141,11 @@ class Router implements RouterInterface
             $this->response->error($this->lang->get('WRONG_REQUEST'));
             return;
         }
-        $stat = new Orm\Stat(
-            $this->container->get(Config\Storage\StorageInterface::class),
-            $this->container->get(Orm\Orm::class)
-        );
+
+        /**
+         * @var Orm\Stat $stat
+         */
+        $stat = $this->container->get(\Dvelum\Orm\Stat::class);
 
         $config = $orm->config($object);
         if ($config->isDistributed()) {
@@ -176,7 +177,7 @@ class Router implements RouterInterface
 
         session_write_close();
 
-        $dbObjectManager = new Orm\Record\Manager();
+        $dbObjectManager = $this->container->get(Orm\Orm::class)->getRecordManager();
         $names = $dbObjectManager->getRegisteredObjects();
         if (empty($names)) {
             $names = [];
@@ -272,14 +273,18 @@ class Router implements RouterInterface
         }
     }
 
-    protected function createBuilder(string $objectName)
+    /**
+     * @param string $objectName
+     * @return Orm\Record\Builder\AbstractAdapter
+     * @throws Orm\Exception
+     */
+    protected function createBuilder(string $objectName): Orm\Record\Builder\AbstractAdapter
     {
-        return Orm\Record\Builder::factory(
-            $this->container->get(Orm\Orm::class),
-            $this->container->get(Config\Storage\StorageInterface::class),
-            $this->container->get(Lang::class)->lang(),
-            $objectName
-        );
+        /**
+         * @var Orm\Orm $orm
+         */
+        $orm = $this->container->get(Orm\Orm::class);
+        return $orm->getBuilder($objectName);
     }
 
     /**

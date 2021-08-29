@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -30,12 +31,12 @@ class Varchar extends \Dvelum\Orm\Record\Config\Field
      */
     public function filter($value)
     {
-        if(is_null($value) && $this->isNull()){
+        if (is_null($value) && $this->isNull()) {
             return null;
         }
 
-        if(!isset($this->config['allow_html']) || !$this->config['allow_html']){
-            $value = \Dvelum\Filter::filterValue('string' , $value);
+        if (!isset($this->config['allow_html']) || !$this->config['allow_html']) {
+            $value = \Dvelum\Filter::filterValue('string', $value);
         }
 
         return $value;
@@ -46,13 +47,13 @@ class Varchar extends \Dvelum\Orm\Record\Config\Field
      * @param mixed $value
      * @return bool
      */
-    public function validate($value) : bool
+    public function validate($value): bool
     {
-        if(!parent::validate($value)){
+        if (!parent::validate($value)) {
             return false;
         }
 
-        if(mb_strlen((string)$value ,'UTF-8') > $this->config['db_len']){
+        if (mb_strlen((string)$value, 'UTF-8') > $this->config['db_len']) {
             $this->validationError = 'The field value exceeds the allowable length.';
             return false;
         }

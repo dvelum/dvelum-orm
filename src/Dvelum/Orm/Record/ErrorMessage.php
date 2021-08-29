@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2019  Kirill Yegorov
@@ -35,17 +36,20 @@ class ErrorMessage
 
     public function cantRead(RecordInterface $record): string
     {
-        return 'You do not have permission to view data in this object [' . $record->getName() . ':' . $record->getId() . '].';
+        return 'You do not have permission to view data in this object [' . $record->getName() . ':' . $record->getId(
+            ) . '].';
     }
 
     public function cantEdit(RecordInterface $record): string
     {
-        return 'You do not have permission to edit data in this object [' . $record->getName() . ':' . $record->getId() . '].';
+        return 'You do not have permission to edit data in this object [' . $record->getName() . ':' . $record->getId(
+            ) . '].';
     }
 
     public function cantDelete(RecordInterface $record): string
     {
-        return 'You do not have permission to delete this object [' . $record->getName() . ':' . $record->getId() . '].';
+        return 'You do not have permission to delete this object [' . $record->getName() . ':' . $record->getId(
+            ) . '].';
     }
 
     public function cantPublish(RecordInterface $record): string
@@ -60,29 +64,33 @@ class ErrorMessage
 
     public function readOnly(RecordInterface $record): string
     {
-        return 'ORM :: cannot save readonly object ['. $record->getName(). ':' . $record->getId() . '].';
+        return 'ORM :: cannot save readonly object [' . $record->getName() . ':' . $record->getId() . '].';
     }
 
-    public function emptyFields(RecordInterface $record, array $fields) : string
+    public function emptyFields(RecordInterface $record, array $fields): string
     {
-        return 'ORM :: Fields can not be empty. ['.$record->getName(). ':' . $record->getId() . ' '.implode(',', $fields).']';
+        return 'ORM :: Fields can not be empty. [' . $record->getName() . ':' . $record->getId() . ' ' . implode(
+                ',',
+                $fields
+            ) . ']';
     }
 
-    public function uniqueValue(string $field, $value) : string
+    public function uniqueValue(string $field, $value): string
     {
-        if(is_array($value) || is_object($value)){
+        if (is_array($value) || is_object($value)) {
             $value = json_encode($value);
         }
-        return 'The Field value should be unique '.$field . ':' . (string) $value;
+        return 'The Field value should be unique ' . $field . ':' . (string)$value;
     }
 
-    public function cantLoadVersion(RecordInterface $record, int $vers) : string
+    public function cantLoadVersion(RecordInterface $record, int $vers): string
     {
         return 'Cannot load version for ' . $record->getName() . ':' . $record->getId() . '. v:' . $vers;
     }
 
-    public function cantLoadVersionIncompatible(RecordInterface $record, int $vers, string  $errors) : string
+    public function cantLoadVersionIncompatible(RecordInterface $record, int $vers, string $errors): string
     {
-        return 'Cannot load version data ' . $record->getName() . ':' . $record->getId() . '. v:' . $vers . '. This version contains incompatible data. ' . $errors;
+        return 'Cannot load version data ' . $record->getName() . ':' . $record->getId(
+            ) . '. v:' . $vers . '. This version contains incompatible data. ' . $errors;
     }
 }

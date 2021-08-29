@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2018  Kirill Yegorov
@@ -27,5 +28,5 @@ interface MapperInterface
      * @param mixed $key
      * @return Bucket
      */
-    public function keyToBucket($key) : Bucket;
+    public function keyToBucket($key): Bucket;
 }

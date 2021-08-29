@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Dvelum\App\Console\Orm;
@@ -11,15 +12,19 @@ class Build extends Console\Action
 {
     public function action(): bool
     {
-        $ormConfig = Config::storage()->get('orm.php');
-        $dbObjectManager = new Orm\Record\Manager();
+        $ormConfig = $this->diContainer->get(Config\Storage\StorageInterface::class)->get('orm.php');
+        /**
+         * @var Orm\Orm $orm
+         */
+        $orm = $this->diContainer->get(Orm\Orm::class);
+        $dbObjectManager = $orm->getRecordManager();
         $success = true;
 
         echo "BUILD OBJECTS " . PHP_EOL;
 
         // build object
         foreach ($dbObjectManager->getRegisteredObjects() as $object) {
-            $cfg = Orm\Record\Config::factory($object);
+            $cfg = $orm->config($object);
             if ($cfg->isDistributed()) {
                 echo "\t " . $object . ' :  is distributed, skip' . PHP_EOL;
                 continue;
@@ -30,7 +35,7 @@ class Build extends Console\Action
             }
 
             echo "\t " . $object . ' : ';
-            $builder = Orm\Record\Builder::factory($object);
+            $builder = $orm->getBuilder($object);
             if ($builder->build(false)) {
                 echo 'OK' . PHP_EOL;
             } else {
@@ -44,7 +49,7 @@ class Build extends Console\Action
             echo PHP_EOL . "\t BUILD FOREIGN KEYS" . PHP_EOL . PHP_EOL;
 
             foreach ($dbObjectManager->getRegisteredObjects() as $object) {
-                $cfg = Orm\Record\Config::factory($object);
+                $cfg = $orm->config($object);
 
                 if ($cfg->isDistributed()) {
                     echo "\t " . $object . ' :  is distributed, skip' . PHP_EOL;
@@ -57,7 +62,7 @@ class Build extends Console\Action
                 }
 
                 echo "\t " . $object . ' : ';
-                $builder = Orm\Record\Builder::factory($object);
+                $builder = $orm->getBuilder($object);
                 if ($builder->build(true)) {
                     echo 'OK' . PHP_EOL;
                 } else {
