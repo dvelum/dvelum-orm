@@ -23,16 +23,11 @@ declare(strict_types=1);
 namespace Dvelum\App\Orm\Api\Controller;
 
 use Dvelum\App\Orm\Api\Controller;
-use Dvelum\App\Backend\Orm\Manager;
+use Dvelum\App\Orm\Api\Manager;
 use Dvelum\Orm;
 
 class Index extends Controller
 {
-    public function getModule(): string
-    {
-        return 'Orm';
-    }
-
     public function indexAction()
     {
     }
@@ -68,7 +63,7 @@ class Index extends Controller
         }
 
         try {
-            $objectCfg = Orm\Record\Config::factory($object);
+            $objectCfg = $this->ormService->config($object);
         } catch (\Exception $e) {
             $this->response->error($this->lang->get('WRONG_REQUEST') . ' code 2');
             return;
@@ -123,7 +118,7 @@ class Index extends Controller
         }
 
         try {
-            $objectCfg = Orm\Record\Config::factory($object);
+            $objectCfg = $this->ormService->config($object);
         } catch (\Exception $e) {
             $this->response->error($this->lang->get('WRONG_REQUEST') . ' code 2');
             return;
@@ -152,7 +147,7 @@ class Index extends Controller
             return;
         }
 
-        $manager = new Manager();
+        $manager = new Manager($this->ormService);
         $indexConfig = $manager->getIndexConfig($object, $index);
 
         if ($indexConfig === false) {

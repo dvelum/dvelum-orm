@@ -25,7 +25,8 @@ return [
      * Log Db_Object errors
      */
     'db_object_error_log' => true,
-    'db_object_error_log_path' => $docRoot . '/data/logs/error/db_object.error.log',
+    'db_object_error_log_path' => $docRoot . '/data/logs/orm/db_object.error.log',
+    'build_log_prefix' =>  'build_log',
     /*
      * Сlear the object version history when deleting an object.
      * The recommended setting is “false”. Thus, even though the object has been deleted,

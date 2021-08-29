@@ -75,7 +75,7 @@ if(!$skipBuild) {
     $dbObjectManager = new \Dvelum\Orm\Record\Manager();
     foreach ($dbObjectManager->getRegisteredObjects() as $object) {
         echo 'build ' . $object . ' : ';
-        $builder = \Dvelum\Orm\Record\Builder::factory($object);
+        $builder = \Dvelum\Orm\Record\BuilderFactory::factory($object);
         if ($builder->build(false)) {
             echo 'OK';
         } else {
@@ -96,7 +96,7 @@ if(!$skipBuild) {
     echo PHP_EOL . 'BUILD FOREIGN KEYS' . PHP_EOL . PHP_EOL;
     foreach ($dbObjectManager->getRegisteredObjects() as $object) {
         echo 'build ' . $object . ' : ';
-        $builder = \Dvelum\Orm\Record\Builder::factory($object);
+        $builder = \Dvelum\Orm\Record\BuilderFactory::factory($object);
         if ($builder->build(true)) {
             echo 'OK';
         } else {
@@ -123,7 +123,7 @@ if(!$skipBuild) {
 
             echo "\t\t" . $object . ' : ';
 
-            $builder = \Dvelum\Orm\Record\Builder::factory($object);
+            $builder = \Dvelum\Orm\Record\BuilderFactory::factory($object);
             $builder->setConnection(\Dvelum\Orm\Model::factory($object)->getDbShardConnection($shardId));
 
             if ($builder->build(false, true)) {
@@ -148,7 +148,7 @@ if(!$skipBuild) {
         foreach ($registeredObjects as $index => $object) {
             echo "\t\t" . $object . ' : ';
 
-            $builder = \Dvelum\Orm\Record\Builder::factory($object);
+            $builder = \Dvelum\Orm\Record\BuilderFactory::factory($object);
             $builder->setConnection(\Dvelum\Orm\Model::factory($object)->getDbShardConnection($shardId));
 
             if ($builder->build(true, true)) {

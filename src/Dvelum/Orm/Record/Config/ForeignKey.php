@@ -90,7 +90,7 @@ class ForeignKey
 
         $keys = [];
         foreach ($links as $object => $fields) {
-            $oConfig = Config::factory($object);
+            $oConfig = $orm->config($object);
             /*
              *  Only InnoDb implements Foreign Keys
              */
@@ -98,7 +98,7 @@ class ForeignKey
                 continue;
             }
 
-            $oModel = Model::factory($object);
+            $oModel = $orm->model($object);
 
             /*
              * Foreign keys are only available for objects with the same database connection

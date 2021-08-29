@@ -44,7 +44,7 @@ class Stat
 
     /**
      * Get orm objects statistics
-     * @return array
+     * @return array<int, array{name:string,table:string,engine:string,vc:bool,fields:int,title:string,luik_title:string,rev_contril:bool,save_history:bool,system:bool,db_host:string,db_name:string,locked:bool,readonly:bool,primary_key:string,connection:string,distributed:bool}>
      */
     public function getInfo(): array
     {

@@ -76,7 +76,7 @@ class Field implements \ArrayAccess
     {
         return (isset($this->config['db_type']) && in_array(
                 $this->config['db_type'],
-                Orm\Record\Builder::$numTypes,
+                Orm\Record\BuilderFactory::$numTypes,
                 true
             ));
     }
@@ -89,7 +89,7 @@ class Field implements \ArrayAccess
     {
         return (isset($this->config['db_type']) && in_array(
                 $this->config['db_type'],
-                Orm\Record\Builder::$intTypes,
+                Orm\Record\BuilderFactory::$intTypes,
                 true
             ));
     }
@@ -102,7 +102,7 @@ class Field implements \ArrayAccess
     {
         return (isset($this->config['db_type']) && in_array(
                 $this->config['db_type'],
-                Orm\Record\Builder::$floatTypes,
+                Orm\Record\BuilderFactory::$floatTypes,
                 true
             ));
     }
@@ -118,10 +118,10 @@ class Field implements \ArrayAccess
             return false;
         }
 
-        $isText = (in_array($this->config['db_type'], Orm\Record\Builder::$textTypes, true));
+        $isText = (in_array($this->config['db_type'], Orm\Record\BuilderFactory::$textTypes, true));
 
         if ($charTypes && !$isText) {
-            $isText = (in_array($this->config['db_type'], Orm\Record\Builder::$charTypes, true));
+            $isText = (in_array($this->config['db_type'], Orm\Record\BuilderFactory::$charTypes, true));
         }
 
         return $isText;
@@ -134,7 +134,7 @@ class Field implements \ArrayAccess
     {
         return (isset($this->config['db_type']) && in_array(
                 $this->config['db_type'],
-                Orm\Record\Builder::$dateTypes,
+                Orm\Record\BuilderFactory::$dateTypes,
                 true
             ));
     }

@@ -25,7 +25,7 @@ use Dvelum\Lang\Dictionary;
 use Dvelum\Orm;
 use Dvelum\Orm\Record\Config;
 use Dvelum\Orm\Model;
-use Dvelum\Orm\Record\Builder;
+use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Log;
 use Dvelum\Lang;
 use Dvelum\Config\ConfigInterface;

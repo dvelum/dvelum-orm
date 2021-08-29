@@ -64,7 +64,7 @@ class Import
         }
         $dataType = strtolower($dataType);
 
-        if (!in_array($dataType, Builder::$numTypes, true)) {
+        if (!in_array($dataType, BuilderFactory::$numTypes, true)) {
             $this->errors[] = 'PRIMARY KEY is not numeric';
             return false;
         }

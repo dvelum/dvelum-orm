@@ -21,11 +21,10 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm\Record;
 
-use Dvelum\Config as Cfg;
+use Dvelum\Config;
 use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Lang\Dictionary;
 use Dvelum\Orm;
-use Dvelum\Orm\Model;
 
 /**
  * Builder for Orm\Record
@@ -35,57 +34,73 @@ use Dvelum\Orm\Model;
  * @license General Public License version 3
  *
  */
-class Builder
+class BuilderFactory
 {
-    protected static $writeLog = false;
-    protected static $logPrefix = '0.1';
-    protected static $logsPath = './logs/';
-    protected static $foreignKeys = false;
+    protected $writeLog = false;
+    protected $logPrefix = '0.1';
+    protected $logsPath = './logs/';
+    protected $foreignKeys = false;
+
+    public function __construct(array $configOptions)
+    {
+        foreach ($configOptions as $key => $value)
+        {
+            if(isset($this->{$key})){
+                $this->{$key} = $value;
+            }
+        }
+    }
 
     /**
      * @param string $objectName
      * @return Builder\AbstractAdapter
      * @throws Orm\Exception
      */
-    static public function factory(
+     public function factory(
         Orm\Orm $orm,
         StorageInterface $configStorage,
         Dictionary $lang,
         string $objectName
     ): Builder\AbstractAdapter {
+
         $objectConfig = $orm->config($objectName);
-
         $adapter = 'Builder_Generic';
-
-        $config = Cfg::factory(\Dvelum\Config\Factory::Simple, $adapter);
+        $config = Config::factory(\Dvelum\Config\Factory::Simple, $adapter);
 
         $log = false;
-        if (static::$writeLog) {
+        if ($this->writeLog) {
             $log = new \Dvelum\Log\File\Sql(
-                static::$logsPath . $objectConfig->get('connection') . '-' . static::$logPrefix . '-build.sql'
+                $this->logsPath . $objectConfig->get('connection') . '-' . $this->logPrefix . '-build.sql'
             );
         }
 
         $ormConfig = $configStorage->get('orm.php');
 
-        $config->setData([
-                             'objectName' => $objectName,
-                             'configPath' => $ormConfig->get('object_configs'),
-                             'log' => $log,
-                             'useForeignKeys' => static::$foreignKeys
-                         ]);
+         $config->setData(
+             [
+                 'objectName' => $objectName,
+                 'configPath' => $ormConfig->get('object_configs'),
+                 'log' => $log,
+                 'useForeignKeys' => $this->foreignKeys
+             ]
+         );
 
         $model = $orm->model($objectName);
         $platform = $model->getDbConnection()->getAdapter()->getPlatform();
 
+        if($platform === null){
+            throw new Orm\Exception('Undefined Platform');
+        }
+
         $platform = $platform->getName();
-        $builderAdapter = static::class . '\\' . $platform;
+
+        $builderAdapter = '\\Dvelum\\Orm\\Record\\Builder\\' . $platform;
 
         if (class_exists($builderAdapter)) {
             return new $builderAdapter($config, $orm, $configStorage, $lang);
         }
 
-        $builderAdapter = static::class . '\\Generic\\' . $platform;
+        $builderAdapter = '\\Dvelum\\Orm\\Record\\Builder\\Generic\\' . $platform;
 
         if (class_exists($builderAdapter)) {
             return new $builderAdapter($config, $orm, $configStorage, $lang);
@@ -155,53 +170,4 @@ class Builder
         'mediumblob',
         'longblob'
     ];
-
-    /**
-     * Write SQL log
-     * @param bool $flag
-     * @return void
-     */
-    static public function writeLog(bool $flag): void
-    {
-        self::$writeLog = $flag;
-    }
-
-    /**
-     * Set query log file prefix
-     * @param string $string
-     * @return void
-     */
-    static public function setLogPrefix(string $string): void
-    {
-        self::$logPrefix = $string;
-    }
-
-    /**
-     * Set logs path
-     * @param string $string
-     * @return void
-     */
-    static public function setLogsPath(string $string): void
-    {
-        self::$logsPath = $string;
-    }
-
-    /**
-     * Use foreign keys
-     * @param bool $flag
-     * @return void
-     */
-    static public function useForeignKeys(bool $flag): void
-    {
-        self::$foreignKeys = $flag;
-    }
-
-    /**
-     * Check if foreign keys is used
-     * @return bool
-     */
-    static public function foreignKeys(): bool
-    {
-        return self::$foreignKeys;
-    }
 }

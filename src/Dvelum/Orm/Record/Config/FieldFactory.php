@@ -61,13 +61,13 @@ class FieldFactory
                     break;
             }
         } else {
-            if (in_array($dbType, Orm\Record\Builder::$intTypes, true)) {
+            if (in_array($dbType, Orm\Record\BuilderFactory::$intTypes, true)) {
                 $fieldClass = 'Integer';
-            } elseif (in_array($dbType, Orm\Record\Builder::$charTypes, true)) {
+            } elseif (in_array($dbType, Orm\Record\BuilderFactory::$charTypes, true)) {
                 $fieldClass = 'Varchar';
-            } elseif (in_array($dbType, Orm\Record\Builder::$textTypes, true)) {
+            } elseif (in_array($dbType, Orm\Record\BuilderFactory::$textTypes, true)) {
                 $fieldClass = 'Text';
-            } elseif (in_array($dbType, Orm\Record\Builder::$floatTypes, true)) {
+            } elseif (in_array($dbType, Orm\Record\BuilderFactory::$floatTypes, true)) {
                 $fieldClass = 'Floating';
             } else {
                 $fieldClass = $dbType;

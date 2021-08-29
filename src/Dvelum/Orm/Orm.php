@@ -29,7 +29,8 @@ use Dvelum\Lang;
 use Dvelum\Lang\Dictionary;
 use Dvelum\Orm\Distributed\Record as DistributedRecord;
 use Dvelum\Db;
-use Dvelum\Orm\Record\Builder;
+use Dvelum\Orm\Record\Builder\AbstractAdapter;
+use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record\Manager;
 use Dvelum\Security\CryptServiceInterface;
 use Dvelum\Utils;
@@ -88,6 +89,8 @@ class Orm
 
     protected Config\Storage\StorageInterface $configStorage;
 
+    private BuilderFactory $builderFactory;
+
     /**
      * @param ConfigInterface $config
      * @param Db\ManagerInterface $dbManager
@@ -124,10 +127,6 @@ class Orm
                                                           }
                                                       ]);
 
-        /*
-         * Prepare Db_Object
-         */
-        Record\Builder::useForeignKeys($config->get('foreign_keys'));
 
         $this->configSettings = Config\Factory::create([
                                                            'configPath' => $config->get('object_configs'),
@@ -497,12 +496,34 @@ class Orm
     /**
      * Get ORM object structure builder (sync db structure)
      * @param string $objectName
-     * @return Builder\AbstractAdapter
+     * @return AbstractAdapter
      * @throws Exception
      */
-    public function getBuilder(string $objectName): Builder\AbstractAdapter
+    public function getBuilder(string $objectName): AbstractAdapter
     {
-        return Builder::factory($this, $this->configStorage, $this->lang->getDictionary(), $objectName);
+        return $this->getBuilderFactory()->factory(
+            $this,
+            $this->configStorage,
+            $this->lang->getDictionary(),
+            $objectName
+        );
+    }
+
+    private function getBuilderFactory(): BuilderFactory
+    {
+        $ormConfig = $this->configStorage->get('orm.php')->__toArray();
+
+        if (!isset($this->builderFactory)) {
+            $this->builderFactory = new BuilderFactory(
+                [
+                    'writeLog' => $ormConfig['use_orm_build_log'],
+                    'foreignKeys' => $ormConfig['foreign_keys'],
+                    'logPrefix' => $ormConfig['build_log_prefix'],
+                    'logsPath' => $ormConfig['log_path']
+                ]
+            );
+        }
+        return $this->builderFactory;
     }
 
     public function getRecordManager(): Manager

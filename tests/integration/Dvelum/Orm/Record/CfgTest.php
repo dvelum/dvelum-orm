@@ -1,7 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use Dvelum\Orm\Record\Builder;
+use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record;
 use Dvelum\Orm\Model;
 
@@ -9,7 +9,7 @@ class CfgTest extends TestCase
 {
     public function testRenameField()
     {
-        $o = Builder::factory('page_rename');
+        $o = BuilderFactory::factory('page_rename');
         $cfg = Record\Config::factory('page_rename');
 
         $fieldManager = new Record\Config\FieldManager();

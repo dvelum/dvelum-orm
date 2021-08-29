@@ -25,7 +25,7 @@ namespace Dvelum\Orm\Record\Builder;
 use Dvelum\Db\Metadata\ColumnObject;
 use Dvelum\Orm;
 use Dvelum\Orm\Exception;
-use Dvelum\Orm\Record\Builder;
+use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Utils;
 
 
@@ -104,7 +104,7 @@ class MySQL extends AbstractAdapter
                 foreach ($fields as $k => $v) {
                     $type = $v['db_type'];
 
-                    if (in_array($type, Builder::$textTypes, true) || in_array($type, Builder::$blobTypes, true)) {
+                    if (in_array($type, BuilderFactory::$textTypes, true) || in_array($type, BuilderFactory::$blobTypes, true)) {
                         $restrictedFields[] = $k;
                     }
                 }
@@ -128,7 +128,6 @@ class MySQL extends AbstractAdapter
 
             default :
                 throw new \Exception('Unknown db engine type');
-                break;
         }
 
         if (!empty($restrictedFields) || !empty($restrictedIndexes)) {
@@ -281,7 +280,7 @@ class MySQL extends AbstractAdapter
                     $typeCmp = true;
                 }
 
-                if (in_array($v['db_type'], Builder::$floatTypes, true)) {
+                if (in_array($v['db_type'], BuilderFactory::$floatTypes, true)) {
                     /*
                      * @note ZF3 has inverted scale and precision values
                      */
@@ -291,7 +290,7 @@ class MySQL extends AbstractAdapter
                     }
                 } elseif (in_array(
                         $v['db_type'],
-                        Builder::$numTypes,
+                        BuilderFactory::$numTypes,
                         true
                     ) && isset(Orm\Record\Field\Property::$numberLength[$v['db_type']])) {
                     /**
@@ -315,7 +314,7 @@ class MySQL extends AbstractAdapter
                   }
                 */
 
-                if (in_array($v['db_type'], Builder::$textTypes, true)) {
+                if (in_array($v['db_type'], BuilderFactory::$textTypes, true)) {
                     if (isset($v['required']) && $v['required']) {
                         $v['db_isNull'] = false;
                     } else {
@@ -334,9 +333,9 @@ class MySQL extends AbstractAdapter
                 }
             }
 
-            if (!((boolean)$v['db_isNull']) && !in_array($v['db_type'], Builder::$dateTypes, true) && !in_array(
+            if (!((boolean)$v['db_isNull']) && !in_array($v['db_type'], BuilderFactory::$dateTypes, true) && !in_array(
                     $v['db_type'],
-                    Builder::$textTypes,
+                    BuilderFactory::$textTypes,
                     true
                 )) {
                 $columnDefault = $column->getColumnDefault();

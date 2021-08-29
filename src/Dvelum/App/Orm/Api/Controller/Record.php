@@ -139,22 +139,26 @@ class Record extends Controller
             return;
         }
 
-        $template = \Dvelum\View::factory();
+        /**
+         * @var \Dvelum\Template\Service $templateService
+         */
+        $templateService = $this->container->get(\Dvelum\Template\Service::class);
+        $template = $templateService->getTemplate();
         $template->disableCache();
-        $template->setData([
-                               'engineUpdate' => $engineUpdate,
-                               'columns' => $colUpd,
-                               'indexes' => $indUpd,
-                               'objects' => $objects,
-                               'keys' => $keyUpd,
-                               'tableExists' => $tableExists,
-                               'tableName' => $this->ormService->model($name)->table(),
-                               'lang' => $this->lang,
-                               'shardObjects' => $shardObjects
-                           ]);
-        $cfgBackend = $this->configStorage->get('backend.php');
-        $templatesPath = 'system/' . $cfgBackend->get('theme') . '/';
-        $msg = $template->render($templatesPath . 'orm_validate_msg.php');
+        $template->setData(
+            [
+                'engineUpdate' => $engineUpdate,
+                'columns' => $colUpd,
+                'indexes' => $indUpd,
+                'objects' => $objects,
+                'keys' => $keyUpd,
+                'tableExists' => $tableExists,
+                'tableName' => $this->ormService->model($name)->table(),
+                'lang' => $this->lang,
+                'shardObjects' => $shardObjects
+            ]
+        );
+        $msg = $template->render('orm_validate_msg.php');
         $this->response->success([], array('text' => $msg, 'nothingToDo' => false));
     }
 
@@ -246,9 +250,9 @@ class Record extends Controller
 
             $v['type'] = $v['db_type'];
 
-            if (in_array($v['db_type'], Orm\Record\Builder::$charTypes, true)) {
+            if (in_array($v['db_type'], Orm\Record\BuilderFactory::$charTypes, true)) {
                 $v['type'] .= ' (' . $v['db_len'] . ')';
-            } elseif (in_array($v['db_type'], Orm\Record\Builder::$floatTypes, true)) {
+            } elseif (in_array($v['db_type'], Orm\Record\BuilderFactory::$floatTypes, true)) {
                 $v['type'] .= ' (' . $v['db_scale'] . ',' . $v['db_precision'] . ')';
             }
         }
@@ -501,7 +505,7 @@ class Record extends Controller
     protected function createObject($name, array $data)
     {
         $usePrefix = $data['use_db_prefix'];
-        $connectionManager = new \Dvelum\Db\Manager($this->appConfig);
+        $connectionManager = new \Dvelum\Db\Manager($this->container->get('config.main'));
         $connection = $connectionManager->getDbConnection($data['connection']);
         $connectionCfg = $connectionManager->getDbConfig($data['connection']);
 
@@ -520,7 +524,7 @@ class Record extends Controller
         $tableName = $data['table'];
 
         if ($usePrefix) {
-            $tableName = $connectionCfg->get('prefix') . $tableName;
+            $tableName = $connectionCfg['prefix'] . $tableName;
         }
 
         if (in_array($tableName, $tables, true)) {

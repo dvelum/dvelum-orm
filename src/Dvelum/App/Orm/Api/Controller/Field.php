@@ -43,7 +43,7 @@ class Field extends Controller
             return;
         }
 
-        $manager = new Manager();
+        $manager = new Manager($this->ormService);
 
         $object = $this->request->post('objectName', 'string', false);
         $objectField = $this->request->post('objectField', 'string', false);
@@ -201,13 +201,13 @@ class Field extends Controller
                  */
                 $newConfig['required'] = false;
                 $newConfig['db_default'] = (int)$this->request->post('db_default', 'bool', false);
-            } elseif (in_array($newConfig['db_type'], Orm\Record\Builder::$intTypes, true)) {
+            } elseif (in_array($newConfig['db_type'], Orm\Record\BuilderFactory::$intTypes, true)) {
                 /*
                  * integer
                  */
                 $newConfig['db_default'] = $this->request->post('db_default', 'integer', false);
                 $newConfig['db_unsigned'] = $this->request->post('db_unsigned', 'bool', false);
-            } elseif (in_array($newConfig['db_type'], Orm\Record\Builder::$floatTypes)) {
+            } elseif (in_array($newConfig['db_type'], Orm\Record\BuilderFactory::$floatTypes)) {
                 /*
                  * float
                  */
@@ -215,7 +215,7 @@ class Field extends Controller
                 $newConfig['db_unsigned'] = $this->request->post('db_unsigned', 'bool', false);
                 $newConfig['db_scale'] = $this->request->post('db_scale', 'integer', 0);
                 $newConfig['db_precision'] = $this->request->post('db_precision', 'integer', 0);
-            } elseif (in_array($newConfig['db_type'], Orm\Record\Builder::$charTypes, true)) {
+            } elseif (in_array($newConfig['db_type'], Orm\Record\BuilderFactory::$charTypes, true)) {
                 /*
                  * char
                  */
@@ -223,7 +223,7 @@ class Field extends Controller
                 $newConfig['db_len'] = $this->request->post('db_len', 'integer', 255);
                 $newConfig['is_search'] = $this->request->post('is_search', 'bool', false);
                 $newConfig['allow_html'] = $this->request->post('allow_html', 'bool', false);
-            } elseif (in_array($newConfig['db_type'], Orm\Record\Builder::$textTypes, true)) {
+            } elseif (in_array($newConfig['db_type'], Orm\Record\BuilderFactory::$textTypes, true)) {
                 /*
                  * text
                  */
@@ -234,7 +234,7 @@ class Field extends Controller
                 if (!$newConfig['required']) {
                     $newConfig['db_isNull'] = true;
                 }
-            } elseif (in_array($newConfig['db_type'], Orm\Record\Builder::$dateTypes, true)) {
+            } elseif (in_array($newConfig['db_type'], Orm\Record\BuilderFactory::$dateTypes, true)) {
                 /*
                  * date
                  */
@@ -302,7 +302,7 @@ class Field extends Controller
         $object = $this->request->post('object', 'string', false);
         $field = $this->request->post('name', 'string', false);
 
-        $manager = new Manager();
+        $manager = new Manager($this->ormService);
         $result = $manager->removeField($object, $field);
 
         switch ($result) {
@@ -342,7 +342,7 @@ class Field extends Controller
             return;
         }
 
-        $manager = new Manager();
+        $manager = new Manager($this->ormService);
         $result = $manager->getFieldConfig($object, $field);
 
         if (!$result) {

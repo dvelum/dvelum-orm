@@ -53,17 +53,7 @@ class Router implements RouterInterface
         $this->lang = $container->get(Lang::class)->lang();
 
         $configStorage = $this->container->get(Config\Storage\StorageInterface::class);
-
         $this->routes = $configStorage->get('orm/routes.php')->__toArray();
-
-        $appConfig = $this->container->get('config.main');
-        /*
-          * Set Orm Builder log paths
-          */
-        $ormConfig = $configStorage->get('orm.php');
-        Orm\Record\Builder::writeLog($ormConfig['use_orm_build_log']);
-        Orm\Record\Builder::setLogsPath($ormConfig['log_path']);
-        Orm\Record\Builder::setLogPrefix($appConfig['development_version'] . '_build_log.sql');
     }
 
     public function route(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -71,8 +61,6 @@ class Router implements RouterInterface
         $this->request = new Request($request);
         $this->response = new Response($response);
         $this->response->setFormat(Response::FORMAT_JSON);
-
-        $configStorage = $this->container->get(Config\Storage\StorageInterface::class);
 
         $action = $this->request->getPart($this->pathIndex);
 

@@ -9,7 +9,7 @@ use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Lang;
 use Dvelum\Lang\Dictionary;
 use Dvelum\Orm\Orm;
-use Dvelum\Orm\Record\Builder;
+use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record\Builder\AbstractAdapter;
 use Dvelum\Request;
 use Dvelum\Response;

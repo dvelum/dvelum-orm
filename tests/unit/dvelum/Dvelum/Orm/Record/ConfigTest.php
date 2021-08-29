@@ -1,7 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use Dvelum\Orm\Record\Builder;
+use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record;
 use Dvelum\Orm\Model;
 

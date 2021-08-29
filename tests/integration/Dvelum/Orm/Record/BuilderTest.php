@@ -1,7 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use Dvelum\Orm\Record\Builder;
+use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record\Builder\BuilderInterface;
 
 
@@ -9,20 +9,20 @@ class BuilderTest extends TestCase
 {
     public function testCreateObject()
     {
-        $o = Builder::factory('Page');
+        $o = BuilderFactory::factory('Page');
         $this->assertTrue($o instanceof BuilderInterface);
     }
 
     public function testTableExists()
     {
-        $o = Builder::factory('Page');
+        $o = BuilderFactory::factory('Page');
         $this->assertTrue($o->tableExists());
     }
 
 
     public function testValidate()
     {
-        $o = Builder::factory('Page');
+        $o = BuilderFactory::factory('Page');
         $o->build();
         $this->assertTrue($o->validate());
     }
@@ -63,7 +63,7 @@ class BuilderTest extends TestCase
         /**
          * @var Builder\MySQL $o
          */
-        $o = Builder::factory('Page');
+        $o = BuilderFactory::factory('Page');
         $this->assertTrue($o->checkEngineCompatibility('myisam'));
         $this->assertTrue($o->checkEngineCompatibility('innodb'));
         $this->assertTrue(is_array($o->checkEngineCompatibility('memory')));

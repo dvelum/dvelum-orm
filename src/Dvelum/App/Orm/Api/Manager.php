@@ -26,7 +26,7 @@ use Dvelum\File;
 use Dvelum\Orm;
 use Dvelum\Lang;
 use Dvelum\Config;
-use Dvelum\Orm\Record\Builder;
+use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record\Config\Translator;
 use Exception;
 

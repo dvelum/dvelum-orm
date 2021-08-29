@@ -237,11 +237,11 @@ class Distributed extends Controller
             }
             $dbType = $config['db_type'];
             if (
-                in_array($dbType, Record\Builder::$charTypes, true)
+                in_array($dbType, Record\BuilderFactory::$charTypes, true)
                 ||
-                in_array($dbType, Record\Builder::$numTypes, true)
+                in_array($dbType, Record\BuilderFactory::$numTypes, true)
                 ||
-                in_array($dbType, Record\Builder::$dateTypes, true)
+                in_array($dbType, Record\BuilderFactory::$dateTypes, true)
             ) {
                 $data[] = ['name' => $name];
             }
