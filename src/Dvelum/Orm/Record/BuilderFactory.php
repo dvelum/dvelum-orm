@@ -43,9 +43,8 @@ class BuilderFactory
 
     public function __construct(array $configOptions)
     {
-        foreach ($configOptions as $key => $value)
-        {
-            if(isset($this->{$key})){
+        foreach ($configOptions as $key => $value) {
+            if (isset($this->{$key})) {
                 $this->{$key} = $value;
             }
         }
@@ -56,13 +55,12 @@ class BuilderFactory
      * @return Builder\AbstractAdapter
      * @throws Orm\Exception
      */
-     public function factory(
+    public function factory(
         Orm\Orm $orm,
         StorageInterface $configStorage,
         Dictionary $lang,
         string $objectName
     ): Builder\AbstractAdapter {
-
         $objectConfig = $orm->config($objectName);
         $adapter = 'Builder_Generic';
         $config = Config::factory(\Dvelum\Config\Factory::Simple, $adapter);
@@ -76,19 +74,19 @@ class BuilderFactory
 
         $ormConfig = $configStorage->get('orm.php');
 
-         $config->setData(
-             [
-                 'objectName' => $objectName,
-                 'configPath' => $ormConfig->get('object_configs'),
-                 'log' => $log,
-                 'useForeignKeys' => $this->foreignKeys
-             ]
-         );
+        $config->setData(
+            [
+                'objectName' => $objectName,
+                'configPath' => $ormConfig->get('object_configs'),
+                'log' => $log,
+                'useForeignKeys' => $this->foreignKeys
+            ]
+        );
 
         $model = $orm->model($objectName);
         $platform = $model->getDbConnection()->getAdapter()->getPlatform();
 
-        if($platform === null){
+        if ($platform === null) {
             throw new Orm\Exception('Undefined Platform');
         }
 

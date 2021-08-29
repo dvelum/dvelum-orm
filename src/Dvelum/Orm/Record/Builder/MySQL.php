@@ -104,7 +104,11 @@ class MySQL extends AbstractAdapter
                 foreach ($fields as $k => $v) {
                     $type = $v['db_type'];
 
-                    if (in_array($type, BuilderFactory::$textTypes, true) || in_array($type, BuilderFactory::$blobTypes, true)) {
+                    if (in_array($type, BuilderFactory::$textTypes, true) || in_array(
+                            $type,
+                            BuilderFactory::$blobTypes,
+                            true
+                        )) {
                         $restrictedFields[] = $k;
                     }
                 }

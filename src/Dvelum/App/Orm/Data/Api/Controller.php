@@ -131,7 +131,7 @@ class Controller
         return $this->canDelete;
     }
 
-    public function checkCanPublish() : bool
+    public function checkCanPublish(): bool
     {
         // simplified for development mode
         return $this->canEdit;
@@ -145,7 +145,7 @@ class Controller
     }
 
 
-    protected function getApi(Data\Api\Request $request ): Data\Api
+    protected function getApi(Data\Api\Request $request): Data\Api
     {
         $api = new App\Orm\Data\Api($request, $this->orm);
         if (!empty($this->listFields)) {
@@ -639,6 +639,7 @@ class Controller
         $db->commit();
         $this->response->success($result);
     }
+
     /**
      * Get controller configuration
      * @return ConfigInterface
@@ -647,6 +648,7 @@ class Controller
     {
         return $this->configStorage->get('backend/controller.php');
     }
+
     /**
      * Get posted data and put it into Orm\Record
      * (in case of failure, JSON error message is sent)
@@ -826,10 +828,10 @@ class Controller
 
         $links = $cfg->getLinks(
             [
-                                    Orm\Record\Config::LINK_OBJECT,
-                                    Orm\Record\Config::LINK_OBJECT_LIST,
-                                    Orm\Record\Config::LINK_DICTIONARY
-                                ],
+                Orm\Record\Config::LINK_OBJECT,
+                Orm\Record\Config::LINK_OBJECT_LIST,
+                Orm\Record\Config::LINK_DICTIONARY
+            ],
             false
         );
 

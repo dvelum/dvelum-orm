@@ -31,7 +31,7 @@ class Api
     public function __construct(Api\Request $request, Orm\Orm $orm)
     {
         $this->apiRequest = $request;
-
+        $this->orm = $orm;
 
         $object = $this->apiRequest->getObjectName();
         $ormObjectConfig = $this->orm->config($object);
