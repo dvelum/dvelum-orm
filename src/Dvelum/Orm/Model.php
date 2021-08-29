@@ -122,6 +122,8 @@ class Model
      */
     protected $searchFields = null;
 
+    protected \Dvelum\Orm\Orm $orm;
+
     /**
      * Get DB table prefix
      * @return string
@@ -137,9 +139,10 @@ class Model
      * @param Config\ConfigInterface $ormConfig
      * @throws \Exception
      */
-    public function __construct(string $objectName, Config\ConfigInterface $settings, Config\ConfigInterface $ormConfig)
+    public function __construct(string $objectName, Config\ConfigInterface $settings, Config\ConfigInterface $ormConfig, \Dvelum\Orm\Orm $orm)
     {
         $this->settings = $settings;
+        $this->orm = $orm;
 
         $this->store = $settings->get('storeLoader')();
         $this->name = strtolower($objectName);
@@ -202,7 +205,7 @@ class Model
     {
         if (empty($this->objectConfig)) {
             try {
-                $this->objectConfig = Orm\Record\Config::factory($this->name);
+                $this->objectConfig = $this->orm->config($this->name);
             } catch (\Exception $e) {
                 throw new \Exception('Object ' . $this->name . ' is not exists');
             }
@@ -467,7 +470,7 @@ class Model
             /**
              * @var \Dvelum\Orm\RecordInterface $object
              */
-            $object = Orm\Record::factory($this->name, $recordId);
+            $object = $this->orm->record($this->name, $recordId);
         } catch (\Exception $e) {
             $this->logError('Remove record ' . $recordId . ' : ' . $e->getMessage());
             return false;

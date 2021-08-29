@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -20,6 +21,7 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm\Record\Builder;
 
+use Dvelum\Lang\Dictionary;
 use Dvelum\Orm;
 use Dvelum\Orm\Record\Config;
 use Dvelum\Orm\Model;
@@ -30,7 +32,9 @@ use Dvelum\Config\ConfigInterface;
 use Dvelum\Utils;
 use Dvelum\Db\Metadata\Object\ColumnObject;
 use Laminas\Db\Sql\Ddl;
+use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Config as Cfg;
+
 use \Exception;
 
 
@@ -83,37 +87,51 @@ abstract class AbstractAdapter implements BuilderInterface
 
     protected $validationErrors = [];
 
+    protected Orm\Orm $orm;
+    protected StorageInterface $configStorage;
+    protected Dictionary $lang;
+
     abstract public function prepareColumnUpdates();
+
     abstract public function prepareIndexUpdates();
+
     abstract public function prepareKeysUpdate();
 
     /**
      * @param ConfigInterface $config
      * @throws \Exception
      */
-    public function __construct(ConfigInterface $config)
-    {
+    public function __construct(
+        ConfigInterface $config,
+        Orm\Orm $orm,
+        StorageInterface $configStorage,
+        Dictionary $lang
+    ) {
+        $this->orm = $orm;
+        $this->lang = $lang;
+        $this->configStorage = $configStorage;
         $this->configPath = $config->get('configPath');
         $this->objectName = $config->get('objectName');
 
-        if($config->offsetExists('log') && $config->get('log') instanceof Log\File){
+        if ($config->offsetExists('log') && $config->get('log') instanceof Log\File) {
             $this->log = $config->get('log');
         }
 
-        if($config->offsetExists('useForeignKeys')){
+        if ($config->offsetExists('useForeignKeys')) {
             $this->useForeignKeys = $config->get('useForeignKeys');
         }
 
-        $this->model = Model::factory($this->objectName);
+        $this->model = $orm->model($this->objectName);
         $this->db = $this->model->getDbConnection();
         $this->dbPrefix = $this->model->getDbPrefix();
-        $this->objectConfig = Orm\Record\Config::factory($this->objectName);
+        $this->objectConfig = $orm->config($this->objectName);
     }
 
     /**
-     * @param  \Dvelum\Db\Adapter $db
+     * @param \Dvelum\Db\Adapter $db
      */
-    public function setConnection(\Dvelum\Db\Adapter $db){
+    public function setConnection(\Dvelum\Db\Adapter $db)
+    {
         $this->db = $db;
     }
 
@@ -130,21 +148,18 @@ abstract class AbstractAdapter implements BuilderInterface
      * Check for broken object links
      * @return array
      */
-    public function getBrokenLinks() : array
+    public function getBrokenLinks(): array
     {
         $links = $this->objectConfig->getLinks();
 
-        if(empty($links)){
+        if (empty($links)) {
             return [];
         }
 
         $brokenFields = [];
-        foreach($links as $o => $fieldList)
-        {
-            if(!Config::configExists($o))
-            {
-                foreach($fieldList as $field => $cfg)
-                {
+        foreach ($links as $o => $fieldList) {
+            if (!$this->orm->configExists($o)) {
+                foreach ($fieldList as $field => $cfg) {
                     $brokenFields[$field] = $o;
                 }
             }
@@ -152,39 +167,40 @@ abstract class AbstractAdapter implements BuilderInterface
         return $brokenFields;
     }
 
-    public function validateDistributedConfig() : bool
+    public function validateDistributedConfig(): bool
     {
-        if(!$this->checkRelations()){
+        if (!$this->checkRelations()) {
             $this->validationErrors['relations'] = true;
             return false;
         }
         $shardUpdates = $this->getDistributedObjectsUpdatesInfo();
         $linksUpdates = $this->getObjectsUpdatesInfo();
 
-        if(!empty($shardUpdates) || !empty($linksUpdates))
+        if (!empty($shardUpdates) || !empty($linksUpdates)) {
             return false;
-        else
+        } else {
             return true;
-
+        }
     }
+
     /**
      * Check if DB table has correct structure
      * @return bool
      */
-    public function validate() : bool
+    public function validate(): bool
     {
-        if(!$this->tableExists()){
+        if (!$this->tableExists()) {
             $this->validationErrors['table'] = true;
             return false;
         }
-        if(!$this->checkRelations()){
+        if (!$this->checkRelations()) {
             $this->validationErrors['relations'] = true;
             return false;
         }
         // Check columns
         $updateColumns = $this->prepareColumnUpdates();
         // Column changes
-        if(!empty($updateColumns)){
+        if (!empty($updateColumns)) {
             $this->validationErrors['columns'] = true;
             return false;
         }
@@ -192,13 +208,13 @@ abstract class AbstractAdapter implements BuilderInterface
         // Check indexes
         $updateIndexes = $this->prepareIndexUpdates();
         // Index changes
-        if(!empty($updateIndexes)){
+        if (!empty($updateIndexes)) {
             $this->validationErrors['indexes'] = true;
             return false;
         }
 
         $updateKeys = [];
-        if($this->useForeignKeys){
+        if ($this->useForeignKeys) {
             $updateKeys = $this->prepareKeysUpdate();
         }
 
@@ -211,13 +227,14 @@ abstract class AbstractAdapter implements BuilderInterface
             'links' => !empty($linksUpdates)
         ];
 
-        if(!empty($updateKeys) || !empty($shardUpdates) || !empty($linksUpdates))
+        if (!empty($updateKeys) || !empty($shardUpdates) || !empty($linksUpdates)) {
             return false;
-        else
+        } else {
             return true;
+        }
     }
 
-    public function getValidationErrors() : array
+    public function getValidationErrors(): array
     {
         return $this->validationErrors;
     }
@@ -226,7 +243,7 @@ abstract class AbstractAdapter implements BuilderInterface
      * Get Existing Columns
      * @return \Dvelum\Db\Metadata\ColumnObject[]
      */
-    protected function getExistingColumns() : array
+    protected function getExistingColumns(): array
     {
         return $this->db->getMeta()->getColumns($this->model->table());
     }
@@ -238,20 +255,22 @@ abstract class AbstractAdapter implements BuilderInterface
      * @param boolean $addPrefix - optional append prefix, default false
      * @return boolean
      */
-    public function tableExists(string $name = '', bool $addPrefix = false) : bool
+    public function tableExists(string $name = '', bool $addPrefix = false): bool
     {
-        if(empty($name))
+        if (empty($name)) {
             $name = $this->model->table();
+        }
 
-        if($addPrefix)
+        if ($addPrefix) {
             $name = $this->model->getDbPrefix() . $name;
+        }
 
-        try{
+        try {
             $tables = $this->db->listTables();
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return false;
         }
-        return in_array($name , $tables , true);
+        return in_array($name, $tables, true);
     }
 
     /**
@@ -286,19 +305,19 @@ abstract class AbstractAdapter implements BuilderInterface
      * @param string $sql
      * @return bool
      */
-    protected function logSql(string $sql) : bool
+    protected function logSql(string $sql): bool
     {
-        if(!$this->log){
+        if (!$this->log) {
             return true;
         }
 
-        try{
+        try {
             $this->log->info('--');
             $this->log->info('--' . date('Y-m-d H:i:s'));
             $this->log->info('--');
             $this->log->info($sql);
-        }catch (\Error $e){
-            $this->errors[] = 'Cant write to log file '.$this->log->getFileName();
+        } catch (\Error $e) {
+            $this->errors[] = 'Cant write to log file ' . $this->log->getFileName();
             return false;
         }
 
@@ -309,19 +328,18 @@ abstract class AbstractAdapter implements BuilderInterface
      * Get object foreign keys
      * @return array
      */
-    public function getOrmForeignKeys() : array
+    public function getOrmForeignKeys(): array
     {
-        if(!$this->useForeignKeys)
+        if (!$this->useForeignKeys) {
             return [];
+        }
 
         $keyManager = new Config\ForeignKey();
         $data = $keyManager->getForeignKeys($this->objectConfig);
         $keys = [];
 
-        if(!empty($data))
-        {
-            foreach($data as $item)
-            {
+        if (!empty($data)) {
+            foreach ($data as $item) {
                 $keyName = $this->createForeignKeyName($item);
                 $keys[$keyName] = $item;
             }
@@ -332,31 +350,29 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * Generate index name  for constraint key
      * Mysql limits with 64 chars
-     * @param  array $item
+     * @param array $item
      * @return string
      */
     public function createForeignKeyName(array $item): string
     {
-        $curObjectConfig = Orm\Record\Config::factory($item['curObject']);
+        $curObjectConfig = $this->orm->config($item['curObject']);
         $key = '';
-        if($curObjectConfig->isDistributed())
-        {
-            $toObj  = Orm\Record\Config::factory($item['toObject']);
-            if($toObj->isDistributed())
-            {
-                $key = $this->db->getConfig()['dbname'].'.'.$item['curTable'].'.'.$item['curField'] .
+        if ($curObjectConfig->isDistributed()) {
+            $toObj = $this->orm->config($item['toObject']);
+            if ($toObj->isDistributed()) {
+                $key = $this->db->getConfig()['dbname'] . '.' . $item['curTable'] . '.' . $item['curField'] .
                     '-' .
-                    $this->db->getConfig()['dbname'].'.'.$item['toTable'].'.'.$item['toField'];
+                    $this->db->getConfig()['dbname'] . '.' . $item['toTable'] . '.' . $item['toField'];
             }
         }
 
-        if(empty($key)){
-            $key = $item['curDb'].'.'.$item['curTable'].'.'.$item['curField'] .
+        if (empty($key)) {
+            $key = $item['curDb'] . '.' . $item['curTable'] . '.' . $item['curField'] .
                 '-' .
-                $item['toDb'].'.'.$item['toTable'].'.'.$item['toField'];
+                $item['toDb'] . '.' . $item['toTable'] . '.' . $item['toField'];
         }
 
-        if(mb_strlen($key,'utf-8') > 64){
+        if (mb_strlen($key, 'utf-8') > 64) {
             $key = md5($key);
         }
         return $key;
@@ -366,19 +382,18 @@ abstract class AbstractAdapter implements BuilderInterface
      * Get updates information
      * @return array
      */
-    public function getRelationUpdates() : array
+    public function getRelationUpdates(): array
     {
         $updates = [];
         $relation = new Orm\Record\Config\Relation();
         $list = $relation->getManyToMany($this->objectConfig);
 
-        foreach($list as $fields)
-        {
-            if(!empty($fields)){
-                foreach($fields as $fieldName=>$linkType){
+        foreach ($list as $fields) {
+            if (!empty($fields)) {
+                foreach ($fields as $fieldName => $linkType) {
                     $relationObjectName = $this->objectConfig->getRelationsObject($fieldName);
-                    if(!is_string($relationObjectName) || !Config::configExists($relationObjectName)){
-                        $updates[$fieldName] = ['name' => $relationObjectName, 'action'=>'add'];
+                    if (!is_string($relationObjectName) || !$this->orm->configExists($relationObjectName)) {
+                        $updates[$fieldName] = ['name' => $relationObjectName, 'action' => 'add'];
                     }
                 }
             }
@@ -395,42 +410,43 @@ abstract class AbstractAdapter implements BuilderInterface
         $links = $this->objectConfig->getLinks();
         $brokenFields = [];
 
-        if(!empty($links))
-        {
+        if (!empty($links)) {
             $brokenFields = [];
-            foreach($links as $o => $fieldList){
-                if(!Config::configExists($o)){
-                    foreach($fieldList as $field => $cfg)
+            foreach ($links as $o => $fieldList) {
+                if (!$this->orm->configExists($o)) {
+                    foreach ($fieldList as $field => $cfg) {
                         $brokenFields[$field] = $o;
+                    }
                 }
             }
         }
 
-        if(empty($brokenFields))
+        if (empty($brokenFields)) {
             return false;
-        else
+        } else {
             return $brokenFields;
+        }
     }
 
     /**
      * Remove object
      * @return bool
      */
-    public function remove() : bool
+    public function remove(): bool
     {
-        if($this->objectConfig->isLocked() || $this->objectConfig->isReadOnly()){
+        if ($this->objectConfig->isLocked() || $this->objectConfig->isReadOnly()) {
             $this->errors[] = 'Can not remove locked object table ' . $this->objectConfig->getName();
             return false;
         }
 
         $sql = null;
 
-        try
-        {
-            $model = Model::factory($this->objectName);
+        try {
+            $model = $this->orm->model($this->objectName);
 
-            if(!$this->tableExists())
+            if (!$this->tableExists()) {
                 return true;
+            }
 
             $db = $this->db;
 
@@ -439,9 +455,7 @@ abstract class AbstractAdapter implements BuilderInterface
             $db->query($sql);
             $this->logSql($sql);
             return true;
-        }
-        catch(\Throwable $e)
-        {
+        } catch (\Throwable $e) {
             $this->errors[] = $e->getMessage() . ' <br>SQL: ' . $sql;
             return false;
         }
@@ -453,26 +467,25 @@ abstract class AbstractAdapter implements BuilderInterface
      * @param string $newName
      * @return bool
      */
-    public function renameField($oldName , $newName) : bool
+    public function renameField($oldName, $newName): bool
     {
-        if($this->objectConfig->isLocked() || $this->objectConfig->isReadOnly())
-        {
+        if ($this->objectConfig->isLocked() || $this->objectConfig->isReadOnly()) {
             $this->errors[] = 'Can not build locked object ' . $this->objectConfig->getName();
             return false;
         }
 
         $fieldConfig = $this->objectConfig->getField($newName);
 
-        $sql = ' ALTER TABLE ' . $this->model->table() . ' CHANGE `' . $oldName . '` ' . $this->getPropertySql($newName , $fieldConfig);
+        $sql = ' ALTER TABLE ' . $this->model->table() . ' CHANGE `' . $oldName . '` ' . $this->getPropertySql(
+                $newName,
+                $fieldConfig
+            );
 
-        try
-        {
+        try {
             $this->db->query($sql);
             $this->logSql($sql);
             return true;
-        }
-        catch(\Throwable $e)
-        {
+        } catch (\Throwable $e) {
             echo $e->getMessage();
             $this->errors[] = $e->getMessage() . ' <br>SQL: ' . $sql;
             return false;
@@ -485,7 +498,7 @@ abstract class AbstractAdapter implements BuilderInterface
      * @param Orm\Record\Config\Field $field
      * @return string
      */
-    abstract protected function getPropertySql(string $name , Orm\Record\Config\Field $field) : string;
+    abstract protected function getPropertySql(string $name, Orm\Record\Config\Field $field): string;
 
     /**
      * Update distributed objects
@@ -493,48 +506,47 @@ abstract class AbstractAdapter implements BuilderInterface
      * @return bool
      * @throws \Exception
      */
-    protected function updateDistributed(array $list) : bool
+    protected function updateDistributed(array $list): bool
     {
-        $shardingConfig = Cfg::storage()->get('sharding.php');
+        $shardingConfig = $this->configStorage->get('sharding.php');
 
-        if(!$shardingConfig->get('dist_index_enabled')){
+        if (!$shardingConfig->get('dist_index_enabled')) {
             return true;
         }
 
-        $lang = Lang::lang();
+        $lang = $this->lang;
         $usePrefix = true;
         $indexConnection = $shardingConfig->get('dist_index_connection');
 
         $oConfigPath = $this->objectConfig->getConfigPath();
-        $configDir  = Cfg::storage()->getWrite() . $oConfigPath;
+        $configDir = $this->configStorage->getWrite() . $oConfigPath;
 
-        $objectConfig = Orm\Record\Config::factory($this->objectName);
+        $objectConfig = $this->orm->config($this->objectName);
         $fieldList = $objectConfig->getDistributedFields();
 
-        if(empty($fieldList)){
+        if (empty($fieldList)) {
             $this->errors[] = 'Cannot get distributed fields: ' . 'objects/distributed/fields.php';
             return false;
         }
 
         $distribIndexes = $this->objectConfig->getDistributedIndexesConfig();
 
-        foreach ($distribIndexes as $conf){
-            if(!$conf['is_system']){
+        foreach ($distribIndexes as $conf) {
+            if (!$conf['is_system']) {
                 $field = $this->objectConfig->getField($conf['field']);
                 $fieldList[$conf['field']] = $field->__toArray();
                 $fieldList[$conf['field']]['db_isNull'] = true;
             }
         }
 
-        foreach($list as $item)
-        {
+        foreach ($list as $item) {
             $newObjectName = $item['name'];
             $tableName = $newObjectName;
 
             $objectData = [
                 'data_object' => $this->objectName,
-                'connection'=>$indexConnection,
-                'use_db_prefix'=>$usePrefix,
+                'connection' => $indexConnection,
+                'use_db_prefix' => $usePrefix,
                 'disable_keys' => true,
                 'locked' => false,
                 'readonly' => false,
@@ -549,34 +561,34 @@ abstract class AbstractAdapter implements BuilderInterface
                 'indexes' => [],
             ];
 
-            if(!is_dir($configDir) && !@mkdir($configDir, 0655, true)){
-                $this->errors[] = $lang->get('CANT_WRITE_FS').' '.$configDir;
+            if (!is_dir($configDir) && !@mkdir($configDir, 0655, true)) {
+                $this->errors[] = $lang->get('CANT_WRITE_FS') . ' ' . $configDir;
                 return false;
             }
 
             $newObjectName = strtolower($newObjectName);
             $newConfigPath = $oConfigPath . $newObjectName . '.php';
 
-            if(Cfg::storage()->exists($newConfigPath)){
-                $cfg = Cfg::storage()->get($newConfigPath);
+            if ($this->configStorage->exists($newConfigPath)) {
+                $cfg = $this->configStorage->get($newConfigPath);
                 $cfg->setData($objectData);
-            }else{
-                $cfg = Cfg\Factory::create($objectData, $configDir. $newObjectName . '.php');
+            } else {
+                $cfg = Cfg\Factory::create($objectData, $configDir . $newObjectName . '.php');
             }
 
             /*
              * Write object config
              */
-            if(!Cfg::storage()->save($cfg)){
-                $this->errors[] = $lang->get('CANT_WRITE_FS') . ' ' . $configDir. $newObjectName . '.php';;
+            if (!$this->configStorage->save($cfg)) {
+                $this->errors[] = $lang->get('CANT_WRITE_FS') . ' ' . $configDir . $newObjectName . '.php';
                 return false;
             }
 
-            $cfg = Config::factory($newObjectName, true);
+            $cfg = $this->orm->config($newObjectName, true);
 
-            $cfg->setObjectTitle($this->objectName.' ID Routes');
+            $cfg->setObjectTitle($this->objectName . ' ID Routes');
 
-            if(!$cfg->save()){
+            if (!$cfg->save()) {
                 $this->errors[] = $lang->get('CANT_WRITE_FS');
                 return false;
             }
@@ -584,8 +596,8 @@ abstract class AbstractAdapter implements BuilderInterface
             /*
              * Build database
              */
-            $builder = Builder::factory($newObjectName, true);
-            if(!$builder->build()){
+            $builder = Builder::factory($this->orm, $this->configStorage, $this->lang, $newObjectName, true);
+            if (!$builder->build()) {
                 return false;
             }
         }
@@ -598,7 +610,7 @@ abstract class AbstractAdapter implements BuilderInterface
      * @param array $list
      * @return bool
      */
-    protected function updateRelations(array $list) : bool
+    protected function updateRelations(array $list): bool
     {
         $lang = Lang::lang();
         /**
@@ -613,25 +625,26 @@ abstract class AbstractAdapter implements BuilderInterface
 
         $oConfigPath = $this->objectConfig->getConfigPath();
 
-        $configDir  = Cfg::storage()->getWrite() . $oConfigPath;
+        $configDir = Cfg::storage()->getWrite() . $oConfigPath;
 
         $fieldList = Cfg::storage()->get('objects/relations/fields.php');
         $indexesList = Cfg::storage()->get('objects/relations/indexes.php');
 
-        if(empty($fieldList))
+        if (empty($fieldList)) {
             throw new Exception('Cannot get relation fields: ' . 'objects/relations/fields.php');
+        }
 
-        if(empty($indexesList))
+        if (empty($indexesList)) {
             throw new Exception('Cannot get relation indexes: ' . 'objects/relations/indexes.php');
+        }
 
-        $fieldList= $fieldList->__toArray();
+        $fieldList = $fieldList->__toArray();
         $indexesList = $indexesList->__toArray();
 
         $fieldList['source_id']['link_config']['object'] = $this->objectName;
 
 
-        foreach($list as $fieldName=>$info)
-        {
+        foreach ($list as $fieldName => $info) {
             $newObjectName = $info['name'];
             $tableName = $newObjectName;
 
@@ -641,8 +654,8 @@ abstract class AbstractAdapter implements BuilderInterface
 
             $objectData = [
                 'parent_object' => $this->objectName,
-                'connection'=>$connection,
-                'use_db_prefix'=>$usePrefix,
+                'connection' => $connection,
+                'use_db_prefix' => $usePrefix,
                 'disable_keys' => false,
                 'locked' => false,
                 'readonly' => false,
@@ -659,37 +672,45 @@ abstract class AbstractAdapter implements BuilderInterface
 
             $tables = $db->listTables();
 
-            if($usePrefix){
+            if ($usePrefix) {
                 $tableName = $tablePrefix . $tableName;
             }
 
-            if(in_array($tableName, $tables ,true))
-                throw new Exception($lang->get('INVALID_VALUE').' Table Name: '.$tableName .' '.$lang->get('SB_UNIQUE'));
+            if (in_array($tableName, $tables, true)) {
+                throw new Exception(
+                    $lang->get('INVALID_VALUE') . ' Table Name: ' . $tableName . ' ' . $lang->get('SB_UNIQUE')
+                );
+            }
 
-            if(file_exists($configDir . strtolower($newObjectName).'.php'))
-                throw new Exception($lang->get('INVALID_VALUE').' Object Name: '.$newObjectName .' '.$lang->get('SB_UNIQUE'));
+            if (file_exists($configDir . strtolower($newObjectName) . '.php')) {
+                throw new Exception(
+                    $lang->get('INVALID_VALUE') . ' Object Name: ' . $newObjectName . ' ' . $lang->get('SB_UNIQUE')
+                );
+            }
 
-            if(!is_dir($configDir) && !@mkdir($configDir, 0655, true)){
-                $this->errors[] = $lang->get('CANT_WRITE_FS').' '.$configDir;
+            if (!is_dir($configDir) && !@mkdir($configDir, 0655, true)) {
+                $this->errors[] = $lang->get('CANT_WRITE_FS') . ' ' . $configDir;
                 return false;
             }
 
             /**
              * @var ConfigInterface
              */
-            $cfg = Cfg\Factory::create($objectData,$configDir. $newObjectName . '.php');
+            $cfg = Cfg\Factory::create($objectData, $configDir . $newObjectName . '.php');
             /*
              * Write object config
              */
-            if(!Cfg::storage()->save($cfg)){
-                $this->errors[] = $lang->get('CANT_WRITE_FS') . ' ' . $configDir. $newObjectName . '.php';
+            if (!Cfg::storage()->save($cfg)) {
+                $this->errors[] = $lang->get('CANT_WRITE_FS') . ' ' . $configDir . $newObjectName . '.php';
                 return false;
             }
 
             $cfg = Orm\Record\Config::factory($newObjectName);
-            $cfg->setObjectTitle($lang->get('RELATIONSHIP_MANY_TO_MANY').' '.$this->objectName.' & '.$linkedObject);
+            $cfg->setObjectTitle(
+                $lang->get('RELATIONSHIP_MANY_TO_MANY') . ' ' . $this->objectName . ' & ' . $linkedObject
+            );
 
-            if(!$cfg->save()){
+            if (!$cfg->save()) {
                 $this->errors[] = $lang->get('CANT_WRITE_FS') . ' ' . $cfg->getName();
                 return false;
             }
@@ -698,7 +719,7 @@ abstract class AbstractAdapter implements BuilderInterface
              * Build database
             */
             $builder = Builder::factory($newObjectName, true);
-            if(!$builder->build()){
+            if (!$builder->build()) {
                 return false;
             }
         }
@@ -710,15 +731,15 @@ abstract class AbstractAdapter implements BuilderInterface
      */
     public function getDistributedObjectsUpdatesInfo()
     {
-        if(!$this->objectConfig->isDistributed()){
+        if (!$this->objectConfig->isDistributed()) {
             return [];
         }
 
         $updates = [];
 
         $idObject = $this->objectConfig->getDistributedIndexObject();
-        if(!Orm\Record\Config::configExists($idObject)){
-            $updates[] = ['name' => $idObject, 'action'=>'add'];
+        if (!Orm\Record\Config::configExists($idObject)) {
+            $updates[] = ['name' => $idObject, 'action' => 'add'];
             return $updates;
         }
 
@@ -726,14 +747,14 @@ abstract class AbstractAdapter implements BuilderInterface
 
         $fields = $this->objectConfig->getDistributedIndexesConfig();
 
-        if(!empty($fields)){
-            $fields = Utils::rekey('field' , $fields);
+        if (!empty($fields)) {
+            $fields = Utils::rekey('field', $fields);
         }
 
-        foreach ($fields as $field){
+        foreach ($fields as $field) {
             // New field for index object
-            if(!$objectConfig->fieldExists($field['field'])){
-                $updates[] = ['name' => $idObject, 'action'=>'update'];
+            if (!$objectConfig->fieldExists($field['field'])) {
+                $updates[] = ['name' => $idObject, 'action' => 'update'];
                 return $updates;
             }
             $fieldConfig = $this->objectConfig->getField($field['field'])->__toArray();
@@ -743,21 +764,21 @@ abstract class AbstractAdapter implements BuilderInterface
             unset($fieldConfig['db_isNull']);
             unset($fieldConfig['db_isNull']);
 
-            if($this->objectConfig->getPrimaryKey() == $field['field']){
+            if ($this->objectConfig->getPrimaryKey() == $field['field']) {
                 continue;
             }
             unset($fieldConfig['system']);
             unset($indexConfig['system']);
             // field config updated
-            if(!empty(Utils::array_diff_assoc_recursive($fieldConfig,$indexConfig))){
-                $updates[] = ['name' => $idObject, 'action'=>'update'];
+            if (!empty(Utils::array_diff_assoc_recursive($fieldConfig, $indexConfig))) {
+                $updates[] = ['name' => $idObject, 'action' => 'update'];
                 return $updates;
             }
         }
         // delete field from index
-        foreach ($objectConfig->getFields() as $field){
-            if(!$field->isSystem() && !isset($fields[$field->getName()])){
-                $updates[] = ['name' => $idObject, 'action'=>'update'];
+        foreach ($objectConfig->getFields() as $field) {
+            if (!$field->isSystem() && !isset($fields[$field->getName()])) {
+                $updates[] = ['name' => $idObject, 'action' => 'update'];
                 return $updates;
             }
         }
@@ -772,13 +793,12 @@ abstract class AbstractAdapter implements BuilderInterface
         $updates = [];
         $relation = new Config\Relation();
         $list = $relation->getManyToMany($this->objectConfig);
-        foreach($list as $fields)
-        {
-            if(!empty($fields)){
-                foreach($fields as $fieldName=>$linkType){
+        foreach ($list as $fields) {
+            if (!empty($fields)) {
+                foreach ($fields as $fieldName => $linkType) {
                     $relationObjectName = $this->objectConfig->getRelationsObject($fieldName);
-                    if(!is_string($relationObjectName) || !Orm\Record\Config::configExists($relationObjectName)){
-                        $updates[$fieldName] = ['name' => $relationObjectName, 'action'=>'add'];
+                    if (!is_string($relationObjectName) || !Orm\Record\Config::configExists($relationObjectName)) {
+                        $updates[$fieldName] = ['name' => $relationObjectName, 'action' => 'add'];
                     }
                 }
             }

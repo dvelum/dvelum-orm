@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Dvelum\App\Orm\Api;
 
 use Dvelum\App\Router\RouterInterface;
+use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Lang;
 use Dvelum\Lang\Dictionary;
 use Dvelum\Orm\Orm;
+use Dvelum\Orm\Record\Builder;
+use Dvelum\Orm\Record\Builder\AbstractAdapter;
 use Dvelum\Request;
 use Dvelum\Response;
 use Psr\Container\ContainerInterface;
@@ -21,8 +24,10 @@ abstract class Controller
     protected Orm $ormService;
     protected Dictionary $lang;
     protected bool $canEdit;
+    protected bool $canDelete;
+    protected StorageInterface $configStorage;
 
-    public function __construct(Request $request, Response $response, ContainerInterface $container, bool $canEdit)
+    public function __construct(Request $request, Response $response, ContainerInterface $container, bool $canEdit = true, bool $canDelete = true)
     {
         $this->request = $request;
         $this->response = $response;
@@ -30,6 +35,8 @@ abstract class Controller
         $this->ormService = $container->get(Orm::class);
         $this->lang = $container->get(Lang::class)->getDictionary();
         $this->canEdit = $canEdit;
+        $this->canDelete = $canDelete;
+        $this->configStorage = $container->get(StorageInterface::class);
     }
 
     public function setRouter(RouterInterface $router) : void
@@ -40,5 +47,15 @@ abstract class Controller
     public function checkCanEdit() : bool
     {
         return $this->canEdit;
+    }
+
+    public function checkCanDelete(): bool
+    {
+        return $this->canDelete;
+    }
+
+    public function getObjectBuilder(string $objectName, bool $forceConfig = true): AbstractAdapter
+    {
+        return Builder::factory($this->ormService, $this->configStorage, $this->lang, $objectName, $forceConfig);
     }
 }

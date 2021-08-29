@@ -3,3 +3,10 @@
 ![Build and Test](https://github.com/dvelum/dvelum-orm/workflows/Build%20and%20Test/badge.svg?branch=develop&event=push)
 
 # DVelum 4.x ORM [Experimental extension]
+
+
+## Installation for DVelum Core 4.x
+```
+composer require dvelum/dvelum-orm
+php ./console.php  /extension-add/dvelum/dvelum-orm
+```

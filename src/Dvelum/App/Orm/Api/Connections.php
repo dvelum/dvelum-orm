@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace Dvelum\App\Backend\Orm;
+namespace Dvelum\App\Orm\Api;
 
 use Dvelum\Config;
 use Dvelum\Lang;
@@ -57,6 +57,10 @@ class Connections
         $dbPath = Config::storage()->get('main.php')->get('db_config_path');
 
         $dir = dirname($this->config[$devType]['dir'] . '/' . $dbPath);
+
+        if(!is_dir($dir)){
+            return [];
+        }
 
         $files = \Dvelum\File::scanFiles($dir, array('.php'), false, \Dvelum\File::FILES_ONLY);
         $result = [];

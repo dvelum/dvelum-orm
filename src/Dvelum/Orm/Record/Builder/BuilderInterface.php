@@ -19,6 +19,9 @@
 
 namespace Dvelum\Orm\Record\Builder;
 use Dvelum\Config\ConfigInterface;
+use Dvelum\Config\Storage\StorageInterface;
+use Dvelum\Lang\Dictionary;
+use Dvelum\Orm\Orm;
 
 /**
  * interface BuilderInterface
@@ -28,8 +31,10 @@ interface BuilderInterface
 {
     /**
      * @param ConfigInterface $config
+     * @param Orm $orm
+     * @param StorageInterface $configStorage
      */
-    public function __construct(ConfigInterface $config);
+    public function __construct(ConfigInterface $config, Orm $orm, StorageInterface $configStorage, Dictionary $lang);
 
     /**
      * Get error messages

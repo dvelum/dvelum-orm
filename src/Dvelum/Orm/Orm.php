@@ -460,16 +460,16 @@ class Orm
          * Instantiate real or virtual model
          */
         if (class_exists($className)) {
-            $this->models[$listName] = new $className($objectName, $modelSettings, $this->config);
+            $this->models[$listName] = new $className($objectName, $modelSettings, $this->config, $this);
         } elseif (class_exists($nameSpacedClassName)) {
-            $this->models[$listName] = new $nameSpacedClassName($objectName, $modelSettings, $this->config);
+            $this->models[$listName] = new $nameSpacedClassName($objectName, $modelSettings, $this->config, $this);
         } elseif (class_exists($distModelClassName)) {
-            $this->models[$listName] = new $distModelClassName($objectName, $modelSettings, $this->config);
+            $this->models[$listName] = new $distModelClassName($objectName, $modelSettings, $this->config, $this);
         } else {
             if ($this->config($objectName)->isDistributed()) {
-                $this->models[$listName] = new Distributed\Model($objectName, $modelSettings, $this->config);
+                $this->models[$listName] = new Distributed\Model($objectName, $modelSettings, $this->config, $this);
             } else {
-                $this->models[$listName] = new Model($objectName, $modelSettings, $this->config);
+                $this->models[$listName] = new Model($objectName, $modelSettings, $this->config, $this);
             }
         }
         return $this->models[$listName];

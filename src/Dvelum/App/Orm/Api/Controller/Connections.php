@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace Dvelum\App\Orm\Api\Controller;
 
 use Dvelum\App\Backend\Orm;
+use Dvelum\App\Orm\Api\Controller;
 use Dvelum\Config;
 use Dvelum\Db\Adapter;
 use Dvelum\Request;
@@ -33,23 +34,19 @@ use Dvelum\Response;
 use Dvelum\Orm\Model;
 use Dvelum\Orm\Record\Manager;
 use Dvelum\Orm\Record\Import;
+use Psr\Container\ContainerInterface;
 
-class Connections extends \Dvelum\App\Backend\Controller
+class Connections extends Controller
 {
     /**
-     * @var Orm\Connections
+     * @var \Dvelum\App\Orm\Api\Connections $connections
      */
     protected $connections;
 
-    public function getModule(): string
+    public function __construct(Request $request, Response $response, ContainerInterface $container, bool $canEdit = true, bool $canDelete = true)
     {
-        return 'Orm';
-    }
-
-    public function __construct(Request $request, Response $response)
-    {
-        parent::__construct($request, $response);
-        $this->connections = new Orm\Connections($this->appConfig->get('db_configs'));
+        parent::__construct($request, $response, $container, $canEdit, $canDelete);
+        $this->connections = new \Dvelum\App\Orm\Api\Connections($container->get('config.main')->get('db_configs'));
     }
 
     public function indexAction()
@@ -65,7 +62,6 @@ class Connections extends \Dvelum\App\Backend\Controller
             $this->response->error($this->lang->get('WRONG_REQUEST') . ' undefined devType');
             return;
         }
-
 
         $connections = $this->connections->getConnections($devType);
         $data = [];

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api;
 
+use Dvelum\App\Backend\Orm\Connections;
 use Dvelum\Config;
 use Dvelum\File;
 use Dvelum\Orm;
@@ -36,10 +37,16 @@ class Router implements RouterInterface
      * @var bool $canEdit
      */
     private bool $canEdit;
+    private bool $canDelete;
 
-    public function __construct(ContainerInterface $container, int $pathIndex, bool $canEdit)
-    {
+    public function __construct(
+        ContainerInterface $container,
+        int $pathIndex,
+        bool $canEdit = true,
+        bool $canDelete = true
+    ) {
         $this->canEdit = $canEdit;
+        $this->canDelete = $canDelete;
         $this->pathIndex = $pathIndex;
 
         $this->container = $container;
@@ -85,7 +92,7 @@ class Router implements RouterInterface
             $this->indexAction();
         }
 
-        if(!$this->response->isSent()){
+        if (!$this->response->isSent()) {
             $this->response->send();
         }
         return $this->response->getPsrResponse();
@@ -123,14 +130,23 @@ class Router implements RouterInterface
      */
     public function listDetailsAction()
     {
+        /**
+         * @var Orm\Orm $orm
+         */
+        $orm = $this->container->get(Orm\Orm::class);
+
         $object = $this->request->post('object', 'string', '');
 
-        if (!Orm\Record\Config::configExists($object)) {
+        if (!$orm->configExists($object)) {
             $this->response->error($this->lang->get('WRONG_REQUEST'));
             return;
         }
-        $stat = new Orm\Stat();
-        $config = Orm\Record\Config::factory($object);
+        $stat = new Orm\Stat(
+            $this->container->get(Config\Storage\StorageInterface::class),
+            $this->container->get(Orm\Orm::class)
+        );
+
+        $config = $orm->config($object);
         if ($config->isDistributed()) {
             $data = $stat->getDistributedDetails($object);
         } else {
@@ -142,6 +158,11 @@ class Router implements RouterInterface
     private function checkCanEdit(): bool
     {
         return $this->canEdit;
+    }
+
+    private function checkCanDelete(): bool
+    {
+        return $this->canDelete;
     }
 
     /**
@@ -171,7 +192,7 @@ class Router implements RouterInterface
              */
             foreach ($names as $name) {
                 try {
-                    $builder = Orm\Record\Builder::factory($name);
+                    $builder = $this->createBuilder($name);
                     $builder->build(false);
                 } catch (\Exception $e) {
                     $flag = true;
@@ -182,7 +203,7 @@ class Router implements RouterInterface
              */
             foreach ($names as $name) {
                 try {
-                    $builder = Orm\Record\Builder::factory($name);
+                    $builder = $this->createBuilder($name);
                     if (!$builder->buildForeignKeys(true, true)) {
                         $flag = true;
                     }
@@ -193,13 +214,18 @@ class Router implements RouterInterface
         } else {
             foreach ($names as $name) {
                 try {
-                    $builder = Orm\Record\Builder::factory($name);
+                    $builder = $this->createBuilder($name);
                     $builder->build();
                 } catch (\Exception $e) {
                     $flag = true;
                 }
             }
         }
+
+        /**
+         * @var Orm\Orm $orm
+         */
+        $orm = $this->container->get(Orm\Orm::class);
 
         if ($ormConfig->get('sharding')) {
             $sharding = $configStorage->get('sharding.php');
@@ -214,12 +240,12 @@ class Router implements RouterInterface
                 $shardId = $item['id'];
                 //build objects
                 foreach ($names as $index => $object) {
-                    if (!Orm\Record\Config::factory($object)->isDistributed()) {
+                    if (!$orm->config($object)->isDistributed()) {
                         unset($registeredObjects[$index]);
                         continue;
                     }
-                    $builder = Orm\Record\Builder::factory($object);
-                    $builder->setConnection(Orm\Model::factory($object)->getDbShardConnection($shardId));
+                    $builder = $this->createBuilder($object);
+                    $builder->setConnection($orm->model($object)->getDbShardConnection($shardId));
                     if (!$builder->build(false, true)) {
                         $flag = true;
                     }
@@ -228,8 +254,8 @@ class Router implements RouterInterface
                 //build foreign keys
                 if ($ormConfig->get('foreign_keys')) {
                     foreach ($registeredObjects as $index => $object) {
-                        $builder = Orm\Record\Builder::factory($object);
-                        $builder->setConnection(Orm\Model::factory($object)->getDbShardConnection($shardId));
+                        $builder = $this->createBuilder($object);
+                        $builder->setConnection($orm->model($object)->getDbShardConnection($shardId));
                         if (!$builder->build(true, true)) {
                             $flag = true;
                         }
@@ -246,12 +272,22 @@ class Router implements RouterInterface
         }
     }
 
+    protected function createBuilder(string $objectName)
+    {
+        return Orm\Record\Builder::factory(
+            $this->container->get(Orm\Orm::class),
+            $this->container->get(Config\Storage\StorageInterface::class),
+            $this->container->get(Lang::class)->lang(),
+            $objectName
+        );
+    }
+
     /**
      * Get list of database connections
      */
     public function connectionsListAction()
     {
-        $manager = new Connections($this->appConfig->get('db_configs'));
+        $manager = new Connections($this->container->get('config.main')->get('db_configs'));
         $list = $manager->getConnections(0);
         $data = [];
         if (!empty($list)) {
@@ -374,7 +410,13 @@ class Router implements RouterInterface
         /**
          * @var \Dvelum\App\Controller $controller
          */
-        $controller = new $controller($request, $response, $this->container, $this->checkCanEdit());
+        $controller = new $controller(
+            $request,
+            $response,
+            $this->container,
+            $this->checkCanEdit(),
+            $this->checkCanDelete()
+        );
         $controller->setRouter($this);
 
         if ($response->isSent()) {

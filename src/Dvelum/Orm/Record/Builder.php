@@ -21,6 +21,8 @@ declare(strict_types=1);
 namespace Dvelum\Orm\Record;
 
 use Dvelum\Config as Cfg;
+use Dvelum\Config\Storage\StorageInterface;
+use Dvelum\Lang\Dictionary;
 use Dvelum\Orm;
 use Dvelum\Orm\Model;
 
@@ -45,9 +47,9 @@ class Builder
      * @throws Orm\Exception
      * @return Builder\AbstractAdapter
      */
-    static public function factory(string $objectName, bool $forceConfig = true): Builder\AbstractAdapter
+    static public function factory(Orm\Orm $orm, StorageInterface $configStorage, Dictionary $lang, string $objectName, bool $forceConfig = true): Builder\AbstractAdapter
     {
-        $objectConfig = Config::factory($objectName);
+        $objectConfig = $orm->config($objectName);
 
         $adapter = 'Builder_Generic';
 
@@ -58,7 +60,7 @@ class Builder
             $log = new \Dvelum\Log\File\Sql(static::$logsPath . $objectConfig->get('connection') . '-' . static::$logPrefix . '-build.sql');
         }
 
-        $ormConfig = Cfg::storage()->get('orm.php');
+        $ormConfig = $configStorage->get('orm.php');
 
         $config->setData([
             'objectName' => $objectName,
@@ -67,20 +69,20 @@ class Builder
             'useForeignKeys' => static::$foreignKeys
         ]);
 
-        $model = Model::factory($objectName);
+        $model = $orm->model($objectName);
         $platform = $model->getDbConnection()->getAdapter()->getPlatform();
 
         $platform = $platform->getName();
         $builderAdapter = static::class . '\\' . $platform;
 
         if (class_exists($builderAdapter)) {
-            return new $builderAdapter($config, $forceConfig);
+            return new $builderAdapter($config, $orm , $configStorage, $lang);
         }
 
         $builderAdapter = static::class . '\\Generic\\' . $platform;
 
         if (class_exists($builderAdapter)) {
-            return new $builderAdapter($config, $forceConfig);
+            return new $builderAdapter($config, $orm, $configStorage, $lang);
         }
 
         throw new Orm\Exception('Undefined Platform');
@@ -165,7 +167,7 @@ class Builder
      */
     static public function setLogPrefix(string $string): void
     {
-        self::$logPrefix = strval($string);
+        self::$logPrefix = $string;
     }
 
     /**

@@ -4,6 +4,6 @@ return [
         'src' => 'src',
         'configs' => 'configs/common',
         'locales' => 'locales',
-        'dependency' => 'config/common/dependency.php'
+        'dependency' => 'configs/common/dependency.php'
     ]
 ];

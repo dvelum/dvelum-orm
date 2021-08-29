@@ -30,7 +30,6 @@ use Dvelum\Orm;
 class Record extends Controller
 {
 
-
     public function indexAction()
     {
     }
@@ -40,13 +39,13 @@ class Record extends Controller
         $object = $this->request->post('object', 'string', '');
         $shard = $this->request->post('shard', 'string', '');
 
-        if (!Orm\Record\Config::configExists($object)) {
+        if (!$this->ormService->configExists($object)) {
             $this->response->error($this->lang->get('WRONG_REQUEST'));
             return;
         }
 
         $stat = new Orm\Stat();
-        $config = Orm\Record\Config::factory($object);
+        $config = $this->ormService->config($object);
 
 //        $validateShard = false;
 //        if(strlen($shard) && $config->isDistributed()){
@@ -76,7 +75,7 @@ class Record extends Controller
             return;
         }
 
-        $objectConfig = Orm\Record\Config::factory($name);
+        $objectConfig = $this->ormService->config($name);
 
         try {
             /**
@@ -88,7 +87,7 @@ class Record extends Controller
             return;
         }
 
-        $builder = Orm\Record\Builder::factory($name);
+        $builder = $this->getObjectBuilder($name);
 
 
         $colUpd = [];
@@ -100,7 +99,7 @@ class Record extends Controller
         $tableExists = false;
 
         if (strlen($shard) && $objectConfig->isDistributed()) {
-            $model = Orm\Model::factory($name);
+            $model = $this->ormService->model($name);
             $connectionName = $model->getConnectionName();
             $db = $model->getDbManager()->getDbConnection($connectionName, null, $shard);
             $builder->setConnection($db);
@@ -125,7 +124,7 @@ class Record extends Controller
         }
 
         $objects = $builder->getRelationUpdates();
-        $ormConfig = Config::storage()->get('sharding.php');
+        $ormConfig = $this->configStorage->get('sharding.php');
 
         if ($objConfig->isDistributed() && $ormConfig->get('dist_index_enabled')) {
             $shardObjects = $builder->getDistributedObjectsUpdatesInfo();
@@ -139,17 +138,17 @@ class Record extends Controller
         $template = \Dvelum\View::factory();
         $template->disableCache();
         $template->setData([
-                               'engineUpdate' => $engineUpdate,
-                               'columns' => $colUpd,
-                               'indexes' => $indUpd,
-                               'objects' => $objects,
-                               'keys' => $keyUpd,
-                               'tableExists' => $tableExists,
-                               'tableName' => Orm\Model::factory($name)->table(),
-                               'lang' => $this->lang,
-                               'shardObjects' => $shardObjects
-                           ]);
-        $cfgBackend = Config\Factory::storage()->get('backend.php');
+           'engineUpdate' => $engineUpdate,
+           'columns' => $colUpd,
+           'indexes' => $indUpd,
+           'objects' => $objects,
+           'keys' => $keyUpd,
+           'tableExists' => $tableExists,
+           'tableName' => $this->ormService->model($name)->table(),
+           'lang' => $this->lang,
+           'shardObjects' => $shardObjects
+        ]);
+        $cfgBackend = $this->configStorage->get('backend.php');
         $templatesPath = 'system/' . $cfgBackend->get('theme') . '/';
         $msg = $template->render($templatesPath . 'orm_validate_msg.php');
         $this->response->success([], array('text' => $msg, 'nothingToDo' => false));
@@ -174,18 +173,18 @@ class Record extends Controller
             return;
         }
 
-        if (!Orm\Record\Config::configExists($name)) {
+        if (!$this->ormService->configExists($name)) {
             $this->response->error($this->lang->get('WRONG_REQUEST'));
             return;
         }
 
-        $builder = Orm\Record\Builder::factory($name);
-        $config = Orm\Record\Config::factory($name);
+        $builder = $this->getObjectBuilder($name);
+        $config = $this->ormService->config($name);
 
         $buildShard = false;
         if (strlen($shard) && $config->isDistributed()) {
             $buildShard = true;
-            $model = Orm\Model::factory($name);
+            $model = $this->ormService->model($name);
             $connectionName = $model->getConnectionName();
             $builder->setConnection($model->getDbManager()->getDbConnection($connectionName, null, $shard));
         }
@@ -210,13 +209,13 @@ class Record extends Controller
         }
 
         try {
-            $objectConfig = Orm\Record\Config::factory($object);
-        } catch (\Exception $e) {
+            $objectConfig = $this->ormService->config($object);
+        } catch (\InvalidArgumentException $e) {
             $this->response->error($this->lang->get('INVALID_VALUE'));
             return;
         }
 
-        $builder = Orm\Record\Builder::factory($object);
+        $builder = $this->getObjectBuilder($object);
         $brokenFields = $builder->hasBrokenLinks();
 
         $fieldsCfg = $objectConfig->getFieldsConfig();
@@ -266,8 +265,8 @@ class Record extends Controller
         }
 
         try {
-            $objectConfig = Orm\Record\Config::factory($object);
-        } catch (\Exception $e) {
+            $objectConfig = $this->ormService->config($object);
+        } catch (\InvalidArgumentException $e) {
             $this->response->error($this->lang->get('INVALID_VALUE'));
             return;
         }
@@ -301,7 +300,7 @@ class Record extends Controller
         }
 
         try {
-            $oConfig = Orm\Record\Config::factory($objectName);
+            $oConfig = $this->ormService->config($objectName);
             if ($deleteTable && ($oConfig->isLocked() || $oConfig->isReadOnly())) {
                 $this->response->error($this->lang->get('DB_CANT_DELETE_LOCKED_TABLE'));
             }
@@ -469,7 +468,7 @@ class Record extends Controller
      */
     protected function checkExternalProperties(array &$data, array &$errors)
     {
-        $properties = Config::storage()->get('orm/properties.php')->__toArray();
+        $properties = $this->configStorage->get('orm/properties.php')->__toArray();
         if (empty($properties)) {
             return;
         }
@@ -509,10 +508,10 @@ class Record extends Controller
         /**
          * @var \Dvelum\Orm\Orm
          */
-        $ormService = Service::get('orm');
+        $ormService = $this->ormService;
 
         $oConfigPath = $ormService->getConfigSettings()->get('configPath');
-        $configDir = Config::storage()->getWrite() . $oConfigPath;
+        $configDir = $this->configStorage->getWrite() . $oConfigPath;
 
         $tableName = $data['table'];
 
@@ -545,21 +544,21 @@ class Record extends Controller
          */
         $newConfig = Config\Factory::create([], $configDir . $name . '.php');
 
-        if (!Config::storage()->save($newConfig)) {
+        if (!$this->configStorage->save($newConfig)) {
             $this->response->error($this->lang->get('CANT_WRITE_FS') . ' ' . $configDir . $name . '.php');
         }
 
-        $cfg = Config::storage()->get($oConfigPath . strtolower($name) . '.php', false, false);
+        $cfg = $this->configStorage->get($oConfigPath . strtolower($name) . '.php', false, false);
         /*
          * Add fields config
          */
         $data['fields'] = [];
 
         $cfg->setData($data);
-        Config::storage()->save($cfg);
+        $this->configStorage->save($cfg);
 
         try {
-            $cfg = Orm\Record\Config::factory($name);
+            $cfg = $this->ormService->config($name);
             $cfg->setObjectTitle($data['title']);
 
             if (!$cfg->save()) {
@@ -570,7 +569,7 @@ class Record extends Controller
             /*
              * Build database
             */
-            $builder = Orm\Record\Builder::factory($name);
+            $builder = $this->getObjectBuilder($name);
             $builder->build();
         } catch (\Exception $e) {
             $this->response->error($this->lang->get('CANT_EXEC') . 'code 2');
@@ -581,8 +580,8 @@ class Record extends Controller
 
     protected function updateObject($recordId, $name, array $data)
     {
-        $ormConfig = Config::storage()->get('orm.php');
-        $dataDir = Config::storage()->getWrite() . $ormConfig->get('object_configs');
+        $ormConfig = $this->configStorage->get('orm.php');
+        $dataDir = $this->configStorage->getWrite() . $ormConfig->get('object_configs');
         $objectConfigPath = $dataDir . $recordId . '.php';
 
         if (!is_writable($dataDir)) {
@@ -603,7 +602,7 @@ class Record extends Controller
         }
 
         try {
-            $config = Orm\Record\Config::factory($name);
+            $config = $this->ormService->config($name);
         } catch (\Exception $e) {
             $this->response->error($this->lang->get('INVALID_VALUE'));
             return;
@@ -612,7 +611,7 @@ class Record extends Controller
         /**
          * @var Orm\Record\Builder\MySQL $builder
          */
-        $builder = Orm\Record\Builder::factory($name);
+        $builder = $this->getObjectBuilder($name);
 
         /*
          * Rename Db Table
@@ -667,7 +666,7 @@ class Record extends Controller
 
     protected function renameObject($oldName, $newName)
     {
-        $ormConfig = Config::storage()->get('orm.php');
+        $ormConfig = $this->configStorage->get('orm.php');
 
         $newFileName = $ormConfig->get('object_configs') . $newName . '.php';
         //$oldFileName = $this->appConfig->get('object_configs').$oldName.'.php';

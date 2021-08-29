@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api\Controller;
 
-use Dvelum\App\Backend\Orm\Manager;
-use Dvelum\App\Backend\Controller;
+use Dvelum\App\Orm\Api\Manager;
+use Dvelum\App\Orm\Api\Controller;
 use Dvelum\Config;
 use Dvelum\Lang;
 use Dvelum\Orm;
@@ -32,11 +32,6 @@ use Dvelum\Orm\Record;
 
 class Distributed extends Controller
 {
-    public function getModule(): string
-    {
-        return 'Orm';
-    }
-
     public function indexAction()
     {
     }
@@ -56,7 +51,7 @@ class Distributed extends Controller
 
 
         try {
-            $objectConfig = Record\Config::factory($object);
+            $objectConfig = $this->ormService->config($object);
         } catch (Exception $e) {
             $this->response->error($this->lang->get('INVALID_VALUE'));
             return;
@@ -99,7 +94,7 @@ class Distributed extends Controller
         }
 
         try {
-            $objectConfig = Record\Config::factory($object);
+            $objectConfig = $this->ormService->config($object);
         } catch (Exception $e) {
             $this->response->error($this->lang->get('INVALID_VALUE'));
             return;
@@ -134,7 +129,7 @@ class Distributed extends Controller
         }
 
         try {
-            $objectCfg = Record\Config::factory($object);
+            $objectCfg = $this->ormService->config($object);
         } catch (Exception $e) {
             $this->response->error($this->lang->get('WRONG_REQUEST ' . ' code 2'));
             return;
@@ -157,14 +152,12 @@ class Distributed extends Controller
      */
     public function listShardingTypesAction()
     {
-        $lang = Lang::lang();
-
-        $config = Config::storage()->get('sharding.php')->get('sharding_types');
+        $config = $this->configStorage->get('sharding.php')->get('sharding_types');
         $data = [];
         foreach ($config as $index => $item) {
             $data[] = [
                 'id' => $index,
-                'title' => $lang->get($item['title'])
+                'title' => $this->lang->get($item['title'])
             ];
         }
         $this->response->success($data);
@@ -183,12 +176,12 @@ class Distributed extends Controller
             return;
         }
 
-        if (!Orm\Record\Config::configExists($object)) {
+        if (!$this->ormService->configExists($object)) {
             $this->response->success([]);
             return;
         }
 
-        $config = Orm\Record\Config::factory($object);
+        $config = $this->ormService->config($object);
         $fields = $config->getFields();
 
         $data = [];
@@ -228,7 +221,7 @@ class Distributed extends Controller
         }
 
         try {
-            $objectConfig = Record\Config::factory($object);
+            $objectConfig = $this->ormService->config($object);
         } catch (Exception $e) {
             $this->response->error($this->lang->get('INVALID_VALUE'));
             return;

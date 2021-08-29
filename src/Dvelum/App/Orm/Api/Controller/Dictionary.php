@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api\Controller;
 
-use Dvelum\App\Backend\Controller;
+use Dvelum\App\Orm\Api\Controller;
 use Dvelum\App\Dictionary\Manager;
 
 class Dictionary extends Controller
