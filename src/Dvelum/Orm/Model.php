@@ -329,7 +329,7 @@ class Model
         }
 
         $data = $this->getItem($id);
-        $this->cache->save($data, $cacheKey, $lifetime);
+        $this->cache->save($cacheKey, $data, $lifetime);
 
         return $data;
     }
@@ -338,7 +338,7 @@ class Model
      * Get data record by field value using cache. Returns first occurrence
      * @param string $field - field name
      * @param string $value - field value
-     * @return array
+     * @return array<string,mixed>
      * @throws \Exception
      */
     public function getCachedItemByField(string $field, $value): array
@@ -361,7 +361,7 @@ class Model
         }
 
         if ($this->cache && $data) {
-            $this->cache->save($data, $cacheKey);
+            $this->cache->save($cacheKey, $data);
         }
 
         return $data;
@@ -421,7 +421,7 @@ class Model
             }
 
             if ($useCache && $this->cache) {
-                $this->cache->save($data, $cacheKey, $this->cacheTime);
+                $this->cache->save($cacheKey,$data, $this->cacheTime);
             }
         }
         return $data;

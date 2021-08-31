@@ -115,7 +115,7 @@ class Model extends Orm\Model
         }
 
         if ($this->cache && $data) {
-            $this->cache->save($data, $cacheKey);
+            $this->cache->save($cacheKey, $data);
         }
 
         return $data;
@@ -189,7 +189,7 @@ class Model extends Orm\Model
             }
 
             if ($useCache && $this->cache) {
-                $this->cache->save($data, $cacheKey, $this->cacheTime);
+                $this->cache->save($cacheKey, data, $this->cacheTime);
             }
         }
         return $data;
