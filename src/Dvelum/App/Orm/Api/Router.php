@@ -11,13 +11,12 @@ use Dvelum\Orm;
 
 use Dvelum\Lang;
 use Dvelum\Request;
-use Dvelum\Response;
+use Dvelum\Response\Response;
+use Dvelum\Response\ResponseInterface;
 use Dvelum\App\Router\RouterInterface;
 
 use Dvelum\Utils;
-use Psr\Container\ContainerInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
+use Psr\Container\ContainerInterface;;
 
 class Router implements RouterInterface
 {
@@ -28,7 +27,7 @@ class Router implements RouterInterface
     protected array $routes;
 
     private Request $request;
-    private Response $response;
+    private ResponseInterface $response;
     private Lang\Dictionary $lang;
     private int $pathIndex;
 
@@ -50,27 +49,27 @@ class Router implements RouterInterface
         $this->pathIndex = $pathIndex;
 
         $this->container = $container;
-        $this->lang = $container->get(Lang::class)->lang();
+        $this->lang = $container->get(Lang::class)->getDictionary();
 
         $configStorage = $this->container->get(Config\Storage\StorageInterface::class);
         $this->routes = $configStorage->get('orm/routes.php')->__toArray();
     }
 
-    public function route(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function route(Request $request, ResponseInterface $response): ResponseInterface
     {
-        $this->request = new Request($request);
-        $this->response = new Response($response);
-        $this->response->setFormat(Response::FORMAT_JSON);
+        $this->request = $request;
+        $this->response = $response;
+        $response->setFormat(ResponseInterface::FORMAT_JSON);
 
-        $action = $this->request->getPart($this->pathIndex);
+        $action = $request->getPart($this->pathIndex);
 
         if (isset($this->routes[$action])) {
             $router = new self($this->container, $this->pathIndex, $this->canEdit);
             return $router->runController(
                 $this->routes[$action],
-                $this->request->getPart($this->pathIndex + 1),
-                $this->request,
-                $this->response
+                $request->getPart($this->pathIndex + 1),
+                $request,
+                $response
             );
         }
 
@@ -80,10 +79,11 @@ class Router implements RouterInterface
             $this->indexAction();
         }
 
-        if (!$this->response->isSent()) {
-            $this->response->send();
+        if (!$response->isSent()) {
+            $response->send();
         }
-        return $this->response->getPsrResponse();
+
+        return $response;
     }
 
     public function indexAction()
@@ -394,7 +394,7 @@ class Router implements RouterInterface
         string $controller,
         ?string $action,
         Request $request,
-        Response $response
+        ResponseInterface $response
     ): ResponseInterface {
         if (!class_exists($controller)) {
             throw new \Exception('Undefined Controller: ' . $controller);
@@ -442,7 +442,7 @@ class Router implements RouterInterface
         if (!$response->isSent() && method_exists($controller, 'showPage')) {
             $controller->showPage();
         }
-        return $response->getPsrResponse();
+        return $response;
     }
 
 }

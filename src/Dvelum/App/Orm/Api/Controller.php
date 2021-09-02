@@ -12,13 +12,13 @@ use Dvelum\Orm\Orm;
 use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record\Builder\AbstractAdapter;
 use Dvelum\Request;
-use Dvelum\Response;
+use Dvelum\Response\ResponseInterface;
 use Psr\Container\ContainerInterface;
 
 abstract class Controller
 {
     protected Request $request;
-    protected Response $response;
+    protected ResponseInterface $response;
     protected ContainerInterface $container;
     protected RouterInterface $router;
     protected Orm $ormService;
@@ -29,7 +29,7 @@ abstract class Controller
 
     public function __construct(
         Request $request,
-        Response $response,
+        ResponseInterface $response,
         ContainerInterface $container,
         bool $canEdit = true,
         bool $canDelete = true
@@ -43,7 +43,7 @@ abstract class Controller
         $this->canDelete = $canDelete;
         $this->configStorage = $container->get(StorageInterface::class);
          /*
-          * @todo remove bakward compat
+          * @todo remove backward compatibility
           */
         \Dvelum\Orm::setContainer($container);
     }

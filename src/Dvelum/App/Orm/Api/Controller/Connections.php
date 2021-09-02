@@ -29,7 +29,7 @@ use Dvelum\App\Orm\Api\Controller;
 use Dvelum\Config;
 use Dvelum\Db\Adapter;
 use Dvelum\Request;
-use Dvelum\Response;
+use Dvelum\Response\ResponseInterface;
 
 use Dvelum\Orm\Model;
 use Dvelum\Orm\Record\Manager;
@@ -45,7 +45,7 @@ class Connections extends Controller
 
     public function __construct(
         Request $request,
-        Response $response,
+        ResponseInterface $response,
         ContainerInterface $container,
         bool $canEdit = true,
         bool $canDelete = true
@@ -54,12 +54,12 @@ class Connections extends Controller
         $this->connections = new \Dvelum\App\Orm\Api\Connections($container->get('config.main')->get('db_configs'));
     }
 
-    public function indexAction()
+    public function indexAction(): void
     {
         $this->response->notFound();
     }
 
-    public function listAction()
+    public function listAction(): void
     {
         $devType = $this->request->post('devType', 'int', false);
 
@@ -93,7 +93,7 @@ class Connections extends Controller
         $this->response->success($data);
     }
 
-    public function removeAction()
+    public function removeAction():void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -116,7 +116,7 @@ class Connections extends Controller
         $this->response->success();
     }
 
-    public function loadAction()
+    public function loadAction():void
     {
         $id = $this->request->post('id', 'string', false);
         $devType = $this->request->post('devType', 'int', false);
@@ -146,7 +146,7 @@ class Connections extends Controller
         $this->response->success($data);
     }
 
-    public function saveAction()
+    public function saveAction():void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -261,7 +261,7 @@ class Connections extends Controller
         $this->response->success();
     }
 
-    public function testAction()
+    public function testAction() : void
     {
         $id = $this->request->post('id', 'string', false);
         $devType = $this->request->post('devType', 'int', false);
@@ -315,7 +315,7 @@ class Connections extends Controller
         }
     }
 
-    public function tableListAction()
+    public function tableListAction() : void
     {
         $connectionId = $this->request->post('connId', 'string', false);
         $connectionType = $this->request->post('type', 'integer', false);
@@ -354,7 +354,7 @@ class Connections extends Controller
         $this->response->success($data);
     }
 
-    public function fieldsListAction()
+    public function fieldsListAction() : void
     {
         $connectionId = $this->request->post('connId', 'string', false);
         $connectionType = $this->request->post('type', 'integer', false);
@@ -392,7 +392,7 @@ class Connections extends Controller
         $this->response->success($data);
     }
 
-    public function externalTablesAction()
+    public function externalTablesAction() : void
     {
         $connectionId = $this->request->post('connId', 'string', false);
         $connectionType = $this->request->post('type', 'integer', false);
@@ -457,7 +457,7 @@ class Connections extends Controller
         $this->response->success($data);
     }
 
-    public function connectObjectAction()
+    public function connectObjectAction() : void
     {
         if (!$this->checkCanEdit()) {
             return;

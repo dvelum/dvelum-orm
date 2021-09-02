@@ -22,24 +22,21 @@ declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api\Controller;
 
+use Dvelum\App\Dictionary\Service;
 use Dvelum\App\Orm\Api\Controller;
 use Dvelum\App\Dictionary\Manager;
 
 class Dictionary extends Controller
 {
-    public function getModule(): string
-    {
-        return 'Orm';
-    }
 
-    public function indexAction()
+    public function indexAction(): void
     {
     }
 
     /**
      * Create new dictionary or rename existed
      */
-    public function updateAction()
+    public function updateAction(): void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -48,7 +45,7 @@ class Dictionary extends Controller
         $id = $this->request->post('id', 'string', false);
         $name = strtolower($this->request->post('name', 'string', false));
 
-        $manager = Manager::factory();
+        $manager = $this->container->get(Manager::class);
         if (!$name) {
             $this->response->error($this->lang->get('WRONG_REQUEST'));
         }
@@ -73,9 +70,9 @@ class Dictionary extends Controller
     /**
      * Remove dictionary
      */
-    public function removeAction()
+    public function removeAction(): void
     {
-        $manager = Manager::factory();
+        $manager = $this->container->get(Manager::class);
 
         if (!$this->checkCanDelete()) {
             return;
@@ -84,6 +81,7 @@ class Dictionary extends Controller
         $name = strtolower($this->request->post('name', 'string', false));
         if (empty($name)) {
             $this->response->error($this->lang->get('WRONG_REQUEST'));
+            return;
         }
 
         if (!$manager->remove($name)) {
@@ -96,9 +94,9 @@ class Dictionary extends Controller
     /**
      * Get dictionary list
      */
-    public function listAction()
+    public function listAction(): void
     {
-        $manager = Manager::factory();
+        $manager = $this->container->get(Manager::class);
         $data = [];
         $list = $manager->getList();
 
@@ -114,14 +112,15 @@ class Dictionary extends Controller
     /**
      * Get dictionary records list
      */
-    public function recordsAction()
+    public function recordsAction(): void
     {
         $name = strtolower($this->request->post('dictionary', 'string', false));
         if (empty($name)) {
             $this->response->error($this->lang->get('WRONG_REQUEST'));
+            return;
         }
 
-        $list = \Dvelum\App\Dictionary::factory($name)->getData();
+        $list = $this->container->get(Service::class)->get($name)->getData();
 
         $data = [];
 
@@ -137,7 +136,7 @@ class Dictionary extends Controller
     /**
      * Update dictionary records
      */
-    public function updateRecordsAction()
+    public function updateRecordsAction(): void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -149,9 +148,11 @@ class Dictionary extends Controller
 
         if (empty($data) || !strlen($dictionaryName)) {
             $this->response->error($this->lang->get('WRONG_REQUEST'));
+            return;
         }
 
-        $dictionary = \Dvelum\App\Dictionary::factory($dictionaryName);
+        $dictionary = $this->container->get(Service::class)->get($dictionaryName);
+
         foreach ($data as $v) {
             if ($dictionary->isValidKey($v['key']) && $v['key'] != $v['id']) {
                 $this->response->error($this->lang->get('WRONG_REQUEST'));
@@ -162,8 +163,10 @@ class Dictionary extends Controller
             }
             $dictionary->addRecord($v['key'], $v['value']);
         }
-        if (!Manager::factory()->saveChanges($dictionaryName)) {
+
+        if (!$this->container->get(Manager::class)->saveChanges($dictionaryName)) {
             $this->response->error($this->lang->get('CANT_WRITE_FS'));
+            return;
         }
         $this->response->success();
     }
@@ -171,20 +174,22 @@ class Dictionary extends Controller
     /**
      * Remove dictionary record
      */
-    public function removeRecordsAction()
+    public function removeRecordsAction(): void
     {
         $dictionaryName = strtolower($this->request->post('dictionary', 'string', false));
         $name = $this->request->post('name', 'string', false);
 
         if (!strlen($name) || !strlen($dictionaryName)) {
             $this->response->error($this->lang->get('WRONG_REQUEST'));
+            return;
         }
 
-        $dictionary = \Dvelum\App\Dictionary::factory($dictionaryName);
+        $dictionary = $this->container->get(Service::class)->get($dictionaryName);
         $dictionary->removeRecord($name);
 
-        if (!Manager::factory()->saveChanges($dictionaryName)) {
+        if (!$this->container->get(Manager::class)->saveChanges($dictionaryName)) {
             $this->response->error($this->lang->get('CANT_WRITE_FS'));
+            return;
         }
 
         $this->response->success();
