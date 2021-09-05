@@ -63,7 +63,7 @@ class BuilderFactory
     ): Builder\AbstractAdapter {
         $objectConfig = $orm->config($objectName);
         $adapter = 'Builder_Generic';
-        $config = Config::factory(\Dvelum\Config\Factory::Simple, $adapter);
+        $config = Config::factory(\Dvelum\Config\Factory::SIMPLE, $adapter);
 
         $log = false;
         if ($this->writeLog) {
