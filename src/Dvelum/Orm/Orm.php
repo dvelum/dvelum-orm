@@ -422,7 +422,14 @@ class Orm
         $name = strtolower($name);
 
         if ($force || !isset($this->configObjects[$name])) {
-            $config = new Record\Config($name, $this->configSettings, $this->configStorage, $this->fieldFactory(), $this->distributed(), $force);
+            $config = new Record\Config(
+                $name,
+                $this->configSettings,
+                $this->configStorage,
+                $this->fieldFactory(),
+                $this->distributed(),
+                $force
+            );
             $orm = $this;
             $loader = function () use ($orm) {
                 return $orm->getCryptService();
@@ -462,12 +469,19 @@ class Orm
         if (!$this->configExists($name)) {
             return false;
         }
-        $config = $this->config($name);
-        $model = $this->model($name);
-        if ($model->query()->filters([$config->getPrimaryKey() => $id])->getCount() > 0) {
-            return true;
+        try {
+            $cfg = $this->config($name);
+        } catch (\Throwable $e) {
+            return false;
         }
-        return false;
+
+        $model = $this->model($name);
+        $data = $model->getItem($id);
+
+        if (empty($data)) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -476,18 +490,32 @@ class Orm
      * @return bool
      * @throws Exception
      */
-    public function recordsExists(string $name, array $id):bool
+    public function recordsExists(string $name, array $id): bool
     {
         if (!$this->configExists($name)) {
             return false;
         }
-        $id = array_unique(array_map('intval', $id));
-        $config = $this->config($name);
-        $model = $this->model($name);
-        if ($model->query()->filters([$config->getPrimaryKey() => $id])->getCount() === count($id)) {
-            return true;
+        try {
+            $cfg = $this->config($name);
+        } catch (\Throwable $e) {
+            return false;
         }
-        return false;
+
+        $model = $this->model($name);
+        $data = $model->getItems($id);
+
+        if (empty($data)) {
+            return false;
+        }
+
+        $data = Utils::fetchCol($cfg->getPrimaryKey(), $data);
+
+        foreach ($id as $v) {
+            if (!in_array((int)$v, $data, true)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -629,7 +657,7 @@ class Orm
 
     public function distributed(): Distributed
     {
-        if(!isset($this->distributedProvider)){
+        if (!isset($this->distributedProvider)) {
             $this->distributedProvider = ($this->distributedLoader)();
         }
         return $this->distributedProvider;
@@ -637,7 +665,7 @@ class Orm
 
     public function fieldFactory(): FieldFactory
     {
-        if(!isset($this->fieldFactory)){
+        if (!isset($this->fieldFactory)) {
             $this->fieldFactory = ($this->fieldFactoryLoader)();
         }
         return $this->fieldFactory;

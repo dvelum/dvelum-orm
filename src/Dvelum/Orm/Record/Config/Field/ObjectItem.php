@@ -37,6 +37,7 @@ class ObjectItem extends \Dvelum\Orm\Record\Config\Field
         $this->orm = $orm;
         parent::__construct($config);
     }
+
     /**
      * Apply value filter
      * @param mixed $value

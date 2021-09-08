@@ -49,6 +49,7 @@ class Stat
     /**
      * Get orm objects statistics
      * @return array<int, array{name:string,table:string,engine:string,vc:bool,fields:int,title:string,luik_title:string,rev_contril:bool,save_history:bool,system:bool,db_host:string,db_name:string,locked:bool,readonly:bool,primary_key:string,connection:string,distributed:bool}>
+     * @phpstan-return array<int,array<string,mixed>>
      */
     public function getInfo(): array
     {
@@ -121,7 +122,12 @@ class Stat
         return $data;
     }
 
-    public function getDetails($objectName, ?Adapter $db = null): array
+    /**
+     * @param string $objectName
+     * @param Adapter|null $db
+     * @return array<int,array>
+     */
+    public function getDetails(string $objectName, ?Adapter $db = null): array
     {
         $objectModel = $this->orm->model($objectName);
         if (empty($db)) {
@@ -131,7 +137,13 @@ class Stat
         return [$data];
     }
 
-    protected function getTableInfo($objectName, Adapter $db)
+    /**
+     * @param string $objectName
+     * @param Adapter $db
+     * @return array<string,mixed>
+     * @throws \Exception
+     */
+    protected function getTableInfo(string $objectName, Adapter $db) : array
     {
         $objectModel = $this->orm->model($objectName);
         $objectTable = $objectModel->table();
@@ -168,14 +180,14 @@ class Stat
 
             if (!empty($tableInfo)) {
                 $records = $tableInfo['rows'];
-                $dataLength = Utils::formatFileSize($tableInfo['data_length']);
-                $indexLength = Utils::formatFileSize($tableInfo['index_length']);
-                $size = Utils::formatFileSize($tableInfo['data_length'] + $tableInfo['index_length']);
+                $dataLength = Utils::formatFileSize((int)$tableInfo['data_length']);
+                $indexLength = Utils::formatFileSize((int)$tableInfo['index_length']);
+                $size = Utils::formatFileSize((int)$tableInfo['data_length'] + (int)$tableInfo['index_length']);
             }
 
             $data = [
                 'name' => $objectTable,
-                'records' => number_format($records, 0, '.', ' '),
+                'records' => number_format((int)$records, 0, '.', ' '),
                 'data_size' => $dataLength,
                 'index_size' => $indexLength,
                 'size' => $size,
@@ -188,13 +200,19 @@ class Stat
         return $data;
     }
 
+    /**
+     * @param string $objectName
+     * @param string|null $shard
+     * @return array<int,mixed>
+     * @throws Exception
+     */
     public function getDistributedDetails(string $objectName, ?string $shard = null): array
     {
         $config = $this->orm->config($objectName);
         if (!$config->isDistributed()) {
             throw new Exception($objectName . ' is not distributed');
         }
-        $objectModel = Model::factory($objectName);
+        $objectModel = $this->orm->model($objectName);
         $connectionName = $objectModel->getConnectionName();
         $shards = $this->distributed->getShards();
         $table = $objectModel->table();
@@ -233,7 +251,7 @@ class Stat
     /**
      * Validate Db object
      * @param string $objectName
-     * @return array
+     * @return array<string,mixed>
      * @throws \Exception
      */
     public function validate(string $objectName): array
@@ -275,7 +293,7 @@ class Stat
     /**
      * @param string $objectName
      * @param string $shard
-     * @return array
+     * @return array<int,mixed>
      */
     public function validateDistributed(string $objectName, string $shard): array
     {

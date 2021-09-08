@@ -49,16 +49,16 @@ class Store
     protected $eventManager = null;
 
     /**
-     * @var LoggerInterface | false
+     * @var LoggerInterface | null
      */
-    protected $log = false;
+    protected ?LoggerInterface $log = null;
 
     protected Orm\Orm $orm;
 
     /**
-     * @var array
+     * @var array<string,mixed>
      */
-    protected $config = [
+    protected array $config = [
         'linksObject' => 'Links',
         'historyObject' => 'Historylog',
         'versionObject' => 'Vc'
@@ -66,7 +66,7 @@ class Store
 
     /**
      * Store constructor.
-     * @param array $config
+     * @param array<string,mixed> $config
      */
     public function __construct(Orm\Orm $orm, array $config = [])
     {
@@ -227,7 +227,11 @@ class Store
         return true;
     }
 
-    protected function updateOperation(Orm\RecordInterface $object)
+    /**
+     * @param Orm\RecordInterface $object
+     * @return bool
+     */
+    protected function updateOperation(Orm\RecordInterface $object) : bool
     {
         try {
             if (!$this->updateRecord($object)) {
@@ -412,15 +416,15 @@ class Store
         }
 
         foreach ($updates as $k => $v) {
-            $conf = $object->getConfig()->getFieldConfig($k);
+            $conf = $object->getConfig()->getFieldConfig((string)$k);
 
-            if ($object->getConfig()->getField($k)->isMultiLink()) {
-                if (!$this->clearLinks($object, $k, $conf['link_config']['object'])) {
+            if ($object->getConfig()->getField((string)$k)->isMultiLink()) {
+                if (!$this->clearLinks($object, (string)$k, $conf['link_config']['object'])) {
                     return false;
                 }
 
                 if (!empty($v) && is_array($v)) {
-                    if (!$this->createLinks($object, $k, $conf['link_config']['object'], $v)) {
+                    if (!$this->createLinks($object,(string) $k, $conf['link_config']['object'], $v)) {
                         return false;
                     }
                 }
@@ -436,7 +440,7 @@ class Store
      * @param string $targetObjectName
      * @return bool
      */
-    protected function clearLinks(Orm\RecordInterface $object, $objectField, $targetObjectName)
+    protected function clearLinks(Orm\RecordInterface $object, string $objectField, string $targetObjectName)
     {
         if ($object->getConfig()->getField($objectField)->isManyToManyLink()) {
             $relationsObject = $object->getConfig()->getRelationsObject($objectField);
@@ -476,10 +480,10 @@ class Store
      * @param Orm\RecordInterface $object
      * @param string $objectField
      * @param string $targetObjectName
-     * @param array $links
+     * @param array<mixed,mixed> $links
      * @return bool
      */
-    protected function createLinks(Orm\RecordInterface $object, $objectField, $targetObjectName, array $links): bool
+    protected function createLinks(Orm\RecordInterface $object, string $objectField, string $targetObjectName, array $links): bool
     {
         $order = 0;
         $data = [];
@@ -580,14 +584,20 @@ class Store
      * Load record data
      * @param string $objectName
      * @param int $id
-     * @return array
+     * @return array<int|string,mixed>
      */
-    public function load($objectName, $id): array
+    public function load(string $objectName, int $id): array
     {
         return $this->orm->model($objectName)->getItem($id);
     }
 
-    public function encryptData(Orm\RecordInterface $object, $data)
+    /**
+     * @param Orm\RecordInterface $object
+     * @param array<int|string,mixed> $data
+     * @return mixed
+     * @throws Orm\Exception
+     */
+    public function encryptData(Orm\RecordInterface $object, array $data)
     {
         $objectConfig = $object->getConfig();
         $ivField = $objectConfig->getIvField();
@@ -654,7 +664,7 @@ class Store
 
         $id = $this->insertRecord($object, $updates);
 
-        if (!$id) {
+        if ($id === null) {
             return false;
         }
 
@@ -688,10 +698,10 @@ class Store
     /**
      * Insert record
      * @param Orm\RecordInterface $object
-     * @param array $data
-     * @return mixed record id
+     * @param array<int|string,mixed> $data
+     * @return int|null - record id
      */
-    protected function insertRecord(Orm\RecordInterface $object, array $data)
+    protected function insertRecord(Orm\RecordInterface $object, array $data) : ?int
     {
         $db = $this->getDbConnection($object);
         $objectTable = $this->orm->model($object->getName())->table();
@@ -702,7 +712,7 @@ class Store
             if ($this->log) {
                 $this->log->log(LogLevel::ERROR, $object->getName() . '::insert ' . $e->getMessage());
             }
-            return false;
+            return null;
         }
         return $db->lastInsertId($objectTable, $object->getConfig()->getPrimaryKey());
     }
@@ -828,7 +838,7 @@ class Store
 
                 foreach ($data as $k => $v) {
                     if (!is_null($v)) {
-                        $oldObject->set($k, $v);
+                        $oldObject->set((string)$k, $v);
                     }
                 }
             }
@@ -893,12 +903,12 @@ class Store
         $fields = $objectConfig->getFieldsConfig();
 
         foreach ($fields as $field => $conf) {
-            if ($objectConfig->getField($field)->isMultiLink()) {
-                $linkedObject = $objectConfig->getField($field)->getLinkedObject();
+            if ($objectConfig->getField((string)$field)->isMultiLink()) {
+                $linkedObject = $objectConfig->getField((string)$field)->getLinkedObject();
                 if (empty($linkedObject)) {
                     return false;
                 }
-                if (!$this->clearLinks($object, $field, $linkedObject)) {
+                if (!$this->clearLinks($object, (string) $field, $linkedObject)) {
                     return false;
                 }
             }
@@ -1027,8 +1037,8 @@ class Store
      * Returns array of errors or null .
      * @param string $objectName
      * @param mixed $recordId
-     * @param array $groupsData
-     * @return array|null
+     * @param array<mixed,mixed> $groupsData
+     * @return array<int|string,mixed>|null
      */
     public function validateUniqueValues(string $objectName, $recordId, array $groupsData): ?array
     {

@@ -63,7 +63,7 @@ class Api
         $object = $this->apiRequest->getObjectName();
         $ormObjectConfig = $this->orm->config($object);
         if ($ormObjectConfig->isDistributed() && empty($this->apiRequest->getShard())) {
-            $indexConfig =  $this->orm->config($ormObjectConfig->getDistributedIndexObject());
+            $indexConfig = $this->orm->config($ormObjectConfig->getDistributedIndexObject());
             $fields = array_keys($indexConfig->getFields());
         }
         return $this->dataQuery->fields($fields)->fetchAll();
@@ -103,7 +103,7 @@ class Api
     {
         $result = [];
         $objectName = $this->apiRequest->getObjectName();
-        $config =  $this->orm->config($objectName);
+        $config = $this->orm->config($objectName);
 
         $fields = $config->getFields();
         foreach ($fields as $v) {

@@ -12,7 +12,7 @@ class MySQL
      * Get Database tables info
      * @param Adapter $dbAdapter
      * @param string|null $tableName
-     * @return array
+     * @return array<int|string,array>
      * @throws \Exception
      */
     public function getTablesInfo(Adapter $dbAdapter, ?string $tableName = null): array

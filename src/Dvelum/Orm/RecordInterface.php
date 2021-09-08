@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm;
 
+use Dvelum\Orm\Record\Config\Field;
+
 interface RecordInterface
 {
 
@@ -33,7 +35,7 @@ interface RecordInterface
 
     /**
      * Get object fields
-     * @return array
+     * @return array<string,Field>
      */
     public function getFields(): array;
 
@@ -161,16 +163,15 @@ interface RecordInterface
 
     /**
      * Serialize Object List properties
-     * @param array $data
-     * @return array
+     * @param array<int|string,mixed> $data
+     * @return array<int|string,mixed>
      */
     public function serializeLinks(array $data): array;
 
     /**
      * Validate unique fields, object field groups
      * Returns array of errors  or null .
-     * @return array | null
-     * @property boolean $new
+     * @return array<int|string,mixed> | null
      */
     public function validateUniqueValues(): ?array;
 
@@ -187,7 +188,7 @@ interface RecordInterface
 
     /**
      * Get errors
-     * @return array
+     * @return array<int|string,mixed>
      */
     public function getErrors(): array;
 
@@ -228,7 +229,7 @@ interface RecordInterface
 
     /**
      * Save object as new version
-     * @param boolean $useTransaction — using a transaction when changing data is optional.
+     * @param bool $useTransaction — using a transaction when changing data is optional.
      * @return bool
      */
     public function saveVersion(bool $useTransaction = true): bool;
@@ -237,13 +238,13 @@ interface RecordInterface
      * Set insert id for object (Should not exist in the database)
      * @param int $id
      */
-    public function setInsertId(int $id);
+    public function setInsertId(int $id) : void;
 
     /**
      * Get insert ID
-     * @return integer
+     * @return int|null
      */
-    public function getInsertId();
+    public function getInsertId() : ?int;
 
     /**
      * Check DB object class

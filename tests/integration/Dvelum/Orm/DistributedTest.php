@@ -63,6 +63,7 @@ class DistributedTest extends TestCase
             'code' => $code,
             'title' => 'Title'
         ]);
+
         $this->assertTrue((bool)$object->save());
         /**
          * @var \Dvelum\Orm\Distributed\Record $objectItem

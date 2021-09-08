@@ -42,9 +42,9 @@ abstract class Controller
         $this->canEdit = $canEdit;
         $this->canDelete = $canDelete;
         $this->configStorage = $container->get(StorageInterface::class);
-         /*
-          * @todo remove backward compatibility
-          */
+        /*
+         * @todo remove backward compatibility
+         */
         \Dvelum\Orm::setContainer($container);
     }
 

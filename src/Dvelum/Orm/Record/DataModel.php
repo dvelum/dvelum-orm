@@ -32,10 +32,12 @@ use Psr\Log\LogLevel;
 class DataModel
 {
     private Orm $orm;
+
     public function __construct(Orm $orm)
     {
         $this->orm = $orm;
     }
+
     /**
      * @param RecordInterface $record
      * @return array
@@ -404,11 +406,11 @@ class DataModel
          */
         $record->setValues(
             [
-                               'published' => true,
-                               'date_updated' => date('Y-m-d H:i:s'),
-                               'editor_id' => User::factory()->getId(),
-                               'published_version' => $record->getVersion()
-                           ]
+                'published' => true,
+                'date_updated' => date('Y-m-d H:i:s'),
+                'editor_id' => User::factory()->getId(),
+                'published_version' => $record->getVersion()
+            ]
         );
 
         if (empty($record->get('date_published'))) {

@@ -52,9 +52,9 @@ class Record implements RecordInterface
 
     /**
      * Insert ID
-     * @var integer|bool
+     * @var int|null
      */
-    protected $insertId = false;
+    protected ?int $insertId = null;
 
     /**
      * @var Model
@@ -390,7 +390,7 @@ class Record implements RecordInterface
         }
 
         if (array_key_exists($name, $this->data)) {
-            if ($field->isBoolean() && ((int) $this->data[$name]) === ((int) $value)) {
+            if ($field->isBoolean() && ((int)$this->data[$name]) === ((int)$value)) {
                 unset($this->updates[$name]);
                 return;
             }
@@ -721,16 +721,16 @@ class Record implements RecordInterface
      * Set insert id for object (Should not exist in the database)
      * @param int $id
      */
-    public function setInsertId($id)
+    public function setInsertId(int $id) : void
     {
         $this->insertId = $id;
     }
 
     /**
      * Get insert ID
-     * @return int|bool
+     * @return int|null
      */
-    public function getInsertId()
+    public function getInsertId() : ?int
     {
         return $this->insertId;
     }

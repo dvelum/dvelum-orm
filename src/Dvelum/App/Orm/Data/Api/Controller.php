@@ -126,7 +126,7 @@ abstract class Controller
         $this->initListeners();
     }
 
-    abstract public function getObjectName() : string;
+    abstract public function getObjectName(): string;
 
     public function setRouter(RouterInterface $router): void
     {

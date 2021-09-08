@@ -375,7 +375,7 @@ class Model
      * @return array<int|string,mixed>
      * @throws \Exception
      */
-    public function getItemByField(string $fieldName, $value, $fields = '*') : array
+    public function getItemByField(string $fieldName, $value, $fields = '*'): array
     {
         try {
             $sql = $this->db->select()->from($this->table(), $fields);
@@ -395,7 +395,7 @@ class Model
      * @return array<int,array<int|string,mixed>>
      * @throws \Exception
      */
-    public function getItems(array $ids, $fields = '*', bool $useCache = false) : array
+    public function getItems(array $ids, $fields = '*', bool $useCache = false): array
     {
         $data = false;
         $cacheKey = '';
@@ -421,7 +421,7 @@ class Model
             }
 
             if ($useCache && $this->cache) {
-                $this->cache->save($cacheKey,$data, $this->cacheTime);
+                $this->cache->save($cacheKey, $data, $this->cacheTime);
             }
         }
         return $data;

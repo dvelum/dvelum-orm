@@ -31,9 +31,15 @@ use Exception;
  */
 class Import
 {
-    protected $errors = [];
+    /**
+     * @var array<string>
+     */
+    protected array $errors = [];
 
-    public function getErrors()
+    /**
+     * @return array<int,string>
+     */
+    public function getErrors() : array
     {
         return $this->errors;
     }
@@ -83,11 +89,11 @@ class Import
      * @param Db\Adapter $dbAdapter
      * @param string $tableName
      * @param mixed $adapterPrefix , optional default - false
-     * @return array
+     * @return array<string,mixed>
      * @throws Exception
      * @todo cleanup the code
      */
-    public function createConfigByTable(Db\Adapter $dbAdapter, string $tableName, $adapterPrefix = false)
+    public function createConfigByTable(Db\Adapter $dbAdapter, string $tableName, $adapterPrefix = false) : array
     {
         $config = [];
 

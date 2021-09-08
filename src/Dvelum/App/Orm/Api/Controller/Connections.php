@@ -93,7 +93,7 @@ class Connections extends Controller
         $this->response->success($data);
     }
 
-    public function removeAction():void
+    public function removeAction(): void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -116,7 +116,7 @@ class Connections extends Controller
         $this->response->success();
     }
 
-    public function loadAction():void
+    public function loadAction(): void
     {
         $id = $this->request->post('id', 'string', false);
         $devType = $this->request->post('devType', 'int', false);
@@ -146,7 +146,7 @@ class Connections extends Controller
         $this->response->success($data);
     }
 
-    public function saveAction():void
+    public function saveAction(): void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -261,7 +261,7 @@ class Connections extends Controller
         $this->response->success();
     }
 
-    public function testAction() : void
+    public function testAction(): void
     {
         $id = $this->request->post('id', 'string', false);
         $devType = $this->request->post('devType', 'int', false);
@@ -315,7 +315,7 @@ class Connections extends Controller
         }
     }
 
-    public function tableListAction() : void
+    public function tableListAction(): void
     {
         $connectionId = $this->request->post('connId', 'string', false);
         $connectionType = $this->request->post('type', 'integer', false);
@@ -354,7 +354,7 @@ class Connections extends Controller
         $this->response->success($data);
     }
 
-    public function fieldsListAction() : void
+    public function fieldsListAction(): void
     {
         $connectionId = $this->request->post('connId', 'string', false);
         $connectionType = $this->request->post('type', 'integer', false);
@@ -392,7 +392,7 @@ class Connections extends Controller
         $this->response->success($data);
     }
 
-    public function externalTablesAction() : void
+    public function externalTablesAction(): void
     {
         $connectionId = $this->request->post('connId', 'string', false);
         $connectionType = $this->request->post('type', 'integer', false);
@@ -457,7 +457,7 @@ class Connections extends Controller
         $this->response->success($data);
     }
 
-    public function connectObjectAction() : void
+    public function connectObjectAction(): void
     {
         if (!$this->checkCanEdit()) {
             return;

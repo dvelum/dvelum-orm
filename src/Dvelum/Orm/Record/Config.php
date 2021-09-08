@@ -45,38 +45,37 @@ class Config
     const SHARDING_TYPE_VIRTUAL_BUCKET = 'virtual_bucket';
 
     /**
-     * @var Cfg\ConfigInterface $settings
+     * @var Cfg\ConfigInterface<int|string,mixed> $settings
      */
     protected $settings;
 
     /**
-     * @var Cfg\ConfigInterface
+     * @var Cfg\ConfigInterface<int|string,mixed>
      */
     protected $config;
 
     /**
      * Additional fields config for objects under rev. control
-     * @var array
+     * @var array<int|string,mixed>
      */
     static protected $vcFields;
 
     /**
      * List of system fields used for encryption
-     * @var array
+     * @var array<int|string,mixed>
      */
     static protected $cryptFields;
 
     /**
      * List of system fields used for sharding
-     * @var array
+     * @var array<int|string,mixed>
      */
     protected $distributedFields;
 
     /**
-     * @return Orm\Record\Config
      * @var string $name
      */
-    protected $name;
+    protected string $name;
 
     /**
      * Translation adapter
@@ -88,20 +87,22 @@ class Config
      * Translation flag
      * @var bool
      */
-    protected $translated = false;
+    protected bool $translated = false;
 
     /**
      * Database table prefix
      * @var string
      */
-    protected $dbPrefix;
-
-    protected $localCache = [];
+    protected string $dbPrefix;
+    /**
+     * @var array<int|string,mixed>
+     */
+    protected array $localCache = [];
 
     /**
      * @var CryptServiceInterface
      */
-    private $cryptService = null;
+    private ?CryptServiceInterface $cryptService = null;
     /**
      * @var callable|null $cryptServiceLoader
      */
@@ -112,25 +113,33 @@ class Config
     protected Cfg\Storage\StorageInterface $configStorage;
 
     protected Orm\Record\Config\FieldFactory $fieldFactory;
+
     /**
      * Reload object Properties
      */
-    public function reloadProperties()
+    public function reloadProperties(): void
     {
         $this->localCache = [];
         $this->loadProperties();
     }
 
-
+    /**
+     * @param string $name
+     * @param Cfg\ConfigInterface<int|string,mixed> $settings
+     * @param Cfg\Storage\StorageInterface $configStorage
+     * @param Config\FieldFactory $fieldFactory
+     * @param Orm\Distributed $distributed
+     * @param bool $force
+     * @throws \Exception
+     */
     public function __construct(
         string $name,
         Cfg\ConfigInterface $settings,
         Cfg\Storage\StorageInterface $configStorage,
         Orm\Record\Config\FieldFactory $fieldFactory,
         Orm\Distributed $distributed,
-        $force = false
-    )
-    {
+        bool $force = false
+    ) {
         $this->fieldFactory = $fieldFactory;
         $this->configStorage = $configStorage;
         $this->distributed = $distributed;
@@ -158,7 +167,7 @@ class Config
      * Get object name
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -166,7 +175,7 @@ class Config
     /**
      * Lazy loading for items translation
      */
-    protected function prepareTranslation()
+    protected function prepareTranslation(): void
     {
         if ($this->translated) {
             return;
@@ -181,7 +190,7 @@ class Config
     /**
      * Prepare config, load system properties
      */
-    protected function loadProperties()
+    protected function loadProperties(): void
     {
         $dataLink = &$this->config->dataLink();
         $pKeyName = $this->getPrimaryKey();
@@ -255,7 +264,7 @@ class Config
 
     /**
      * Get Version control fields
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     protected function getVcFields(): array
@@ -271,7 +280,7 @@ class Config
 
     /**
      * Get encryption fields
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     protected function getEncryptionFields(): array
@@ -287,7 +296,7 @@ class Config
 
     /**
      * Get a list of fields to be used for search
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     public function getSearchFields(): array
@@ -331,7 +340,7 @@ class Config
     /**
      * Get a list of indices (from the configuration)
      * @param boolean $includeSystem -optional default = true
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     public function getIndexesConfig($includeSystem = true): array
@@ -351,7 +360,7 @@ class Config
     /**
      * Get the field configuration
      * @param string $field
-     * @return array
+     * @return array<int|string,mixed>
      * @throws Exception
      */
     public function getFieldConfig(string $field): array
@@ -368,7 +377,7 @@ class Config
     /**
      * Get index config
      * @param string $index
-     * @return array
+     * @return array<int|string,mixed>
      * @throws Exception
      */
     public function getIndexConfig($index): array
@@ -385,7 +394,7 @@ class Config
     /**
      * Get the configuration of all fields
      * @param bool $includeSystem -optional default = true
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     public function getFieldsConfig(bool $includeSystem = true): array
@@ -424,7 +433,7 @@ class Config
 
     /**
      * Get the configuration of system fields
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     public function getSystemFieldsConfig(): array
@@ -448,9 +457,9 @@ class Config
 
     /**
      * Get a list of fields linking to external objects
-     * @param array $linkTypes - optional link type filter
-     * @param boolean $groupByObject - group field by linked object, default true
-     * @return array  [objectName=>[field => link_type]] | [field =>["object"=>objectName,"link_type"=>link_type]]
+     * @param array<int|string,mixed> $linkTypes - optional link type filter
+     * @param bool $groupByObject - group field by linked object, default true
+     * @return array<string,array>  [objectName=>[field => link_type]] | [field =>["object"=>objectName,"link_type"=>link_type]]
      * @throws \Exception
      */
     public function getLinks(
@@ -470,9 +479,8 @@ class Config
     {
         if ($this->config->offsetExists('save_history') && $this->config->get('save_history')) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
@@ -492,9 +500,9 @@ class Config
             $this->config->get('log_detalization') === 'extended'
         ) {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -523,7 +531,7 @@ class Config
      * @return mixed  string class name / boolean false
      * @throws Exception
      */
-    public function getValidator($field)
+    public function getValidator(string $field)
     {
         if (!$this->fieldExists($field)) {
             throw new Exception('Invalid property name');
@@ -538,7 +546,7 @@ class Config
 
     /**
      * Convert into array
-     * @return array
+     * @return array<int|string,mixed>
      */
     public function __toArray(): array
     {
@@ -561,7 +569,7 @@ class Config
      * @param string $title
      * @return void
      */
-    public function setObjectTitle($title): void
+    public function setObjectTitle(string $title): void
     {
         $this->prepareTranslation();
         $this->config['title'] = $title;
@@ -655,7 +663,7 @@ class Config
 
     /**
      * Replace configuration data with an array
-     * @param array $data
+     * @param array<int|string,mixed> $data
      * @return void
      */
     public function setData(array $data): void
@@ -665,7 +673,7 @@ class Config
 
     /**
      * Get configuration as array
-     * @return array
+     * @return array<int|string,mixed>
      */
     public function getData(): array
     {
@@ -674,7 +682,7 @@ class Config
 
     /**
      * Init indexes for distributed index object
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     protected function initIndexIndexes(): array
@@ -728,7 +736,7 @@ class Config
     /**
      * Get list of distributed indexes
      * @param bool $includeSystem
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     public function getDistributedIndexesConfig(bool $includeSystem = true): array
@@ -783,9 +791,9 @@ class Config
         $link = &$this->config->dataLink();
         if (isset($link['system']) && $this->config['system']) {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -853,7 +861,7 @@ class Config
 
     /**
      * Get names of encrypted fields
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     public function getEncryptedFields(): array
@@ -918,15 +926,15 @@ class Config
             )
             )) {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
      * Check if object is sharding index
      */
-    public function isIndexObject() : bool
+    public function isIndexObject(): bool
     {
         $link = &$this->config->dataLink();
         if (
@@ -965,7 +973,7 @@ class Config
      * @return Config\Field
      * @throws \Exception
      */
-    public function getField($name): Config\Field
+    public function getField(string $name): Config\Field
     {
         $name = (string)$name;
         return $this->fieldFactory->getField($this, $name);
@@ -975,7 +983,7 @@ class Config
      * Set crypt service loader
      * @param callable $loader
      */
-    public function setCryptServiceLoader(callable $loader)
+    public function setCryptServiceLoader(callable $loader) : void
     {
         $this->cryptServiceLoader = $loader;
     }
@@ -1015,9 +1023,8 @@ class Config
 
         if (isset($link['distributed']) && $link['distributed']) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
@@ -1069,7 +1076,7 @@ class Config
 
     /**
      * Get system sharding fields
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     public function getDistributedFields(): array
@@ -1095,7 +1102,8 @@ class Config
             $type === self::SHARDING_TYPE_VIRTUAL_BUCKET ||
             (
                 $this->isIndexObject() &&
-                $this->createConfigObject($this->getDataObject())->getShardingType() === self::SHARDING_TYPE_VIRTUAL_BUCKET
+                $this->createConfigObject($this->getDataObject())->getShardingType(
+                ) === self::SHARDING_TYPE_VIRTUAL_BUCKET
             )
         ) {
             $bucketFields = $this->configStorage->get(
@@ -1112,7 +1120,7 @@ class Config
      * @param string $name
      * @return Config
      */
-    private function createConfigObject(string $name) : Config
+    private function createConfigObject(string $name): Config
     {
         return new self($name, $this->settings, $this->configStorage, $this->fieldFactory, $this->distributed);
     }

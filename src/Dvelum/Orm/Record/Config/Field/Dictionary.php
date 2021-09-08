@@ -37,6 +37,7 @@ class Dictionary extends \Dvelum\Orm\Record\Config\Field
         $this->dictionary = $dictionary;
         parent::__construct($config);
     }
+
     /**
      * Apply value filter
      * @param mixed $value

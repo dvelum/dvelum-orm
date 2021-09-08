@@ -16,7 +16,9 @@ use Dvelum\Response\ResponseInterface;
 use Dvelum\App\Router\RouterInterface;
 
 use Dvelum\Utils;
-use Psr\Container\ContainerInterface;;
+use Psr\Container\ContainerInterface;
+
+;
 
 class Router implements RouterInterface
 {

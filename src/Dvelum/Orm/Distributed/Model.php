@@ -33,6 +33,7 @@ use \Exception;
 class Model extends Orm\Model
 {
     private Orm\Distributed $distributed;
+
     /**
      * @param string $objectName
      * @param Config\ConfigInterface<int|string,mixed> $settings

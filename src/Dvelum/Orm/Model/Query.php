@@ -40,7 +40,7 @@ class Query
     /**
      * @var Adapter $db
      */
-    protected $db;
+    protected Adapter $db;
 
     protected $search = null;
     protected $searchType = self::SEARCH_TYPE_CONTAINS;

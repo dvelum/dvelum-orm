@@ -28,6 +28,7 @@ use Dvelum\Orm\Record\Config\Field;
 class ObjectList extends Field
 {
     private Orm\Orm $orm;
+
     /**
      * @param Orm\Orm $orm
      * @param array<string,mixed> $config
@@ -37,6 +38,7 @@ class ObjectList extends Field
         $this->orm = $orm;
         parent::__construct($config);
     }
+
     /**
      * Apply value filter
      * @param mixed $value

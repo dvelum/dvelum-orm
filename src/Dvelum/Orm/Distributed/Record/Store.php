@@ -50,7 +50,7 @@ class Store extends \Dvelum\Orm\Record\Store
         $this->sharding = $distributed;
     }
 
-    public function setShard(string $shard) : void
+    public function setShard(string $shard): void
     {
         $this->shard = $shard;
     }
@@ -85,9 +85,9 @@ class Store extends \Dvelum\Orm\Record\Store
      * Insert record
      * @param Orm\RecordInterface $object
      * @param array $data
-     * @return mixed record id
+     * @return int|null record id
      */
-    protected function insertRecord(Orm\RecordInterface $object, array $data)
+    protected function insertRecord(Orm\RecordInterface $object, array $data): ?int
     {
         $insert = $this->sharding->reserveIndex($object);
 
@@ -95,7 +95,7 @@ class Store extends \Dvelum\Orm\Record\Store
             if ($this->log) {
                 $this->log->log(LogLevel::ERROR, $object->getName() . '::insert Cannot reserve index for object');
             }
-            return false;
+            return null;
         }
 
         $insertId = $insert->getId();

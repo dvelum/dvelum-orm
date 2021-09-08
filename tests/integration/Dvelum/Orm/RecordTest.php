@@ -58,7 +58,7 @@ class RecordTest extends TestCase
         $o = $this->getOrm()->record('page', $page->getId());
         $this->assertEquals($o->get('code'), $page->get('code'));
         $code = date('ymdHis') . 'testSave';
-        $this->assertTrue($o->set('code', $code));
+       $o->set('code', $code);
         $saved = $o->save();
         $this->assertTrue(!empty($saved));
 
@@ -81,13 +81,13 @@ class RecordTest extends TestCase
     public function testCreate(): void
     {
         $o = $this->getOrm()->record('bgtask');
-        $this->assertTrue($o->set('status', 1));
-        $this->assertTrue($o->set('time_started', date('Y-m-d H:i:s')));
-        $this->assertTrue($o->set('memory', 1024));
-        $this->assertTrue($o->set('op_finished', 0));
-        $this->assertTrue($o->set('op_total', 10));
-        $this->assertTrue($o->set('title', 'Title'));
-        $this->assertTrue((boolean)$o->save());
+        $o->set('status', 1);
+        $o->set('time_started', date('Y-m-d H:i:s'));
+        $o->set('memory', 1024);
+        $o->set('op_finished', 0);
+        $o->set('op_total', 10);
+        $o->set('title', 'Title');
+        $this->assertTrue((bool)$o->save());
 
         $o->delete();
     }
@@ -187,13 +187,13 @@ class RecordTest extends TestCase
 
     public function testSet(): void
     {
-        $object_a = $this->createPage();
-        $object_b = $this->createPage();
-        $this->assertTrue($object_a->set('parent_id', $object_b->getId()));
-        $this->assertEquals($object_a->get('parent_id'), $object_b->getId());
+        $objectA = $this->createPage();
+        $objectB = $this->createPage();
+        $objectA->set('parent_id', $objectB->getId());
+        $this->assertEquals($objectA->get('parent_id'), $objectB->getId());
 
-        $object_a->delete();
-        $object_b->delete();
+        $objectA->delete();
+        $objectB->delete();
     }
 
     public function testIsInstanceOf(): void
@@ -252,8 +252,8 @@ class RecordTest extends TestCase
                 'default_blocks' => true
             )
         );
-        $this->assertTrue((boolean)$o->save());
-        $this->assertTrue($this->getOrm()->recordExists('Page', $iId));
+        $this->assertTrue((bool)$o->save());
+        $this->assertTrue($this->getOrm()->recordExists('Page', $o->getId()));
         $this->assertEquals($iId, $o->getId());
         $somePage->delete();
         $o->delete();

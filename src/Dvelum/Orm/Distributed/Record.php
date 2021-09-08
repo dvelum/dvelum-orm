@@ -40,17 +40,21 @@ class Record extends Orm\Record
      * @param string|null $shard
      * @throws Orm\Exception
      */
-    public function __construct(Orm\Distributed $distributed, Orm\Orm $orm, Config $config, $id = false, ?string $shard = null)
-    {
+    public function __construct(
+        Orm\Distributed $distributed,
+        Orm\Orm $orm,
+        Config $config,
+        $id = false,
+        ?string $shard = null
+    ) {
+        $this->shard = $shard;
+        $this->distributed = $distributed;
         if ($config->getShardingType() === Config::SHARDING_TYPE_KEY_NO_INDEX && $shard === null && !empty($id)) {
             throw new Orm\Exception(
                 'Sharded object with type of Config::SHARDING_TYPE_KEY_NO_INDEX requires shard to be defined at constructor'
             );
         }
         parent::__construct($orm, $config, $id);
-
-        $this->shard = $shard;
-        $this->distributed = $distributed;
     }
 
     public function loadData(): void

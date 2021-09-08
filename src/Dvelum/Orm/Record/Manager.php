@@ -37,7 +37,10 @@ use Dvelum\Service;
  */
 class Manager
 {
-    static protected $objects = null;
+    /**
+     * @var array<int,string>|null
+     */
+    static protected ?array $objects = null;
 
     private StorageInterface $configStorage;
     private Orm $orm;
@@ -50,7 +53,7 @@ class Manager
 
     /**
      * Get list of registered objects (names only)
-     * @return array
+     * @return array<int|string,mixed>
      */
     public function getRegisteredObjects(): ?array
     {

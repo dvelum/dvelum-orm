@@ -32,7 +32,7 @@ class OrmManager extends Manager
 
     /**
      * @param ConfigInterface<int|string,mixed> $appConfig
-     * @param array<string,array{host:string,group:string,weight:int,override:array<string,mixed>}>  $shardsConfig
+     * @param array<string,array{host:string,group:string,weight:int,override:array<string,mixed>}> $shardsConfig
      */
     public function __construct(ConfigInterface $appConfig, array $shardsConfig)
     {

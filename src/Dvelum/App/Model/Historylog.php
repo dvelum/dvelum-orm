@@ -56,14 +56,14 @@ class Historylog extends Model
 
     /**
      * Log action. Fill history table
-     * @param int $userId
+     * @param int|null $userId
      * @param int $recordId
      * @param int $type
      * @param string $object
      * @return bool
      * @throws Exception
      */
-    public function log($userId, $recordId, $type, $object): bool
+    public function log(?int $userId, $recordId, $type, $object): bool
     {
         if (!is_int($type)) {
             throw new Exception('History::log Invalid type');
