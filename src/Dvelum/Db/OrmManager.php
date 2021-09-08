@@ -21,10 +21,24 @@ declare(strict_types=1);
 
 namespace Dvelum\Db;
 
-use Dvelum\Orm\Distributed;
+use Dvelum\Config\ConfigInterface;
 
 class OrmManager extends Manager
 {
+    /**
+     * @var array<string,array{host:string,group:string,weight:int,override:array<string,mixed>}>
+     */
+    protected array $shardsConfig;
+
+    /**
+     * @param ConfigInterface<int|string,mixed> $appConfig
+     * @param array<string,array{host:string,group:string,weight:int,override:array<string,mixed>}>  $shardsConfig
+     */
+    public function __construct(ConfigInterface $appConfig, array $shardsConfig)
+    {
+        $this->shardsConfig = $shardsConfig;
+        parent::__construct($appConfig);
+    }
 
     /**
      * Get Database connection
@@ -61,8 +75,7 @@ class OrmManager extends Manager
             }
 
             if (!empty($shard)) {
-                $sharding = Distributed::factory();
-                $shardInfo = $sharding->getShardInfo($shard);
+                $shardInfo = $this->shardsConfig[$shard];
                 $cfg['host'] = $shardInfo['host'];
                 if (isset($shardInfo['override']) && !empty($shardInfo['override'])) {
                     foreach ($shardInfo['override'] as $k => $v) {

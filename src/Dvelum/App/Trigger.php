@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -25,7 +26,6 @@ namespace Dvelum\App;
 use Dvelum\App\Model\Historylog;
 use Dvelum\Config;
 use Dvelum\Orm;
-use Dvelum\Orm\Model;
 use Dvelum\App\Session\User;
 use Dvelum\Cache\CacheInterface;
 
@@ -45,10 +45,15 @@ class Trigger
      */
     protected $appConfig;
 
-    public function __construct()
+    protected Orm\Orm $orm;
+    protected Config\Storage\StorageInterface $storage;
+
+    public function __construct(Orm\Orm $orm, Config\Storage\StorageInterface $storage)
     {
-        $this->appConfig = Config::storage()->get('main.php');
-        $this->ormConfig = Config::storage()->get('orm.php');
+        $this->storage = $storage;
+        $this->orm = $orm;
+        $this->appConfig = $storage->get('main.php');
+        $this->ormConfig = $storage->get('orm.php');
     }
 
     /**
@@ -63,7 +68,7 @@ class Trigger
 
     protected function getItemCacheKey(Orm\RecordInterface $object)
     {
-        $objectModel = Model::factory($object->getName());
+        $objectModel = $this->orm->model($object->getName());
         return $objectModel->getCacheKey(array('item', $object->getId()));
     }
 
@@ -86,7 +91,7 @@ class Trigger
 
         if ($config->hasHistory()) {
             if ($config->hasExtendedHistory()) {
-                Model::factory($logObject)->saveState(
+                $this->orm->model($logObject)->saveState(
                     Historylog::Create,
                     $object->getName(),
                     $object->getId(),
@@ -96,7 +101,7 @@ class Trigger
                     json_encode($object->getData())
                 );
             } else {
-                Model::factory($logObject)->log(
+                $this->orm->model($logObject)->log(
                     User::factory()->getId(),
                     $object->getId(),
                     Historylog::Create,
@@ -128,7 +133,7 @@ class Trigger
 
         if ($object->getConfig()->hasHistory()) {
             if ($config->hasExtendedHistory()) {
-                Model::factory($logObject)->saveState(
+                $this->orm->model($logObject)->saveState(
                     Historylog::Delete,
                     $object->getName(),
                     $object->getId(),
@@ -138,7 +143,7 @@ class Trigger
                     null
                 );
             } else {
-                Model::factory($logObject)->log(
+                $this->orm->model($logObject)->log(
                     User::factory()->getId(),
                     $object->getId(),
                     Historylog::Delete,
@@ -170,7 +175,7 @@ class Trigger
             }
 
             if ($config->hasExtendedHistory()) {
-                Model::factory($logObject)->saveState(
+                $this->orm->model($logObject)->saveState(
                     Historylog::Update,
                     $object->getName(),
                     $object->getId(),
@@ -180,7 +185,7 @@ class Trigger
                     json_encode($after)
                 );
             } else {
-                Model::factory($logObject)->log(
+                $this->orm->model($logObject)->log(
                     User::factory()->getId(),
                     $object->getId(),
                     Historylog::Update,
@@ -195,7 +200,7 @@ class Trigger
         $logObject = $this->ormConfig->get('history_object');
 
         if ($object->getConfig()->hasHistory()) {
-            Model::factory($logObject)->log(
+            $this->orm->model($logObject)->log(
                 User::factory()->getId(),
                 $object->getId(),
                 Historylog::Publish,
@@ -212,7 +217,7 @@ class Trigger
 
         $logObject = $this->ormConfig->get('history_object');
 
-        Model::factory($logObject)->log(
+        $this->orm->model($logObject)->log(
             User::factory()->getId(),
             $object->getId(),
             Historylog::Unpublish,
@@ -228,7 +233,7 @@ class Trigger
 
         $logObject = $this->ormConfig->get('history_object');
 
-        Model::factory($logObject)->log(
+        $this->orm->model($logObject)->log(
             User::factory()->getId(),
             $object->getId(),
             Historylog::NewVersion,

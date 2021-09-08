@@ -1,60 +1,63 @@
 <?php
+
 namespace Dvelum\Orm;
 
 use PHPUnit\Framework\TestCase;
 
-use Dvelum\App\Session\User;
+use Dvelum\Orm\Orm;
 
 class RecordTest extends TestCase
 {
-    protected $createdPages = [];
 
-    public function __destruct()
+    protected function getOrm(): Orm
     {
-        foreach ($this->createdPages as $item){
-            $item->delete();
-        }
+        return \Dvelum\Test\ServiceLocator::factory()->getContainer()->get(Orm::class);
     }
 
-    protected function createPage()
+    protected $createdPages = [];
+
+
+    protected function createPage(): RecordInterface
     {
-        $user = User::factory();
-        $page = Record::factory('Page');
-        $page->setValues(array(
-            'code'=>uniqid().date('YmdHis'),
-            'is_fixed'=>1,
-            'html_title'=>'Index',
-            'menu_title'=>'Index',
-            'page_title'=>'Index',
-            'meta_keywords'=>'',
-            'meta_description'=>'',
-            'parent_id'=>null,
-            'text' =>'[Index page content]',
-            'func_code'=>'',
-            'order_no' => 1,
-            'show_blocks'=>true,
-            'published'=>true,
-            'published_version'=>0,
-            'editor_id'=>$user->getId(),
-            'date_created'=>date('Y-m-d H:i:s'),
-            'date_updated'=>date('Y-m-d H:i:s'),
-            'author_id'=>$user->getId(),
-            'blocks'=>'',
-            'theme'=>'default',
-            'date_published'=>date('Y-m-d H:i:s'),
-            'in_site_map'=>true,
-            'default_blocks'=>true
-        ));
+        $page = $this->getOrm()->record('Page');
+        $page->setValues(
+            array(
+                'code' => uniqid('', true) . date('YmdHis'),
+                'is_fixed' => 1,
+                'html_title' => 'Index',
+                'menu_title' => 'Index',
+                'page_title' => 'Index',
+                'meta_keywords' => '',
+                'meta_description' => '',
+                'parent_id' => null,
+                'text' => '[Index page content]',
+                'func_code' => '',
+                'order_no' => 1,
+                'show_blocks' => true,
+                'published' => true,
+                'published_version' => 0,
+                'editor_id' => 1,
+                'date_created' => date('Y-m-d H:i:s'),
+                'date_updated' => date('Y-m-d H:i:s'),
+                'author_id' => 1,
+                'blocks' => '',
+                'theme' => 'default',
+                'date_published' => date('Y-m-d H:i:s'),
+                'in_site_map' => true,
+                'default_blocks' => true
+            )
+        );
         $page->save();
         $this->createdPages[] = $page;
         return $page;
     }
-    public function testSave()
+
+    public function testSave(): void
     {
         $page = $this->createPage();
-        $o = Record::factory('page' , $page->getId());
+        $o = $this->getOrm()->record('page', $page->getId());
         $this->assertEquals($o->get('code'), $page->get('code'));
-        $code = date('ymdHis').'testSave';
+        $code = date('ymdHis') . 'testSave';
         $this->assertTrue($o->set('code', $code));
         $saved = $o->save();
         $this->assertTrue(!empty($saved));
@@ -63,21 +66,21 @@ class RecordTest extends TestCase
         $o->delete();
     }
 
-    public function testGetOld()
+    public function testGetOld(): void
     {
         $o = $this->createPage();
         $oldCode = $o->get('code');
         $code = date('ymdHis');
         $o->set('code', $code);
-        $this->assertEquals($o->get('code') , $code);
+        $this->assertEquals($o->get('code'), $code);
         $this->assertEquals($o->getOld('code'), $oldCode);
 
         $o->delete();
     }
 
-    public function testCreate()
+    public function testCreate(): void
     {
-        $o = Record::factory('bgtask');
+        $o = $this->getOrm()->record('bgtask');
         $this->assertTrue($o->set('status', 1));
         $this->assertTrue($o->set('time_started', date('Y-m-d H:i:s')));
         $this->assertTrue($o->set('memory', 1024));
@@ -89,10 +92,11 @@ class RecordTest extends TestCase
         $o->delete();
     }
 
-    public function testFactory(){
+    public function testFactory(): void
+    {
         $page = $this->createPage();
-        $o = Record::factory('Page' , $page->getId());
-        $o2 = Record::factory('page' , $page->getId());
+        $o = $this->getOrm()->record('Page', $page->getId());
+        $o2 = $this->getOrm()->record('page', $page->getId());
         $this->assertEquals($o, $o2);
 
         $o->delete();
@@ -100,7 +104,7 @@ class RecordTest extends TestCase
         $page->delete();
     }
 
-    public function testHasUpdates()
+    public function testHasUpdates(): void
     {
         $o = $this->createPage();
         $this->assertFalse($o->hasUpdates());
@@ -110,35 +114,35 @@ class RecordTest extends TestCase
         $o->delete();
     }
 
-    public function testToString()
+    public function testToString(): void
     {
         $o = $this->createPage();
-        $this->assertEquals($o->__toString(), (string) $o->getId());
+        $this->assertEquals($o->__toString(), (string)$o->getId());
 
         $o->delete();
     }
 
-    public function testObjectExists()
+    public function testObjectExists(): void
     {
         $page = $this->createPage();
 
-        $this->assertFalse(Record::objectExists('ckwjhebjfcwe', false));
-        $this->assertFalse(Record::objectExists('Page', 999999));
-        $this->assertTrue(Record::objectExists('Page', array($page->getId())));
-        $this->assertTrue(Record::objectExists('Page', $page->getId()));
+        $this->assertFalse($this->getOrm()->recordExists('ckwjhebjfcwe', false));
+        $this->assertFalse($this->getOrm()->recordExists('Page', 999999));
+        $this->assertTrue($this->getOrm()->recordsExists('Page', array($page->getId())));
+        $this->assertTrue($this->getOrm()->recordExists('Page', $page->getId()));
 
         $page->delete();
     }
 
-    public function testDeleteObject()
+    public function testDeleteObject(): void
     {
         $page = $this->createPage();
 
         $id = $page->getId();
-        $this->assertTrue($page->getId()>0);
-        $this->assertTrue(Record::objectExists('Page', $id));
+        $this->assertTrue($page->getId() > 0);
+        $this->assertTrue($this->getOrm()->recordExists('Page', $id));
         $this->assertTrue($page->delete());
-        $this->assertFalse(Record::objectExists('Page', $id));
+        $this->assertFalse($this->getOrm()->recordExists('Page', $id));
 
         $page->delete();
     }
@@ -148,7 +152,7 @@ class RecordTest extends TestCase
         $o = $this->createPage();
 
         $linked = $o->getLinkedObject('author_id');
-        $this->assertEquals($linked , 'user');
+        $this->assertEquals($linked, 'user');
 
         $o->delete();
     }
@@ -156,7 +160,7 @@ class RecordTest extends TestCase
     public function test_hasRequired()
     {
         $somePage = $this->createPage();
-        $page = Record::factory('page');
+        $page = $this->getOrm()->record('page');
         $code = date('ymdHiss');
         $page->set('code', $code);
         $page->set('author_id', 1);
@@ -166,45 +170,45 @@ class RecordTest extends TestCase
 
         $page = $this->createPage();
 
-        $this->assertTrue($page->getId()>0);
-        $this->assertTrue(Record::objectExists('Page', $page->getId()));
+        $this->assertTrue($page->getId() > 0);
+        $this->assertTrue($this->getOrm()->recordExists('Page', $page->getId()));
         $this->assertTrue($page->delete());
-        $this->assertFalse(Record::objectExists('Page', $page->getId()));
+        $this->assertFalse($this->getOrm()->recordExists('Page', $page->getId()));
 
         $somePage->delete();
         $page->delete();
     }
 
-    public function testExists()
+    public function testExists(): void
     {
-        $this->assertFalse(Record::objectExists('page' , 723489273));
-        $this->assertFalse(Record::objectExists('undefined' , 723489273));
+        $this->assertFalse($this->getOrm()->recordExists('page', 723489273));
+        $this->assertFalse($this->getOrm()->recordExists('undefined', 723489273));
     }
 
-    public function testSet()
+    public function testSet(): void
     {
         $object_a = $this->createPage();
         $object_b = $this->createPage();
         $this->assertTrue($object_a->set('parent_id', $object_b->getId()));
-        $this->assertEquals($object_a->get('parent_id') , $object_b->getId());
+        $this->assertEquals($object_a->get('parent_id'), $object_b->getId());
 
         $object_a->delete();
         $object_b->delete();
     }
 
-    public function testIsInstanceOf()
+    public function testIsInstanceOf(): void
     {
-        $o = Record::factory('Page');
+        $o = $this->getOrm()->record('Page');
         $this->assertTrue($o->isInstanceOf('Page'));
         $this->assertFalse($o->isInstanceOf('User'));
         $o->delete();
     }
 
-    public function testGetInsertId()
+    public function testGetInsertId(): void
     {
         $somePage = $this->createPage();
         $iId = time();
-        $o = Record::factory('Page');
+        $o = $this->getOrm()->record('Page');
         $o->setInsertId($iId);
         $this->assertEquals($iId, $o->getInsertId());
 
@@ -212,51 +216,52 @@ class RecordTest extends TestCase
         $o->delete();
     }
 
-    public function testSetInsertId()
+    public function testSetInsertId(): void
     {
         $somePage = $this->createPage();
 
         $iId = time();
-        $o = Record::factory('Page');
+        $o = $this->getOrm()->record('Page');
         $o->setInsertId($iId);
-        $userId = User::factory()->getId();
 
-        $this->assertEquals($iId , $o->getInsertId());
-        $o->setValues(array(
-            'code'=>$iId,
-            'is_fixed'=>1,
-            'html_title'=>'Index',
-            'menu_title'=>'Index',
-            'page_title'=>'Index',
-            'meta_keywords'=>'',
-            'meta_description'=>'',
-            'parent_id'=>null,
-            'text' =>'[Index page content]',
-            'func_code'=>'',
-            'order_no' => 1,
-            'show_blocks'=>true,
-            'published'=>true,
-            'published_version'=>0,
-            'editor_id'=>$userId,
-            'date_created'=>date('Y-m-d H:i:s'),
-            'date_updated'=>date('Y-m-d H:i:s'),
-            'author_id'=>$userId,
-            'blocks'=>'',
-            'theme'=>'default',
-            'date_published'=>date('Y-m-d H:i:s'),
-            'in_site_map'=>true,
-            'default_blocks'=>true
-        ));
-        $this->assertTrue((boolean) $o->save());
-        $this->assertTrue(Record::objectExists('Page', $iId));
+        $this->assertEquals($iId, $o->getInsertId());
+        $o->setValues(
+            array(
+                'code' => $iId,
+                'is_fixed' => 1,
+                'html_title' => 'Index',
+                'menu_title' => 'Index',
+                'page_title' => 'Index',
+                'meta_keywords' => '',
+                'meta_description' => '',
+                'parent_id' => null,
+                'text' => '[Index page content]',
+                'func_code' => '',
+                'order_no' => 1,
+                'show_blocks' => true,
+                'published' => true,
+                'published_version' => 0,
+                'editor_id' => 1,
+                'date_created' => date('Y-m-d H:i:s'),
+                'date_updated' => date('Y-m-d H:i:s'),
+                'author_id' => 1,
+                'blocks' => '',
+                'theme' => 'default',
+                'date_published' => date('Y-m-d H:i:s'),
+                'in_site_map' => true,
+                'default_blocks' => true
+            )
+        );
+        $this->assertTrue((boolean)$o->save());
+        $this->assertTrue($this->getOrm()->recordExists('Page', $iId));
         $this->assertEquals($iId, $o->getId());
         $somePage->delete();
         $o->delete();
     }
 
-    public function testGetTitle()
+    public function testGetTitle(): void
     {
-        $page = Record::factory('Page');
+        $page = $this->getOrm()->record('Page');
         $cfg = $page->getConfig();
 
         $data = $cfg->getData();
@@ -264,10 +269,10 @@ class RecordTest extends TestCase
 
         $cfg->setData($data);
 
-        $page->set('code' , 'pageCode');
-        $page->set('menu_title' , 'pageTitle');
+        $page->set('code', 'pageCode');
+        $page->set('menu_title', 'pageTitle');
 
         //echo $page->getTitle();exit;
-        $this->assertEquals('/ pageCode / pageTitle /' , $page->getTitle());
+        $this->assertEquals('/ pageCode / pageTitle /', $page->getTitle());
     }
 }

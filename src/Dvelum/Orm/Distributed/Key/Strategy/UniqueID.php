@@ -24,6 +24,7 @@ namespace Dvelum\Orm\Distributed\Key\Strategy;
 use Dvelum\Orm\Distributed\Key\GeneratorInterface;
 use Dvelum\Config\ConfigInterface;
 use Dvelum\Orm\Model;
+use Dvelum\Orm\Orm;
 use Dvelum\Orm\Record;
 use Dvelum\Orm\Distributed\Key\Reserved;
 use Dvelum\Orm\RecordInterface;
@@ -36,9 +37,11 @@ class UniqueID implements GeneratorInterface
      */
     protected $config;
     protected $shardField;
+    protected Orm $orm;
 
-    public function __construct(ConfigInterface $config)
+    public function __construct(Orm $orm, ConfigInterface $config)
     {
+        $this->orm = $orm;
         $this->config = $config;
         $this->shardField = $config->get('shard_field');
     }
@@ -53,7 +56,7 @@ class UniqueID implements GeneratorInterface
     {
         $objectConfig = $object->getConfig();
         $indexObject = $objectConfig->getDistributedIndexObject();
-        $model = Model::factory($indexObject);
+        $model = $this->orm->model($indexObject);
         $db = $model->getDbConnection();
         try {
             $db->delete($model->table(), $db->quoteIdentifier($model->getPrimaryKey()) . ' = ' . $db->quote($indexId));
@@ -75,7 +78,7 @@ class UniqueID implements GeneratorInterface
     {
         $objectConfig = $object->getConfig();
         $indexObject = $objectConfig->getDistributedIndexObject();
-        $model = Model::factory($indexObject);
+        $model = $this->orm->model($indexObject);
         $indexConfig = $model->getObjectConfig();
         $db = $model->getDbConnection();
 
@@ -132,10 +135,10 @@ class UniqueID implements GeneratorInterface
      */
     public function findObjectShard(string $objectName, $distributedKey)
     {
-        $objectConfig = Record\Config::factory($objectName);
+        $objectConfig = $this->orm->config($objectName);
         $indexObject = $objectConfig->getDistributedIndexObject();
 
-        $model = Model::factory($indexObject);
+        $model = $this->orm->model($indexObject);
         $query = $model->query()->filters([$objectConfig->getPrimaryKey() => $distributedKey]);
 
         $shardData = $query->fetchRow();
@@ -155,10 +158,10 @@ class UniqueID implements GeneratorInterface
      */
     public function findObjectsShards(string $objectName, array $distributedKeys): array
     {
-        $objectConfig = Record\Config::factory($objectName);
+        $objectConfig = $this->orm->config($objectName);
         $indexObject = $objectConfig->getDistributedIndexObject();
 
-        $model = Model::factory($indexObject);
+        $model = $this->orm->model($indexObject);
         $query = $model->query()->filters([$objectConfig->getPrimaryKey() => $distributedKeys]);
 
         $shardData = $query->fetchAll();

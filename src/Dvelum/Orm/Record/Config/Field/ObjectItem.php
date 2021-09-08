@@ -22,10 +22,21 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm\Record\Config\Field;
 
-use Dvelum\Orm;
+use Dvelum\Orm\Orm;
 
 class ObjectItem extends \Dvelum\Orm\Record\Config\Field
 {
+    protected Orm $orm;
+
+    /**
+     * @param Orm $orm
+     * @param array<string,mixed> $config
+     */
+    public function __construct(Orm $orm, array $config)
+    {
+        $this->orm = $orm;
+        parent::__construct($config);
+    }
     /**
      * Apply value filter
      * @param mixed $value
@@ -74,7 +85,7 @@ class ObjectItem extends \Dvelum\Orm\Record\Config\Field
             if (!is_int($value)) {
                 return false;
             }
-            return Orm\Record::objectExists($this->config['link_config']['object'], $value);
+            return $this->orm->recordExists($this->config['link_config']['object'], $value);
         }
 
         return true;

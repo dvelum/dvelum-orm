@@ -252,8 +252,8 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * Check if table exists
      * @param string $name - optional, table name,
-     * @param boolean $addPrefix - optional append prefix, default false
-     * @return boolean
+     * @param bool $addPrefix - optional append prefix, default false
+     * @return bool
      */
     public function tableExists(string $name = '', bool $addPrefix = false): bool
     {
@@ -292,7 +292,7 @@ abstract class AbstractAdapter implements BuilderInterface
 
             foreach ($fields as $fieldName => $linkType) {
                 $relationObjectName = $this->objectConfig->getRelationsObject($fieldName);
-                if (!is_string($relationObjectName) || !Config::configExists($relationObjectName)) {
+                if (!is_string($relationObjectName) || !$this->orm->configExists($relationObjectName)) {
                     return false;
                 }
             }
@@ -326,7 +326,7 @@ abstract class AbstractAdapter implements BuilderInterface
 
     /**
      * Get object foreign keys
-     * @return array
+     * @return array<string,mixed>
      */
     public function getOrmForeignKeys(): array
     {
@@ -423,9 +423,9 @@ abstract class AbstractAdapter implements BuilderInterface
 
         if (empty($brokenFields)) {
             return false;
-        } else {
-            return $brokenFields;
         }
+
+        return $brokenFields;
     }
 
     /**
@@ -769,7 +769,7 @@ abstract class AbstractAdapter implements BuilderInterface
             unset($fieldConfig['system']);
             unset($indexConfig['system']);
             // field config updated
-            if (!empty(Utils::array_diff_assoc_recursive($fieldConfig, $indexConfig))) {
+            if (!empty(Utils::arrayDiffAssocRecursive($fieldConfig, $indexConfig))) {
                 $updates[] = ['name' => $idObject, 'action' => 'update'];
                 return $updates;
             }

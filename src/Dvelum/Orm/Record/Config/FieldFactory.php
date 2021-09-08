@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm\Record\Config;
 
+use Dvelum\App\Dictionary\Service;
 use Dvelum\Orm;
 use Dvelum\Orm\Record\Config;
 
@@ -30,7 +31,22 @@ use Dvelum\Orm\Record\Config;
  */
 class FieldFactory
 {
-    public static function getField(Config $config, string $fieldName): Field
+    protected Orm\Orm $orm;
+    protected Service $dictionary;
+
+    public function __construct(Orm\Orm $orm, Service $dictionary)
+    {
+        $this->orm = $orm;
+        $this->dictionary = $dictionary;
+    }
+
+    /**
+     * @param Config $config
+     * @param string $fieldName
+     * @return Field
+     * @throws Orm\Exception
+     */
+    public function getField(Config $config, string $fieldName): Field
     {
         $fields = $config->getConfig()->get('fields');
 
@@ -51,14 +67,14 @@ class FieldFactory
         if (isset($configData['type']) && $configData['type'] === 'link' && isset($configData['link_config']) && isset($configData['link_config']['link_type'])) {
             switch ($configData['link_config']['link_type']) {
                 case Orm\Record\Config::LINK_OBJECT;
-                    $fieldClass = 'ObjectItem';
-                    break;
+                    $class = Config\Field\ObjectItem::class;
+                    return new $class($this->orm, $configData);
                 case Orm\Record\Config::LINK_OBJECT_LIST;
-                    $fieldClass = 'ObjectList';
-                    break;
+                    $class = Config\Field\ObjectList::class;
+                    return new $class($this->orm, $configData);
                 case 'dictionary';
-                    $fieldClass = 'Dictionary';
-                    break;
+                    $class = Config\Field\Dictionary::class;
+                    return new $class($this->dictionary, $configData);
             }
         } else {
             if (in_array($dbType, Orm\Record\BuilderFactory::$intTypes, true)) {
@@ -76,10 +92,9 @@ class FieldFactory
         $fieldClass = 'Dvelum\\Orm\\Record\\Config\\Field\\' . ucfirst((string)$fieldClass);
 
         if (class_exists($fieldClass)) {
-            $field = new $fieldClass($configData);
-        } else {
-            $field = new Config\Field($configData);
+            return new $fieldClass($configData);
         }
-        return $field;
+
+        return new Config\Field($configData);
     }
 }

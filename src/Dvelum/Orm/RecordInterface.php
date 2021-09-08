@@ -21,16 +21,12 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm;
 
-use Dvelum\Orm\Record\Config;
-
 interface RecordInterface
 {
 
-    public function __construct(Config $config, $id = false);
-
     /**
      * Set raw data from storage
-     * @param array $data
+     * @param array<int|string,mixed> $data
      * @return void
      */
     public function setRawData(array $data): void;
@@ -43,8 +39,8 @@ interface RecordInterface
 
     /**
      * Get the object data, returns the associative array ‘field name’
-     * @param boolean $withUpdates , optional default true
-     * @return array
+     * @param bool $withUpdates , optional default true
+     * @return array<int|string,mixed>
      */
     public function getData($withUpdates = true): array;
 
@@ -75,16 +71,16 @@ interface RecordInterface
 
     /**
      * Get updated, but not saved object data
-     * @return array
+     * @return array<int|string,mixed>
      */
     public function getUpdates(): array;
 
     /**
      * Set the object identifier (existing DB ID)
-     * @param integer $id
+     * @param int $id
      * @return void
      */
-    public function setId($id): void;
+    public function setId(int $id): void;
 
     /**
      * Commit the object data changes (without saving)
@@ -109,7 +105,7 @@ interface RecordInterface
 
     /**
      * Set the object properties using the associative array of fields and values
-     * @param array $values
+     * @param array<int|string,mixed> $values
      * @return void
      * @throws Exception
      */
@@ -119,10 +115,10 @@ interface RecordInterface
      * Set the object field val
      * @param string $name
      * @param mixed $value
-     * @return bool
+     * @return void
      * @throws Exception
      */
-    public function set(string $name, $value): bool;
+    public function set(string $name, $value): void;
 
     /**
      * Get the object field value
@@ -145,23 +141,23 @@ interface RecordInterface
 
     /**
      * Save changes
-     * @param boolean $useTransaction — using a transaction when changing data is optional.
+     * @param bool $useTransaction — using a transaction when changing data is optional.
      * If data update in your code is carried out within an external transaction
      * set the value to  false,
      * otherwise, the first update will lead to saving the changes
-     * @return int | boolean;
+     * @return int | bool;
      */
-    public function save($useTransaction = true);
+    public function save(bool $useTransaction = true);
 
     /**
      * Deleting an object
-     * @param boolean $useTransaction — using a transaction when changing data is optional.
+     * @param bool $useTransaction — using a transaction when changing data is optional.
      * If data update in your code is carried out within an external transaction
      * set the value to  false,
      * otherwise, the first update will lead to saving the changes
      * @return bool - success flag
      */
-    public function delete($useTransaction = true): bool;
+    public function delete(bool $useTransaction = true): bool;
 
     /**
      * Serialize Object List properties
@@ -200,7 +196,7 @@ interface RecordInterface
      * @param bool $useTransaction — using a transaction when changing data is optional.
      * @return bool
      */
-    public function unpublish($useTransaction = true): bool;
+    public function unpublish(bool $useTransaction = true): bool;
 
     /**
      * Publish VC object
@@ -209,7 +205,7 @@ interface RecordInterface
      * @return bool
      * @throws Exception
      */
-    public function publish($version = false, $useTransaction = true): bool;
+    public function publish($version = false, bool $useTransaction = true): bool;
 
     /**
      * Get loaded version
@@ -241,7 +237,7 @@ interface RecordInterface
      * Set insert id for object (Should not exist in the database)
      * @param int $id
      */
-    public function setInsertId($id);
+    public function setInsertId(int $id);
 
     /**
      * Get insert ID

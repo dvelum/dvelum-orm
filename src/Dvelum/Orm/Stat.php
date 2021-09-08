@@ -31,15 +31,19 @@ use Dvelum\Utils;
 class Stat
 {
     private Orm\Orm $orm;
-    private StorageInterface $configStorage;
     private Lang\Dictionary $lang;
+    private Distributed $distributed;
 
-
-    public function __construct(StorageInterface $configStorage, Orm\Orm $orm, Lang\Dictionary $lang)
+    /**
+     * @param \Dvelum\Orm\Orm $orm
+     * @param Lang\Dictionary $lang
+     * @param Distributed $distributed
+     */
+    public function __construct(Orm\Orm $orm, Distributed $distributed, Lang\Dictionary $lang)
     {
-        $this->configStorage = $configStorage;
         $this->orm = $orm;
         $this->lang = $lang;
+        $this->distributed = $distributed;
     }
 
     /**
@@ -192,8 +196,7 @@ class Stat
         }
         $objectModel = Model::factory($objectName);
         $connectionName = $objectModel->getConnectionName();
-        $sharding = Distributed::factory();
-        $shards = $sharding->getShards();
+        $shards = $this->distributed->getShards();
         $table = $objectModel->table();
         $data = [];
 
@@ -280,9 +283,7 @@ class Stat
         $builder = $this->orm->getBuilder($objectName);
         $model = $this->orm->model($objectName);
         $connectionName = $model->getConnectionName();
-
-        $sharding = Distributed::factory();
-        $shards = $sharding->getShards();
+        $shards = $this->distributed->getShards();
 
         $result[] = $this->validate($objectName);
 

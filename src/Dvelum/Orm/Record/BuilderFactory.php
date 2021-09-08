@@ -36,16 +36,21 @@ use Dvelum\Orm;
  */
 class BuilderFactory
 {
-    protected $writeLog = false;
-    protected $logPrefix = '0.1';
-    protected $logsPath = './logs/';
-    protected $foreignKeys = false;
+    protected bool $writeLog = false;
+    protected string $logPrefix = '0.1';
+    protected string $logsPath = './logs/';
+    protected bool $foreignKeys = false;
 
-    public function __construct(array $configOptions)
+    /**
+     * @param ?array<string,mixed> $configOptions
+     */
+    public function __construct(?array $configOptions)
     {
-        foreach ($configOptions as $key => $value) {
-            if (isset($this->{$key})) {
-                $this->{$key} = $value;
+        if ($configOptions !== null) {
+            foreach ($configOptions as $key => $value) {
+                if (isset($this->{$key})) {
+                    $this->{$key} = $value;
+                }
             }
         }
     }

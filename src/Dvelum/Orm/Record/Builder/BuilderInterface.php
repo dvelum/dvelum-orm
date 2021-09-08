@@ -94,4 +94,12 @@ interface BuilderInterface
      * @return bool
      */
     public function remove(): bool;
+
+    /**
+     * Check if table exists
+     * @param string $name - optional, table name,
+     * @param bool $addPrefix - optional append prefix, default false
+     * @return bool
+     */
+    public function tableExists(string $name = '', bool $addPrefix = false): bool;
 }

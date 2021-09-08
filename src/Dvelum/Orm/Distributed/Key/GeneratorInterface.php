@@ -22,16 +22,17 @@ declare(strict_types=1);
 namespace Dvelum\Orm\Distributed\Key;
 
 use Dvelum\Config\ConfigInterface;
+use Dvelum\Orm\Orm;
 use Dvelum\Orm\Record;
 use Dvelum\Orm\RecordInterface;
 
 interface GeneratorInterface
 {
     /**
-     * GeneratorInterface constructor.
-     * @param ConfigInterface $config
+     * @param Orm $orm
+     * @param ConfigInterface<int|string,mixed> $config
      */
-    public function __construct(ConfigInterface $config);
+    public function __construct(Orm $orm, ConfigInterface $config);
 
     /**
      * Reserve object id, save route

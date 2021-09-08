@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm\Distributed;
 
+use Dvelum\Config;
 use Dvelum\Db\Select\Filter;
 use Dvelum\Orm;
 use Dvelum\Utils;
@@ -31,17 +32,40 @@ use \Exception;
  */
 class Model extends Orm\Model
 {
+    private Orm\Distributed $distributed;
+    /**
+     * @param string $objectName
+     * @param Config\ConfigInterface<int|string,mixed> $settings
+     * @param Config\ConfigInterface<int|string,mixed> $ormConfig
+     * @param Orm\Orm $orm
+     * @param Config\Storage\StorageInterface $configStorage
+     * @param Orm\Distributed $distributed
+     * @throws Exception
+     */
+    public function __construct(
+        string $objectName,
+        Config\ConfigInterface $settings,
+        Config\ConfigInterface $ormConfig,
+        Orm\Orm $orm,
+        Config\Storage\StorageInterface $configStorage,
+        Orm\Distributed $distributed
+    ) {
+        parent::__construct($objectName, $settings, $ormConfig, $orm, $configStorage);
+        $this->distributed = $distributed;
+    }
+
+
     /**
      * Get record by id
-     * @param integer $id
+     * @param int $id
      * @param array|string $fields — optional — the list of fields to retrieve
      * @return array
      * @throws \Exception
      */
     public function getItem($id, $fields = ['*']): array
     {
-        $sharding = Orm\Distributed::factory();
-        $shard = $sharding->findObjectShard($this->getObjectName(), $id);
+        $sharding = $this->distributed;
+        $shard = $sharding->findObjectShard($this->orm->config($this->getObjectName()), $id);
 
         if (empty($shard)) {
             return [];
@@ -50,12 +74,10 @@ class Model extends Orm\Model
         $db = $this->getDbShardConnection($shard);
         $primaryKey = $this->getPrimaryKey();
         $query = $this->query()->setDbConnection($db)
-            ->filters([
-                          $primaryKey => $id
-                      ])
+            ->filters([$primaryKey => $id])
             ->fields($fields);
 
-        $result = $query->fetchRow();;
+        $result = $query->fetchRow();
 
         if (empty($result)) {
             $result = [];
@@ -75,10 +97,7 @@ class Model extends Orm\Model
         $db = $this->getDbShardConnection($shard);
         $primaryKey = $this->getPrimaryKey();
 
-        $query = $this->query()->setDbConnection($db)
-            ->filters([
-                          $primaryKey => $id
-                      ]);
+        $query = $this->query()->setDbConnection($db)->filters([$primaryKey => $id]);
 
         $result = $query->fetchRow();
 
@@ -130,16 +149,16 @@ class Model extends Orm\Model
      * @return array|null
      * @throws Exception
      */
-    public function getItemByField(string $fieldName, $value, $fields = '*')
+    public function getItemByField(string $fieldName, $value, $fields = '*'): array
     {
-        $model = Model::factory($this->getObjectConfig()->getDistributedIndexObject());
+        $model = $this->orm->model($this->getObjectConfig()->getDistributedIndexObject());
         $item = $model->getItemByField($fieldName, $value);
 
         if (!empty($item)) {
             return $this->getItem($item[$this->getPrimaryKey()], $fields);
-        } else {
-            return [];
         }
+
+        return [];
     }
 
     /**
@@ -150,7 +169,7 @@ class Model extends Orm\Model
      * @return array / false
      * @throws Exception
      */
-    final public function getItems(array $ids, $fields = '*', $useCache = false)
+    final public function getItems(array $ids, $fields = '*', bool $useCache = false): array
     {
         $data = false;
         $cacheKey = '';
@@ -165,7 +184,7 @@ class Model extends Orm\Model
         }
 
         if ($data === false) {
-            $sharding = Orm\Distributed::factory();
+            $sharding = $this->distributed;
             $shards = $sharding->findObjectsShards($this->getObjectName(), $ids);
 
             $data = [];
@@ -189,7 +208,7 @@ class Model extends Orm\Model
             }
 
             if ($useCache && $this->cache) {
-                $this->cache->save($cacheKey, data, $this->cacheTime);
+                $this->cache->save($cacheKey, $data, $this->cacheTime);
             }
         }
         return $data;
@@ -216,7 +235,7 @@ class Model extends Orm\Model
             /**
              * @var Orm\RecordInterface $object
              */
-            $object = Orm\Record::factory($this->getObjectName(), $recordId);
+            $object = $this->orm->record($this->getObjectName(), $recordId);
         } catch (\Exception $e) {
             $this->logError('Remove record ' . $recordId . ' : ' . $e->getMessage());
             return false;
@@ -224,9 +243,8 @@ class Model extends Orm\Model
 
         if ($this->getStore()->delete($object)) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
@@ -243,7 +261,7 @@ class Model extends Orm\Model
      */
     public function checkUnique(int $recordId, string $fieldName, $fieldValue): bool
     {
-        $model = Model::factory($this->getObjectConfig()->getDistributedIndexObject());
+        $model = $this->orm->model($this->getObjectConfig()->getDistributedIndexObject());
 
         $filters = [
             new Filter($this->getPrimaryKey(), $recordId, Filter::NOT),

@@ -34,9 +34,9 @@ class Historylog extends Model
 {
     /**
      * Action types
-     * @var array
+     * @var array<string>
      */
-    public static $actions = array(
+    public static array $actions = [
         1 => 'Delete',
         2 => 'Create',
         3 => 'Update',
@@ -44,7 +44,7 @@ class Historylog extends Model
         5 => 'Sort',
         6 => 'Unpublish',
         7 => 'New Version'
-    );
+    ];
 
     public const Delete = 1;
     public const Create = 2;
@@ -56,47 +56,49 @@ class Historylog extends Model
 
     /**
      * Log action. Fill history table
-     * @param integer $user_id
-     * @param integer $record_id
-     * @param integer $type
+     * @param int $userId
+     * @param int $recordId
+     * @param int $type
      * @param string $object
      * @return bool
      * @throws Exception
      */
-    public function log($user_id, $record_id, $type, $object): bool
+    public function log($userId, $recordId, $type, $object): bool
     {
-        if (!is_integer($type)) {
+        if (!is_int($type)) {
             throw new Exception('History::log Invalid type');
         }
 
-        $obj = Orm\Record::factory($this->name);
-        $obj->setValues(array(
-                            'user_id' => intval($user_id),
-                            'record_id' => intval($record_id),
-                            'type' => intval($type),
-                            'date' => date('Y-m-d H:i:s'),
-                            'object' => $object
-                        ));
+        $obj = $this->orm->record($this->name);
+        $obj->setValues(
+            [
+                'user_id' => (int)$userId,
+                'record_id' => (int)$recordId,
+                'type' => (int)$type,
+                'date' => date('Y-m-d H:i:s'),
+                'object' => $object
+            ]
+        );
         return (bool)$obj->save(false);
     }
 
     /**
      * Get log for the  data item
-     * @param string $table_name
-     * @param integer $record_id
-     * @param integer $start - optional
-     * @param integer $limit - optional
+     * @param string $tableName
+     * @param int $recordId
+     * @param int $start - optional
+     * @param int $limit - optional
      * @return array
      */
-    public function getLog($table_name, $record_id, $start = 0, $limit = 25): array
+    public function getLog($tableName, $recordId, $start = 0, $limit = 25): array
     {
         $db = $this->getDbConnection();
         $sql = $db->select()
             ->from(array('l' => $this->table()), ['type', 'date'])
-            ->where('l.table_name = ?', $table_name)
-            ->where('l.record_id = ?', $record_id)
+            ->where('l.table_name = ?', $tableName)
+            ->where('l.record_id = ?', $recordId)
             ->joinLeft(
-                array('u' => Model::factory('User')->table()),
+                array('u' => $this->orm->model('User')->table()),
                 ' l.user_id = u.id',
                 array('user' => 'u.name)')
             )
@@ -114,32 +116,32 @@ class Historylog extends Model
                 }
             }
             return $data;
-        } else {
-            return [];
         }
+
+        return [];
     }
 
     /**
      * Save object state
-     * @param integer $operation
+     * @param int $operation
      * @param string $objectName
-     * @param integer $objectId
-     * @param integer $userId
+     * @param int $objectId
+     * @param int $userId
      * @param string $date
      * @param string $before
      * @param string $after
-     * @return integer | false
+     * @return int | false
      */
     public function saveState($operation, $objectName, $objectId, $userId, $date, $before = null, $after = null)
     {
-        // проверяем, существует ли такой тип объектов
-        if (!Orm\Record\Config::configExists($objectName)) {
+        // Check object type
+        if (!$this->orm->configExists($objectName)) {
             $this->logError('Invalid object name "' . $objectName . '"');
             return false;
         }
 
         try {
-            $o = Orm\Record::factory('Historylog');
+            $o = $this->orm->record('Historylog');
             $o->setValues(array(
                               'type' => $operation,
                               'object' => $objectName,

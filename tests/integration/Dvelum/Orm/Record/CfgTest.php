@@ -3,14 +3,20 @@
 use PHPUnit\Framework\TestCase;
 use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record;
-use Dvelum\Orm\Model;
+use Dvelum\Orm\Orm;
 
 class CfgTest extends TestCase
 {
-    public function testRenameField()
+    protected function getOrm(): Orm
     {
-        $o = BuilderFactory::factory('page_rename');
-        $cfg = Record\Config::factory('page_rename');
+        return \Dvelum\Test\ServiceLocator::factory()->getContainer()->get(Orm::class);
+    }
+    public function testRenameField() : void
+    {
+        $orm = $this->getOrm();
+
+        $o = $orm->getBuilder('page_rename');
+        $cfg = $orm->config('page_rename');
 
         $fieldManager = new Record\Config\FieldManager();
         $fieldManager->renameField($cfg,'page_title', 'untitle');

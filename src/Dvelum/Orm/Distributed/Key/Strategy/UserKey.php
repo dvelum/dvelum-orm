@@ -38,7 +38,7 @@ class UserKey extends UniqueID
     {
         $objectConfig = $record->getConfig();
         $indexObject = $objectConfig->getDistributedIndexObject();
-        $model = Model::factory($indexObject);
+        $model = $this->orm->model($indexObject);
 
         $shardingKey = $objectConfig->getShardingKey();
 

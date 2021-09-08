@@ -22,8 +22,21 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm\Record\Config\Field;
 
+use Dvelum\App\Dictionary\Service;
+
 class Dictionary extends \Dvelum\Orm\Record\Config\Field
 {
+    protected Service $dictionary;
+
+    /**
+     * @param Service $dictionary
+     * @param array<string,mixed> $config
+     */
+    public function __construct(Service $dictionary, array $config)
+    {
+        $this->dictionary = $dictionary;
+        parent::__construct($config);
+    }
     /**
      * Apply value filter
      * @param mixed $value
@@ -49,7 +62,7 @@ class Dictionary extends \Dvelum\Orm\Record\Config\Field
         }
 
         if (!empty($value)) {
-            $dictionary = \Dvelum\App\Dictionary::factory($this->config['link_config']['object']);
+            $dictionary = $this->dictionary->get($this->config['link_config']['object']);
             if (!$dictionary->isValidKey($value)) {
                 $this->validationError = 'Invalid dictionary value';
                 return false;

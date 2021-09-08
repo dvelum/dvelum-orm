@@ -29,16 +29,18 @@ class Floating extends Field
     /**
      * Apply value filter
      * @param mixed $value
-     * @return mixed
+     * @return float|null
      */
     public function filter($value)
     {
-        if (!is_null($value)) {
-            if (is_string($value)) {
-                $value = str_replace(',', '.', $value);
-            }
-            floatval($value);
+        if ($value === null) {
+            return $value;
         }
-        return $value;
+
+        if (is_string($value)) {
+            $value = str_replace(',', '.', $value);
+        }
+
+        return (float)$value;
     }
 }

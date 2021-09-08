@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Dvelum\App;
 
+use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Orm;
 use Dvelum\Cache\CacheInterface;
 use Dvelum\Utils\Strings;
@@ -35,7 +36,16 @@ use Dvelum\App\Trigger;
  */
 class EventManager extends Orm\Record\Event\Manager
 {
-    protected $cache;
+    protected ?CacheInterface $cache;
+    protected Orm\Orm $orm;
+    protected StorageInterface $configStorage;
+
+    public function __construct(Orm\Orm $orm, StorageInterface $configStorage, ?CacheInterface $cache = null)
+    {
+        $this->cache = $cache;
+        $this->configStorage = $configStorage;
+        $this->orm = $orm;
+    }
 
     /**
      * Set cache adapter
@@ -74,7 +84,7 @@ class EventManager extends Orm\Record\Event\Manager
             }
             $trigger->$code($object);
         } elseif (method_exists('\\Dvelum\\App\\Trigger', $code)) {
-            $trigger = new Trigger();
+            $trigger = new Trigger($this->orm, $this->configStorage);
             if ($this->cache) {
                 $trigger->setCache($this->cache);
             }

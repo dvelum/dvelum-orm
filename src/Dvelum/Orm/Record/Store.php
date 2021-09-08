@@ -53,6 +53,8 @@ class Store
      */
     protected $log = false;
 
+    protected Orm\Orm $orm;
+
     /**
      * @var array
      */
@@ -66,8 +68,9 @@ class Store
      * Store constructor.
      * @param array $config
      */
-    public function __construct(array $config = [])
+    public function __construct(Orm\Orm $orm, array $config = [])
     {
+        $this->orm = $orm;
         $this->config = array_merge($this->config, $config);
     }
 
@@ -112,7 +115,7 @@ class Store
      * Set event manager
      * @param EventManager $obj
      */
-    public function setEventManager(EventManager $obj)
+    public function setEventManager(EventManager $obj): void
     {
         $this->eventManager = $obj;
     }
@@ -123,7 +126,7 @@ class Store
      */
     protected function getDbConnection(Orm\RecordInterface $object): Db\Adapter
     {
-        $objectModel = Model::factory($object->getName());
+        $objectModel = $this->orm->model($object->getName());
         return $objectModel->getDbManager()->getDbConnection($objectModel->getDbConnectionName(), null, null);
     }
 
@@ -440,16 +443,16 @@ class Store
             if (empty($relationsObject)) {
                 return false;
             }
-            $linksObjModel = Model::factory((string)$relationsObject);
-            $where = ' `source_id` = ' . intval($object->getId());
+            $linksObjModel = $this->orm->model((string)$relationsObject);
+            $where = ' `source_id` = ' . ((int)$object->getId());
         } else {
-            $linksObjModel = Model::factory($this->config['linksObject']);
+            $linksObjModel = $this->orm->model($this->config['linksObject']);
 
             $db = $linksObjModel->getDbConnection();
 
             $where = 'src = ' . $db->quote($object->getName()) . '
         		AND
-        		 src_id = ' . intval($object->getId()) . '
+        		 src_id = ' . ((int)$object->getId()) . '
         		AND
         		 src_field = ' . $db->quote($objectField) . '
                 AND
@@ -487,7 +490,7 @@ class Store
                 return false;
             }
 
-            $linksObjModel = Model::factory((string)$relationsObject);
+            $linksObjModel = $this->orm->model((string)$relationsObject);
 
             foreach ($links as $k => $v) {
                 $data[] = array(
@@ -498,7 +501,7 @@ class Store
                 $order++;
             }
         } else {
-            $linksObjModel = Model::factory($this->config['linksObject']);
+            $linksObjModel = $this->orm->model($this->config['linksObject']);
             foreach ($links as $k => $v) {
                 $data[] = array(
                     'src' => $object->getName(),
@@ -581,7 +584,7 @@ class Store
      */
     public function load($objectName, $id): array
     {
-        return Model::factory($objectName)->getItem($id);
+        return $this->orm->model($objectName)->getItem($id);
     }
 
     public function encryptData(Orm\RecordInterface $object, $data)
@@ -691,7 +694,7 @@ class Store
     protected function insertRecord(Orm\RecordInterface $object, array $data)
     {
         $db = $this->getDbConnection($object);
-        $objectTable = Model::factory($object->getName())->table();
+        $objectTable = $this->orm->model($object->getName())->table();
 
         try {
             $db->insert($objectTable, $object->serializeLinks($data));
@@ -714,7 +717,7 @@ class Store
         $db = $this->getDbConnection($object);
         try {
             $db->delete(
-                Model::factory($object->getName())->table(),
+                $this->orm->model($object->getName())->table(),
                 $db->quoteIdentifier($object->getConfig()->getPrimaryKey()) . ' =' . $object->getId()
             );
             return true;
@@ -748,7 +751,7 @@ class Store
         if (!empty($updates)) {
             try {
                 $db->update(
-                    Model::factory($object->getName())->table(),
+                    $this->orm->model($object->getName())->table(),
                     $updates,
                     $db->quoteIdentifier($object->getConfig()->getPrimaryKey()) . ' = ' . $object->getId()
                 );
@@ -805,7 +808,7 @@ class Store
          * Create new revision
          * @var \Dvelum\App\Model\Vc $versionModel
          */
-        $versionModel = Model::factory($this->config['versionObject']);
+        $versionModel = $this->orm->model($this->config['versionObject']);
         $versNum = $versionModel->newVersion($object);
 
         if (!$versNum) {
@@ -816,7 +819,7 @@ class Store
             /**
              * @var Orm\RecordInterface $oldObject
              */
-            $oldObject = Orm\Record::factory($object->getName(), $object->getId());
+            $oldObject = $this->orm->record($object->getName(), $object->getId());
             /**
              * Update object if not published
              */
@@ -935,12 +938,12 @@ class Store
     /**
      * Delete Orm\Record
      * @param string $objectName
-     * @param array $ids
-     * @return boolean
+     * @param array<int> $ids
+     * @return bool
      */
-    public function deleteObjects($objectName, array $ids): bool
+    public function deleteObjects(string $objectName, array $ids): bool
     {
-        $objectConfig = Orm\Record\Config::factory($objectName);
+        $objectConfig = $this->orm->config($objectName);
 
         if ($objectConfig->isReadOnly()) {
             if ($this->log) {
@@ -950,7 +953,7 @@ class Store
             return false;
         }
 
-        $objectModel = Model::factory($objectName);
+        $objectModel = $this->orm->model($objectName);
         $tableName = $objectModel->table();
 
         if (empty($ids)) {
@@ -960,7 +963,7 @@ class Store
         /**
          * @var  Orm\RecordInterface $specialCase
          */
-        $specialCase = Orm\Record::factory($objectName);
+        $specialCase = $this->orm->record($objectName);
 
         $db = $this->getDbConnection($specialCase);
 
@@ -989,13 +992,13 @@ class Store
          * Clear object links (links from object)
          * @var Links $linksModel
          */
-        $linksModel = Model::factory($this->config['linksObject']);
+        $linksModel = $this->orm->model($this->config['linksObject']);
         $linksModel->clearLinksFor($objectName, $ids);
 
         /**
          * @var Historylog $history
          */
-        $history = Model::factory($this->config['historyObject']);
+        $history = $this->orm->model($this->config['historyObject']);
         $userId = \Dvelum\App\Session\User::factory()->getId();
 
         /*
@@ -1029,7 +1032,7 @@ class Store
      */
     public function validateUniqueValues(string $objectName, $recordId, array $groupsData): ?array
     {
-        $model = Model::factory($objectName);
+        $model = $this->orm->model($objectName);
         $db = $model->getDbConnection();
 
         $primaryKey = $model->getPrimaryKey();

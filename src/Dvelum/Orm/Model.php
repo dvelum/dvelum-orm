@@ -124,6 +124,8 @@ class Model
 
     protected \Dvelum\Orm\Orm $orm;
 
+    protected Config\Storage\StorageInterface $configStorage;
+
     /**
      * Get DB table prefix
      * @return string
@@ -143,10 +145,12 @@ class Model
         string $objectName,
         Config\ConfigInterface $settings,
         Config\ConfigInterface $ormConfig,
-        \Dvelum\Orm\Orm $orm
+        \Dvelum\Orm\Orm $orm,
+        Config\Storage\StorageInterface $configStorage
     ) {
         $this->settings = $settings;
         $this->orm = $orm;
+        $this->configStorage = $configStorage;
 
         $this->store = $settings->get('storeLoader')();
         $this->name = strtolower($objectName);
@@ -160,7 +164,7 @@ class Model
 
         $this->dbManager = $settings->get('defaultDbManager');
 
-        $this->lightConfig = Config\Factory::storage()->get(
+        $this->lightConfig = $this->configStorage->get(
             $ormConfig->get('object_configs') . $this->name . '.php',
             true,
             false
@@ -286,19 +290,15 @@ class Model
 
     /**
      * Get record by id
-     * @param integer $id
-     * @param array|string $fields — optional — the list of fields to retrieve
-     * @return array
+     * @param int $id
+     * @param array<int|string,string>|string $fields — optional — the list of fields to retrieve
+     * @return array<int|string,string>
      * @throws \Exception
      */
-    public function getItem($id, $fields = ['*']): array
+    public function getItem(int $id, $fields = ['*']): array
     {
         $primaryKey = $this->getPrimaryKey();
-        $query = $this->query()
-            ->filters([
-                          $primaryKey => $id
-                      ])
-            ->fields($fields);
+        $query = $this->query()->filters([$primaryKey => $id])->fields($fields);
 
         $result = $query->fetchRow();
 
@@ -310,18 +310,18 @@ class Model
 
     /**
      *  Get the object data using cache
-     * @param integer $id - object identifier
+     * @param int $id - object identifier
      * @param mixed $lifetime
-     * @return array
+     * @return array<int|string,string>
      * @throws \Exception
      */
-    public function getCachedItem($id, $lifetime = false)
+    public function getCachedItem(int $id, $lifetime = false)
     {
         if (!$this->cache) {
             return $this->getItem($id);
         }
 
-        $cacheKey = $this->getCacheKey(array('item', $id));
+        $cacheKey = $this->getCacheKey(['item', $id]);
         $data = $this->cache->load($cacheKey);
 
         if ($data !== false) {
@@ -337,13 +337,13 @@ class Model
     /**
      * Get data record by field value using cache. Returns first occurrence
      * @param string $field - field name
-     * @param string $value - field value
+     * @param mixed $value - field value
      * @return array<string,mixed>
      * @throws \Exception
      */
     public function getCachedItemByField(string $field, $value): array
     {
-        $cacheKey = $this->getCacheKey(array('item', $field, $value));
+        $cacheKey = $this->getCacheKey(['item', $field, (string)$value]);
         $data = false;
 
         if ($this->cache) {
@@ -371,11 +371,11 @@ class Model
      * Get Item by field value. Returns first occurrence
      * @param string $fieldName
      * @param mixed $value
-     * @param string|array $fields
-     * @return array|null
+     * @param string|array<int|string,string> $fields
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
-    public function getItemByField(string $fieldName, $value, $fields = '*')
+    public function getItemByField(string $fieldName, $value, $fields = '*') : array
     {
         try {
             $sql = $this->db->select()->from($this->table(), $fields);
@@ -389,13 +389,13 @@ class Model
 
     /**
      * Get a number of entries a list of IDs
-     * @param array $ids - list of IDs
+     * @param array<int> $ids - list of IDs
      * @param mixed $fields - optional - the list of fields to retrieve
      * @param bool $useCache - optional, defaul false
-     * @return array / false
+     * @return array<int,array<int|string,mixed>>
      * @throws \Exception
      */
-    public function getItems(array $ids, $fields = '*', $useCache = false)
+    public function getItems(array $ids, $fields = '*', bool $useCache = false) : array
     {
         $data = false;
         $cacheKey = '';

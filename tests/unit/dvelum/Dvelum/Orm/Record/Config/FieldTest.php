@@ -2,12 +2,18 @@
 
 use PHPUnit\Framework\TestCase;
 
+use Dvelum\Orm;
 
 class FieldTest extends TestCase
 {
+    protected function getOrm(): Orm\Orm
+    {
+        return \Dvelum\Test\ServiceLocator::factory()->getContainer()->get(Orm\Orm::class);
+    }
+
     public function testProperties()
     {
-        $config = \Dvelum\Orm\Record\Config::factory('user');
+        $config = $this->getOrm()->config('user');
         $field = $config->getField('id');
         $this->assertTrue($field->isSystem());
         $this->assertTrue($field->isSearch());
@@ -16,14 +22,14 @@ class FieldTest extends TestCase
         $this->assertTrue($field->isUnsigned());
         $this->assertTrue($field->isUnique());
         $this->assertTrue($config->getField('name')->isSearch());
-        $this->assertEquals('id' , $field->getName());
-        $this->assertEquals('bigint' , $field->getDbType());
+        $this->assertEquals('id', $field->getName());
+        $this->assertEquals('bigint', $field->getDbType());
 
-        $config = \Dvelum\Orm\Record\Config::factory('user_auth');
+        $config = $this->getOrm()->config('user_auth');
 
         $authorField = $config->getField('user');
-        $this->assertEquals('user' , $authorField->getLinkedObject());
-        $this->assertEquals('link' , $authorField->getType());
+        $this->assertEquals('user', $authorField->getLinkedObject());
+        $this->assertEquals('link', $authorField->getType());
         $this->assertTrue($authorField->isLink());
         $this->assertFalse($authorField->isDictionaryLink());
         $this->assertTrue($authorField->isObjectLink());

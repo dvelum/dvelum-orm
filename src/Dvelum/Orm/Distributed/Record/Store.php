@@ -2,7 +2,7 @@
 
 /**
  *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2017  Kirill Yegorov
+ *  Copyright (C) 2011-2021  Kirill Yegorov
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,15 +35,22 @@ class Store extends \Dvelum\Orm\Record\Store
      */
     protected $sharding;
 
-    protected $shard = '';
+    /**
+     * @var string
+     */
+    protected string $shard = '';
 
-    public function __construct(array $config = [])
+    /**
+     * @param Distributed $distributed
+     * @param array<int|string,mixed> $config
+     */
+    public function __construct(Distributed $distributed, Orm\Orm $orm, array $config = [])
     {
-        parent::__construct($config);
-        $this->sharding = Distributed::factory();
+        parent::__construct($orm, $config);
+        $this->sharding = $distributed;
     }
 
-    public function setShard(string $shard)
+    public function setShard(string $shard) : void
     {
         $this->shard = $shard;
     }
@@ -59,7 +66,7 @@ class Store extends \Dvelum\Orm\Record\Store
         /**
          * @var \Dvelum\Orm\Distributed\Model $model
          */
-        $model = Model::factory($objectName);
+        $model = $this->orm->model($objectName);
 
         if (empty($this->shard)) {
             $result = $model->getItem($id);
@@ -112,7 +119,7 @@ class Store extends \Dvelum\Orm\Record\Store
         $data = $object->serializeLinks($data);
         $db = $this->getDbConnection($object);
 
-        $model = Model::factory($object->getName());
+        $model = $this->orm->model($object->getName());
         try {
             $db->beginTransaction();
             if (empty($insertId)) {
@@ -145,7 +152,7 @@ class Store extends \Dvelum\Orm\Record\Store
     {
         $objectConfig = $object->getConfig();
         $indexObject = $objectConfig->getDistributedIndexObject();
-        $indexModel = Model::factory($indexObject);
+        $indexModel = $this->orm->model($indexObject);
 
         $db = $indexModel->getDbConnection();
         $db->beginTransaction();
@@ -155,7 +162,7 @@ class Store extends \Dvelum\Orm\Record\Store
                 /**
                  * @var Orm\RecordInterface $obj
                  */
-                $obj = Orm\Record::factory($indexObject, $object->getId());
+                $obj = $this->orm->record($indexObject, $object->getId());
                 $obj->delete(false);
             } catch (Exception $e) {
                 if ($this->log) {
@@ -188,7 +195,7 @@ class Store extends \Dvelum\Orm\Record\Store
             $shardId = null;
         }
 
-        $objectModel = Model::factory($object->getName());
+        $objectModel = $this->orm->model($object->getName());
         return $objectModel->getDbManager()->getDbConnection($objectModel->getDbConnectionName(), null, $shardId);
     }
 
@@ -212,7 +219,7 @@ class Store extends \Dvelum\Orm\Record\Store
         $updates = $object->serializeLinks($updates);
 
         $shardingIndex = $object->getConfig()->getDistributedIndexObject();
-        $indexModel = Model::factory($shardingIndex);
+        $indexModel = $this->orm->model($shardingIndex);
         $indexConfig = $indexModel->getObjectConfig();
         $indexDb = $indexModel->getDbConnection();
 
@@ -225,7 +232,7 @@ class Store extends \Dvelum\Orm\Record\Store
             }
         }
 
-        $model = Model::factory($object->getName());
+        $model = $this->orm->model($object->getName());
         if (!empty($updates)) {
             try {
                 if (!empty($indexUpdates)) {

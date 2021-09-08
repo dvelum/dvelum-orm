@@ -31,6 +31,7 @@ use Dvelum\Orm\Distributed\Record as DistributedRecord;
 use Dvelum\Db;
 use Dvelum\Orm\Record\Builder\AbstractAdapter;
 use Dvelum\Orm\Record\BuilderFactory;
+use Dvelum\Orm\Record\Config\FieldFactory;
 use Dvelum\Orm\Record\Manager;
 use Dvelum\Security\CryptServiceInterface;
 use Dvelum\Utils;
@@ -40,15 +41,24 @@ use Psr\Log\LoggerInterface;
 
 class Orm
 {
-    protected $configObjects = [];
-    protected $configFiles = [];
-    protected $models = [];
     /**
-     * @var ConfigInterface
+     * @var array<string,\Dvelum\Orm\Record\Config>
+     */
+    protected array $configObjects = [];
+    /**
+     * @var array<string>
+     */
+    protected array $configFiles = [];
+    /**
+     * @var array<string,Model|\Dvelum\Orm\Distributed\Model>
+     */
+    protected array $models = [];
+    /**
+     * @var ConfigInterface<int|string,mixed>
      */
     protected $configSettings;
     /**
-     * @var ConfigInterface
+     * @var ConfigInterface<int|string,mixed>
      */
     protected $modelSettings;
     /**
@@ -56,26 +66,27 @@ class Orm
      */
     private $cryptService;
     /**
-     * @var Record\Store $storage
+     * @var Record\Store|null $storage
      */
-    protected $storage = null;
+    protected ?Record\Store $storage = null;
     /**
-     * @var Record\Store $distributedStorage
+     * @var DistributedRecord\Store|null $distributedStorage
      */
-    protected $distributedStorage = null;
+    protected ?DistributedRecord\Store $distributedStorage = null;
+
     protected $distributedStoreLoader;
     /**
      * @var EventManager $eventManager
      */
     protected $eventManager = null;
     /**
-     * @var ConfigInterface $config
+     * @var ConfigInterface<int|string,mixed> $config
      */
     protected $config;
     /**
      * @var LoggerInterface|null $log
      */
-    protected $log = null;
+    protected ?LoggerInterface $log = null;
 
     protected $translator = false;
 
@@ -90,11 +101,26 @@ class Orm
     protected Config\Storage\StorageInterface $configStorage;
 
     private BuilderFactory $builderFactory;
+    private Distributed $distributedProvider;
+    /**
+     * @var callable $distributedLoader
+     */
+    private $distributedLoader;
+
+    private FieldFactory $fieldFactory;
+    /**
+     * @var callable $fieldFactoryLoader
+     */
+    private $fieldFactoryLoader;
 
     /**
-     * @param ConfigInterface $config
+     * @param ConfigInterface<int|string,mixed> $config
      * @param Db\ManagerInterface $dbManager
      * @param string $language
+     * @param Lang $lang
+     * @param StorageInterface $configStorage
+     * @param callable $distributedLoader
+     * @param callable $fieldFactoryLoader
      * @param CacheInterface|null $cache
      * @throws \Exception
      */
@@ -102,15 +128,19 @@ class Orm
         ConfigInterface $config,
         Db\ManagerInterface $dbManager,
         string $language,
-        CacheInterface $cache = null,
         Lang $lang,
-        Config\Storage\StorageInterface $configStorage
+        Config\Storage\StorageInterface $configStorage,
+        callable $distributedLoader,
+        callable $fieldFactoryLoader,
+        ?CacheInterface $cache = null
     ) {
         $this->config = $config;
         $this->language = $language;
         $this->lang = $lang;
-        $this->eventManager = new EventManager();
+        $this->eventManager = new EventManager($this, $configStorage);
         $this->configStorage = $configStorage;
+        $this->distributedLoader = $distributedLoader;
+        $this->fieldFactoryLoader = $fieldFactoryLoader;
 
         if ($cache) {
             $this->eventManager->setCache($cache);
@@ -118,24 +148,27 @@ class Orm
 
         $orm = $this;
 
-        $this->modelSettings = Config\Factory::create([
-                                                          'hardCacheTime' => $config->get('hard_cache'),
-                                                          'dataCache' => $cache,
-                                                          'defaultDbManager' => $dbManager,
-                                                          'logLoader' => function () use ($orm) {
-                                                              return $orm->getLog();
-                                                          }
-                                                      ]);
+        $this->modelSettings = Config\Factory::create(
+            [
+                'hardCacheTime' => $config->get('hard_cache'),
+                'dataCache' => $cache,
+                'defaultDbManager' => $dbManager,
+                'logLoader' => function () use ($orm) {
+                    return $orm->getLog();
+                }
+            ]
+        );
 
-
-        $this->configSettings = Config\Factory::create([
-                                                           'configPath' => $config->get('object_configs'),
-                                                           'translatorLoader' => function () use ($orm) {
-                                                               return $orm->getTranslator();
-                                                           },
-                                                           'useForeignKeys' => $config->get('foreign_keys'),
-                                                           'ivField' => $config->get('iv_field'),
-                                                       ]);
+        $this->configSettings = Config\Factory::create(
+            [
+                'configPath' => $config->get('object_configs'),
+                'translatorLoader' => function () use ($orm) {
+                    return $orm->getTranslator();
+                },
+                'useForeignKeys' => $config->get('foreign_keys'),
+                'ivField' => $config->get('iv_field'),
+            ]
+        );
 
         $this->storeLoader = function () use ($orm) {
             return $orm->storage();
@@ -147,7 +180,7 @@ class Orm
 
     /**
      * Get ORM configuration options
-     * @return ConfigInterface
+     * @return ConfigInterface<int|string,mixed>
      */
     public function getConfig(): ConfigInterface
     {
@@ -216,7 +249,7 @@ class Orm
                 'versionObject' => $this->config->get('version_object'),
             ];
             $storeClass = $this->config->get('storage');
-            $this->storage = new $storeClass($storageOptions);
+            $this->storage = new $storeClass($this, $storageOptions);
             $this->storage->setEventManager($this->eventManager);
 
             if (!empty($this->log)) {
@@ -235,7 +268,11 @@ class Orm
                 'versionObject' => $this->config->get('version_object'),
             ];
             $distributedStoreClass = $this->config->get('distributed_storage');
-            $this->distributedStorage = new $distributedStoreClass($storageOptions);
+            $this->distributedStorage = new $distributedStoreClass(
+                $this->distributed(),
+                $this,
+                $storageOptions
+            );
             $this->distributedStorage->setEventManager($this->eventManager);
             if (!empty($this->log)) {
                 $this->distributedStorage->setLog($this->log);
@@ -261,22 +298,23 @@ class Orm
      * Factory method of object creation is preferable to use, cf. method  __construct() description
      * @param string $name
      * @param int|bool $id , optional default false
-     * @param string|bool $shard . optional
+     * @param string|null $shard . optional
      * @return RecordInterface
      * @throws \Exception
      */
-    public function record(string $name, $id = false, $shard = false): RecordInterface
+    public function record(string $name, $id = false, ?string $shard = null): RecordInterface
     {
-        $recordClass = $this->config->get('record');
         $config = $this->config($name);
 
         if (!$config->isDistributed()) {
-            return new $recordClass($config, $id);
+            $recordClass = $this->config->get('record');
+            return new $recordClass($this, $config, $id);
         } else {
             if ($config->isShardRequired() && !empty($id) && empty($shard)) {
                 throw new \InvalidArgumentException('Shard is required for Object ' . $name);
             }
-            return new DistributedRecord($config, $id, $shard);
+            $recordClass = $this->config->get('distributed_record');
+            return new $recordClass($this->distributed(), $this, $config, $id, $shard);
         }
     }
 
@@ -384,7 +422,7 @@ class Orm
         $name = strtolower($name);
 
         if ($force || !isset($this->configObjects[$name])) {
-            $config = new Record\Config($name, $this->configSettings, $force);
+            $config = new Record\Config($name, $this->configSettings, $this->configStorage, $this->fieldFactory(), $this->distributed(), $force);
             $orm = $this;
             $loader = function () use ($orm) {
                 return $orm->getCryptService();
@@ -411,7 +449,7 @@ class Orm
 
         $cfgPath = $this->configSettings->get('configPath');
 
-        if (Config\Factory::storage()->exists($cfgPath . $name . '.php')) {
+        if ($this->configStorage->exists($cfgPath . $name . '.php')) {
             $this->configFiles[$name] = $cfgPath . $name . '.php';
             return true;
         }
@@ -419,9 +457,42 @@ class Orm
         return false;
     }
 
+    public function recordExists(string $name, int $id): bool
+    {
+        if (!$this->configExists($name)) {
+            return false;
+        }
+        $config = $this->config($name);
+        $model = $this->model($name);
+        if ($model->query()->filters([$config->getPrimaryKey() => $id])->getCount() > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param string $name
+     * @param array<int> $id
+     * @return bool
+     * @throws Exception
+     */
+    public function recordsExists(string $name, array $id):bool
+    {
+        if (!$this->configExists($name)) {
+            return false;
+        }
+        $id = array_unique(array_map('intval', $id));
+        $config = $this->config($name);
+        $model = $this->model($name);
+        if ($model->query()->filters([$config->getPrimaryKey() => $id])->getCount() === count($id)) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Get ORM Object Config settings
-     * @return ConfigInterface
+     * @return ConfigInterface<int|string,mixed>
      */
     public function getConfigSettings(): ConfigInterface
     {
@@ -430,7 +501,7 @@ class Orm
 
     /**
      * Get Orm Model Settings
-     * @return ConfigInterface
+     * @return ConfigInterface<int|string,mixed>
      */
     public function getModelSettings(): ConfigInterface
     {
@@ -464,22 +535,47 @@ class Orm
             $modelSettings['storeLoader'] = $this->storeLoader;
         }
 
-        /*
-         * Instantiate real or virtual model
-         */
-        if (class_exists($className)) {
-            $this->models[$listName] = new $className($objectName, $modelSettings, $this->config, $this);
-        } elseif (class_exists($nameSpacedClassName)) {
-            $this->models[$listName] = new $nameSpacedClassName($objectName, $modelSettings, $this->config, $this);
-        } elseif (class_exists($distModelClassName)) {
-            $this->models[$listName] = new $distModelClassName($objectName, $modelSettings, $this->config, $this);
-        } else {
-            if ($this->config($objectName)->isDistributed()) {
-                $this->models[$listName] = new Distributed\Model($objectName, $modelSettings, $this->config, $this);
-            } else {
-                $this->models[$listName] = new Model($objectName, $modelSettings, $this->config, $this);
+        $classVariants = [$className, $nameSpacedClassName, $distModelClassName];
+        $modelClass = null;
+        foreach ($classVariants as $name) {
+            if (class_exists($name)) {
+                $modelClass = $name;
+                break;
             }
         }
+        if ($modelClass !== null) {
+            if (is_subclass_of($modelClass, \Dvelum\Orm\Distributed\Model::class)) {
+                $this->models[$listName] = new $modelClass(
+                    $objectName,
+                    $modelSettings,
+                    $this->config,
+                    $this,
+                    $this->configStorage,
+                    $this->distributed()
+                );
+            } else {
+                $this->models[$listName] = new $modelClass(
+                    $objectName, $modelSettings, $this->config, $this, $this->configStorage
+                );
+            }
+        } else {
+            // Create Virtual Model
+            if ($this->config($objectName)->isDistributed()) {
+                $this->models[$listName] = new Distributed\Model(
+                    $objectName,
+                    $modelSettings,
+                    $this->config,
+                    $this,
+                    $this->configStorage,
+                    $this->distributed()
+                );
+            } else {
+                $this->models[$listName] = new Model(
+                    $objectName, $modelSettings, $this->config, $this, $this->configStorage
+                );
+            }
+        }
+
         return $this->models[$listName];
     }
 
@@ -490,7 +586,7 @@ class Orm
      */
     public function stat(): Stat
     {
-        return new Stat($this->configStorage, $this, $this->lang->getDictionary());
+        return new Stat($this, $this->distributed(), $this->lang->getDictionary());
     }
 
     /**
@@ -529,5 +625,21 @@ class Orm
     public function getRecordManager(): Manager
     {
         return new Manager($this->configStorage, $this);
+    }
+
+    public function distributed(): Distributed
+    {
+        if(!isset($this->distributedProvider)){
+            $this->distributedProvider = ($this->distributedLoader)();
+        }
+        return $this->distributedProvider;
+    }
+
+    public function fieldFactory(): FieldFactory
+    {
+        if(!isset($this->fieldFactory)){
+            $this->fieldFactory = ($this->fieldFactoryLoader)();
+        }
+        return $this->fieldFactory;
     }
 }

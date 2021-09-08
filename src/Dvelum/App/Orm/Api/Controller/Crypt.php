@@ -38,21 +38,24 @@ class Crypt extends Controller
         return 'Orm';
     }
 
-    public function indexAction()
+    public function indexAction(): void
     {
     }
 
     /**
      * Decrypt object data (background)
      */
-    public function decryptAction()
+    public function decryptAction(): void
     {
         if (!$this->checkCanEdit()) {
             return;
         }
+
         $object = $this->request->post('object', 'string', false);
 
-        if (!$object || !Orm\Record\Config::configExists($object)) {
+        $orm = $this->container->get(Orm\Orm::class);
+
+        if (!$object || !$orm->configExists($object)) {
             $this->response->error($this->lang->get('WRONG_REQUEST'));
             return;
         }
@@ -60,8 +63,8 @@ class Crypt extends Controller
         $container = $this->decryptContainerPrefix . $object;
 
         //$objectModel = Model::factory($object);
-        $taskModel = Model::factory('bgtask');
-        $signalModel = Model::factory('Bgtask_Signal');
+        $taskModel = $orm->model('bgtask');
+        $signalModel = $orm->model('Bgtask_Signal');
 
         //disable profiling in dev mode
         // if($this->appConfig->get('development')) {
@@ -100,7 +103,9 @@ class Crypt extends Controller
 
         $object = $this->request->post('object', 'string', false);
 
-        if (!$object || !Orm\Record\Config::configExists($object)) {
+        $orm = $this->container->get(Orm\Orm::class);
+
+        if (!$object || !$orm->configExists($object)) {
             $this->response->error($this->lang->get('WRONG_REQUEST'));
             return;
         }
@@ -108,8 +113,8 @@ class Crypt extends Controller
         $container = $this->encryptContainerPrefix . $object;
 
         //$objectModel = Model::factory($object);
-        $taskModel = Model::factory('bgtask');
-        $signalModel = Model::factory('Bgtask_Signal');
+        $taskModel = $orm->model('bgtask');
+        $signalModel = $orm->model('Bgtask_Signal');
 
         //disable profiling in dev mode
         //if($this->appConfig->get('development')) {
@@ -168,9 +173,9 @@ class Crypt extends Controller
             $this->response->error($this->lang->get('WRONG_REQUEST'));
             return;
         }
-
+        $orm = $this->container->get(Orm\Orm::class);
         $pid = $session->get($container);
-        $taskModel = Model::factory('bgtask');
+        $taskModel = $orm->model('bgtask');
         $statusData = $taskModel->getItem($pid);
 
         if (empty($statusData)) {
@@ -178,10 +183,12 @@ class Crypt extends Controller
             return;
         }
 
-        $this->response->success([
-                                     'status' => $statusData['status'],
-                                     'op_total' => $statusData['op_total'],
-                                     'op_finished' => $statusData['op_finished']
-                                 ]);
+        $this->response->success(
+            [
+                'status' => $statusData['status'],
+                'op_total' => $statusData['op_total'],
+                'op_finished' => $statusData['op_finished']
+            ]
+        );
     }
 }

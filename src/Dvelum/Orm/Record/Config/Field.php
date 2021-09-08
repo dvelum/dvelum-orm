@@ -21,7 +21,9 @@ declare(strict_types=1);
 
 namespace Dvelum\Orm\Record\Config;
 
-use Dvelum\Orm;
+use Dvelum\Orm\Orm;
+use Dvelum\Orm\Record\BuilderFactory;
+use Dvelum\Orm\Record\Config;
 
 /**
  * Class Field
@@ -29,9 +31,16 @@ use Dvelum\Orm;
  */
 class Field implements \ArrayAccess
 {
-    protected $config;
-    protected $validationError = '';
+    /**
+     * @var array<string,mixed>
+     */
+    protected array $config;
+    protected string $validationError = '';
 
+
+    /**
+     * @param array<string,mixed> $config
+     */
     public function __construct(array $config)
     {
         $this->config = $config;
@@ -39,7 +48,7 @@ class Field implements \ArrayAccess
 
     /**
      * Get field config
-     * @return array
+     * @return array<string,mixed>
      */
     public function getConfig(): array
     {
@@ -61,7 +70,7 @@ class Field implements \ArrayAccess
 
     /**
      * Check whether the field is a boolean field
-     * @return boolean
+     * @return bool
      */
     public function isBoolean(): bool
     {
@@ -70,26 +79,26 @@ class Field implements \ArrayAccess
 
     /**
      * Check whether the field is a numeric field
-     * @return boolean
+     * @return bool
      */
     public function isNumeric(): bool
     {
         return (isset($this->config['db_type']) && in_array(
                 $this->config['db_type'],
-                Orm\Record\BuilderFactory::$numTypes,
+                BuilderFactory::$numTypes,
                 true
             ));
     }
 
     /**
      * Check whether the field is a integer field
-     * @return boolean
+     * @return bool
      */
     public function isInteger(): bool
     {
         return (isset($this->config['db_type']) && in_array(
                 $this->config['db_type'],
-                Orm\Record\BuilderFactory::$intTypes,
+                BuilderFactory::$intTypes,
                 true
             ));
     }
@@ -102,7 +111,7 @@ class Field implements \ArrayAccess
     {
         return (isset($this->config['db_type']) && in_array(
                 $this->config['db_type'],
-                Orm\Record\BuilderFactory::$floatTypes,
+                BuilderFactory::$floatTypes,
                 true
             ));
     }
@@ -118,10 +127,10 @@ class Field implements \ArrayAccess
             return false;
         }
 
-        $isText = (in_array($this->config['db_type'], Orm\Record\BuilderFactory::$textTypes, true));
+        $isText = (in_array($this->config['db_type'], BuilderFactory::$textTypes, true));
 
         if ($charTypes && !$isText) {
-            $isText = (in_array($this->config['db_type'], Orm\Record\BuilderFactory::$charTypes, true));
+            $isText = (in_array($this->config['db_type'], BuilderFactory::$charTypes, true));
         }
 
         return $isText;
@@ -134,7 +143,7 @@ class Field implements \ArrayAccess
     {
         return (isset($this->config['db_type']) && in_array(
                 $this->config['db_type'],
-                Orm\Record\BuilderFactory::$dateTypes,
+                BuilderFactory::$dateTypes,
                 true
             ));
     }
@@ -147,22 +156,21 @@ class Field implements \ArrayAccess
     {
         if (isset($this->config['required']) && $this->config['required']) {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
      * Check if field can be used for search
-     * @return boolean
+     * @return bool
      */
     public function isSearch(): bool
     {
         if (isset($this->config['is_search']) && $this->config['is_search']) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
@@ -173,27 +181,26 @@ class Field implements \ArrayAccess
     {
         if (isset($this->config['type']) && $this->config['type'] === 'encrypted') {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
      * Check if the field is a link
-     * @return boolean
+     * @return bool
      */
     public function isLink(): bool
     {
         if (isset($this->config['type']) && $this->config['type'] === 'link') {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
      * Check if the field is a link to the dictionary
-     * @return boolean
+     * @return bool
      */
     public function isDictionaryLink(): bool
     {
@@ -201,14 +208,13 @@ class Field implements \ArrayAccess
                 $this->config['link_config']
             ) && $this->config['link_config']['link_type'] === 'dictionary') {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
      * Check if html is allowed\
-     * @return boolean
+     * @return bool
      */
     public function isHtml(): bool
     {
@@ -230,7 +236,7 @@ class Field implements \ArrayAccess
 
     /**
      * Check whether the field should be unique
-     * @return boolean
+     * @return bool
      */
     public function isUnique(): bool
     {
@@ -247,17 +253,16 @@ class Field implements \ArrayAccess
 
     /**
      * Check if a field is a object link
-     * @return boolean
+     * @return bool
      */
     public function isObjectLink(): bool
     {
         if (isset($this->config['type']) && $this->config['type'] === 'link' && isset($this->config['link_config']) && is_array(
                 $this->config['link_config']
-            ) && $this->config['link_config']['link_type'] === Orm\Record\Config::LINK_OBJECT) {
+            ) && $this->config['link_config']['link_type'] === Config::LINK_OBJECT) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
@@ -268,24 +273,23 @@ class Field implements \ArrayAccess
     {
         if (isset($this->config['type']) && $this->config['type'] === 'link' && isset($this->config['link_config']) && is_array(
                 $this->config['link_config']
-            ) && $this->config['link_config']['link_type'] === Orm\Record\Config::LINK_OBJECT_LIST) {
+            ) && $this->config['link_config']['link_type'] === Config::LINK_OBJECT_LIST) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
      * Check if field is ManyToMany relation
-     * @return boolean
+     * @return bool
      */
     public function isManyToManyLink(): bool
     {
         if (isset($this->config['type']) && $this->config['type'] === 'link'
             && is_array($this->config['link_config'])
-            && $this->config['link_config']['link_type'] === Orm\Record\Config::LINK_OBJECT_LIST
+            && $this->config['link_config']['link_type'] === Config::LINK_OBJECT_LIST
             && isset($this->config['link_config']['relations_type'])
-            && $this->config['link_config']['relations_type'] === Orm\Record\Config::RELATION_MANY_TO_MANY
+            && $this->config['link_config']['relations_type'] === Config::RELATION_MANY_TO_MANY
         ) {
             return true;
         }
@@ -313,27 +317,25 @@ class Field implements \ArrayAccess
     {
         if (isset($this->config['db_default'])) {
             return $this->config['db_default'];
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
      * Check if field has default value
-     * @return boolean
+     * @return bool
      */
     public function hasDefault(): bool
     {
         if (isset($this->config['db_default']) && $this->config['db_default'] !== false) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
      * Check if field is numeric and unsigned
-     * @return boolean
+     * @return bool
      */
     public function isUnsigned(): bool
     {
@@ -343,22 +345,20 @@ class Field implements \ArrayAccess
 
         if (isset($this->config['db_unsigned']) && $this->config['db_unsigned']) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
      * Check if field can be null
-     * @return boolean
+     * @return bool
      */
     public function isNull(): bool
     {
         if (isset($this->config['db_isNull']) && $this->config['db_isNull']) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**

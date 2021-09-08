@@ -23,23 +23,26 @@ namespace Dvelum\Orm\Distributed\Router;
 
 use Dvelum\Config\ConfigInterface;
 use Dvelum\Orm\Distributed;
+use Dvelum\Orm\Orm;
 use Dvelum\Orm\RecordInterface;
 
 class WithParent implements RouteInterface
 {
     /**
-     * @var ConfigInterface
+     * @var ConfigInterface<int|string,mixed>
      */
     protected $config;
-    /**
-     * @var Distributed
-     */
-    protected $sharding;
 
-    public function __construct(Distributed $sharding, ConfigInterface $config)
+    protected Orm $orm;
+
+    /**
+     * @param Orm $orm
+     * @param ConfigInterface<int|string,mixed> $config
+     */
+    public function __construct(Orm $orm, ConfigInterface $config)
     {
         $this->config = $config;
-        $this->sharding = $sharding;
+        $this->orm = $orm;
     }
 
     /**
@@ -55,7 +58,7 @@ class WithParent implements RouteInterface
         $objectShard = '';
 
         if (!empty($parentId)) {
-            $objectShard = $this->sharding->findObjectShard($parentObject, $parentId);
+            $objectShard = $this->orm->distributed()->findObjectShard($this->orm->config($parentObject), $parentId);
         }
 
         if (empty($objectShard)) {

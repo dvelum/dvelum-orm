@@ -2,7 +2,7 @@
 
 /**
  *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2017  Kirill Yegorov
+ *  Copyright (C) 2011-2021  Kirill Yegorov
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,34 +26,46 @@ use Dvelum\Orm\Record\Config;
 
 class Record extends Orm\Record
 {
-    protected $shard = null;
+    protected ?string $shard = null;
     /**
      * @var Orm\Distributed\Record\Store $store
      */
-    protected $store;
+    protected Orm\Distributed\Record\Store $store;
+    private Orm\Distributed $distributed;
 
-    public function __construct(Config $config, $id = false, $shard = false)
+    /**
+     * @param Orm\Distributed $distributed
+     * @param Config $config
+     * @param false $id
+     * @param string|null $shard
+     * @throws Orm\Exception
+     */
+    public function __construct(Orm\Distributed $distributed, Orm\Orm $orm, Config $config, $id = false, ?string $shard = null)
     {
-        $this->shard = $shard;
-        if ($config->getShardingType() === Config::SHARDING_TYPE_KEY_NO_INDEX && empty($shard) && !empty($id)) {
+        if ($config->getShardingType() === Config::SHARDING_TYPE_KEY_NO_INDEX && $shard === null && !empty($id)) {
             throw new Orm\Exception(
                 'Sharded object with type of Config::SHARDING_TYPE_KEY_NO_INDEX requires shard to be defined at constructor'
             );
         }
+        parent::__construct($orm, $config, $id);
 
-        parent::__construct($config, $id);
+        $this->shard = $shard;
+        $this->distributed = $distributed;
     }
 
     public function loadData(): void
     {
-        $model = Model::factory($this->getName());
+        $model = $this->orm->model($this->getName());
         $store = $model->getStore();
+        /**
+         * @todo need refactoring
+         */
         $store->setShard((string)$this->shard);
         parent::loadData();
     }
 
     public function getShard(): string
     {
-        return $this->get(Orm\Distributed::factory()->getShardField());
+        return $this->get($this->distributed->getShardField());
     }
 }

@@ -2,7 +2,7 @@
 
 /**
  *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2017  Kirill Yegorov
+ *  Copyright (C) 2011-2021  Kirill Yegorov
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -57,9 +57,9 @@ class Record implements RecordInterface
     protected $insertId = false;
 
     /**
-     * @var Model|\Dvelum\Orm\Distributed\Model
+     * @var Model
      */
-    protected $model;
+    protected Model $model;
 
     /**
      * Loaded version of VC object
@@ -72,6 +72,9 @@ class Record implements RecordInterface
      */
     protected $dataModel = null;
 
+    protected Orm\Orm $orm;
+
+
     /**
      * The object constructor takes its name and identifier,
      * (the parameter is not required), if absent,
@@ -83,12 +86,13 @@ class Record implements RecordInterface
      * @param bool|int $id - optional
      * @throws Exception | \Exception
      */
-    public function __construct(Config $config, $id = false)
+    public function __construct(Orm\Orm $orm, Config $config, $id = false)
     {
         $this->config = $config;
         $this->name = $config->getName();
         $this->id = $id;
         $this->primaryKey = $config->getPrimaryKey();
+        $this->orm = $orm;
 
         if ($this->id) {
             $this->loadData();
@@ -101,7 +105,7 @@ class Record implements RecordInterface
     public function getDataModel(): DataModel
     {
         if (empty($this->dataModel)) {
-            $this->dataModel = new DataModel();
+            $this->dataModel = new DataModel($this->orm);
         }
         return $this->dataModel;
     }
@@ -292,6 +296,7 @@ class Record implements RecordInterface
      * @param integer|array $ids
      * @return bool
      * @throws \Exception
+     * @deprecated
      */
     static public function objectExists(string $name, $ids): bool
     {
@@ -319,7 +324,7 @@ class Record implements RecordInterface
         $data = Utils::fetchCol($cfg->getPrimaryKey(), $data);
 
         foreach ($ids as $v) {
-            if (!in_array(intval($v), $data, true)) {
+            if (!in_array((int)$v, $data, true)) {
                 return false;
             }
         }
@@ -328,7 +333,7 @@ class Record implements RecordInterface
 
     /**
      * Set the object properties using the associative array of fields and values
-     * @param array $values
+     * @param array<int|string,mixed> $values
      * @return void
      * @throws Exception
      */
@@ -345,10 +350,10 @@ class Record implements RecordInterface
      * Set the object field val
      * @param string $name
      * @param mixed $value
-     * @return bool
+     * @return void
      * @throws Exception
      */
-    public function set(string $name, $value): bool
+    public function set(string $name, $value): void
     {
         $propConf = $this->config->getFieldConfig($name);
         $validator = $this->getConfig()->getValidator($name);
@@ -385,19 +390,18 @@ class Record implements RecordInterface
         }
 
         if (array_key_exists($name, $this->data)) {
-            if ($field->isBoolean() && intval($this->data[$name]) === intval($value)) {
+            if ($field->isBoolean() && ((int) $this->data[$name]) === ((int) $value)) {
                 unset($this->updates[$name]);
-                return true;
+                return;
             }
 
             if ($this->data[$name] === $value) {
                 unset($this->updates[$name]);
-                return true;
+                return;
             }
         }
 
         $this->updates[$name] = $value;
-        return true;
     }
 
     /**
@@ -601,7 +605,7 @@ class Record implements RecordInterface
      */
     public function __toString(): string
     {
-        return strval($this->getId());
+        return (string)($this->getId());
     }
 
     /**
@@ -611,7 +615,7 @@ class Record implements RecordInterface
      */
     public function getTitle(): string
     {
-        return Model::factory($this->getName())->getTitle($this);
+        return $this->orm->model($this->getName())->getTitle($this);
     }
 
     /**
@@ -621,6 +625,7 @@ class Record implements RecordInterface
      * @param string|bool $shard
      * @return RecordInterface
      * @throws \Exception
+     * @deprecated
      */
     static public function factory(string $name, $id = false, $shard = false): RecordInterface
     {

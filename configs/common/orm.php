@@ -69,11 +69,11 @@ return [
     /*
      * Object storage
      */
-    'storage' => '\\Dvelum\\Orm\\Record\\Store',
+    'storage' => \Dvelum\Orm\Record\Store::class,
     /*
      * Distributed objects storage
      */
-    'distributed_storage' => '\\Dvelum\\Orm\\Distributed\\Record\\Store',
+    'distributed_storage' => \Dvelum\Orm\Distributed\Record\Store::class,
     /*
      * Object translations dir
      */
@@ -81,5 +81,9 @@ return [
     /*
      * Record class
      */
-    'record' => '\\Dvelum\\Orm\\Record'
+    'record' => \Dvelum\Orm\Record::class,
+    /*
+     * Distributed record
+     */
+    'distributed_record' => \Dvelum\Orm\Distributed\Record::class
 ];

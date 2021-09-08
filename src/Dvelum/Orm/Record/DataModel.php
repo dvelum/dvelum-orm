@@ -2,7 +2,7 @@
 
 /**
  *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2019  Kirill Yegorov
+ *  Copyright (C) 2011-2021  Kirill Yegorov
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ namespace Dvelum\Orm\Record;
 
 use Dvelum\App\Session\User;
 use Dvelum\Orm\Model;
+use Dvelum\Orm\Orm;
 use Dvelum\Orm\RecordInterface;
 use Dvelum\Orm\Exception;
 use Dvelum\Utils;
@@ -30,6 +31,11 @@ use Psr\Log\LogLevel;
 
 class DataModel
 {
+    private Orm $orm;
+    public function __construct(Orm $orm)
+    {
+        $this->orm = $orm;
+    }
     /**
      * @param RecordInterface $record
      * @return array
@@ -40,7 +46,7 @@ class DataModel
         $recordName = $record->getName();
         $recordId = $record->getId();
         $recordConfig = $record->getConfig();
-        $model = Model::factory($recordName);
+        $model = $this->orm->model($recordName);
 
         $store = $model->getStore();
         if (empty($recordId)) {
@@ -66,8 +72,8 @@ class DataModel
                             ->fields(['target_id'])->fetchAll();
                     } else {
                         $linkedObject = $recordConfig->getField($field)->getLinkedObject();
-                        $linksObject = Model::factory((string)$linkedObject)->getStore()->getLinksObjectName();
-                        $linksModel = Model::factory($linksObject);
+                        $linksObject = $this->orm->model((string)$linkedObject)->getStore()->getLinksObjectName();
+                        $linksModel = $this->orm->model($linksObject);
                         $relationsData = $linksModel->query()
                             ->params(['sort' => 'order', 'dir' => 'ASC'])
                             ->filters([
@@ -98,7 +104,7 @@ class DataModel
     {
         $recordName = $record->getName();
         $recordConfig = $record->getConfig();
-        $model = Model::factory($recordName);
+        $model = $this->orm->model($recordName);
         $log = $model->getLogsAdapter();
         $store = $model->getStore();
 
@@ -298,7 +304,7 @@ class DataModel
     public function loadVersion(RecordInterface $record, int $vers): bool
     {
         $recordName = $record->getName();
-        $model = Model::factory($recordName);
+        $model = $this->orm->model($recordName);
         $recordConfig = $record->getConfig();
         $log = $model->getLogsAdapter();
 
@@ -316,7 +322,7 @@ class DataModel
         /**
          * @var \Dvelum\App\Model\Vc $vc
          */
-        $vc = Model::factory($versionObject);
+        $vc = $this->orm->model($versionObject);
         $data = $vc->getData($record->getName(), $recordId, $vers);
         $pKey = $recordConfig->getPrimaryKey();
 
@@ -379,7 +385,7 @@ class DataModel
     public function publish(RecordInterface $record, ?int $version, bool $useTransaction): bool
     {
         $recordName = $record->getName();
-        $model = Model::factory($recordName);
+        $model = $this->orm->model($recordName);
         $log = $model->getLogsAdapter();
         $store = $model->getStore();
 
@@ -396,12 +402,14 @@ class DataModel
         /**
          * @todo refactor
          */
-        $record->setValues([
+        $record->setValues(
+            [
                                'published' => true,
                                'date_updated' => date('Y-m-d H:i:s'),
                                'editor_id' => User::factory()->getId(),
                                'published_version' => $record->getVersion()
-                           ]);
+                           ]
+        );
 
         if (empty($record->get('date_published'))) {
             $record->set('date_published', date('Y-m-d H:i:s'));
@@ -420,7 +428,7 @@ class DataModel
     public function delete(RecordInterface $record, bool $useTransaction): bool
     {
         $recordName = $record->getName();
-        $model = Model::factory($recordName);
+        $model = $this->orm->model($recordName);
         $log = $model->getLogsAdapter();
         $store = $model->getStore();
 
@@ -440,7 +448,7 @@ class DataModel
     public function validateUniqueValues(RecordInterface $record, array $uniqGroups): ?array
     {
         $recordName = $record->getName();
-        $model = Model::factory($recordName);
+        $model = $this->orm->model($recordName);
         $store = $model->getStore();
         return $store->validateUniqueValues($record->getName(), $record->getId(), $uniqGroups);
     }

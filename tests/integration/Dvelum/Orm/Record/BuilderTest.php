@@ -3,26 +3,32 @@
 use PHPUnit\Framework\TestCase;
 use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record\Builder\BuilderInterface;
+use Dvelum\Orm\Orm;
 
 
 class BuilderTest extends TestCase
 {
-    public function testCreateObject()
+    protected function getBuilder(string $object): BuilderInterface
     {
-        $o = BuilderFactory::factory('Page');
+        return \Dvelum\Test\ServiceLocator::factory()->getContainer()->get(Orm::class)->getBuilder($object);
+    }
+
+    public function testCreateObject(): void
+    {
+        $o = $this->getBuilder('Page');
         $this->assertTrue($o instanceof BuilderInterface);
     }
 
-    public function testTableExists()
+    public function testTableExists(): void
     {
-        $o = BuilderFactory::factory('Page');
+        $o = $this->getBuilder('Page');
         $this->assertTrue($o->tableExists());
     }
 
 
-    public function testValidate()
+    public function testValidate(): void
     {
-        $o = BuilderFactory::factory('Page');
+        $o = $this->getBuilder('Page');
         $o->build();
         $this->assertTrue($o->validate());
     }
@@ -58,12 +64,12 @@ class BuilderTest extends TestCase
 //
 //	}
 
-    public function testCheckEngineCompatibility()
+    public function testCheckEngineCompatibility(): void
     {
         /**
          * @var Builder\MySQL $o
          */
-        $o = BuilderFactory::factory('Page');
+        $o = $this->getBuilder('Page');
         $this->assertTrue($o->checkEngineCompatibility('myisam'));
         $this->assertTrue($o->checkEngineCompatibility('innodb'));
         $this->assertTrue(is_array($o->checkEngineCompatibility('memory')));
@@ -71,11 +77,9 @@ class BuilderTest extends TestCase
         $invalidEngine = false;
         try {
             $o->checkEngineCompatibility('ksdhuis');
-
         } catch (Exception $e) {
             $invalidEngine = true;
         }
         $this->assertTrue($invalidEngine);
-
     }
 }

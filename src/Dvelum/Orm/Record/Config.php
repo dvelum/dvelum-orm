@@ -107,6 +107,11 @@ class Config
      */
     protected $cryptServiceLoader = null;
 
+    protected Orm\Distributed $distributed;
+
+    protected Cfg\Storage\StorageInterface $configStorage;
+
+    protected Orm\Record\Config\FieldFactory $fieldFactory;
     /**
      * Reload object Properties
      */
@@ -117,14 +122,24 @@ class Config
     }
 
 
-    public function __construct($name, Cfg\ConfigInterface $settings, $force = false)
+    public function __construct(
+        string $name,
+        Cfg\ConfigInterface $settings,
+        Cfg\Storage\StorageInterface $configStorage,
+        Orm\Record\Config\FieldFactory $fieldFactory,
+        Orm\Distributed $distributed,
+        $force = false
+    )
     {
+        $this->fieldFactory = $fieldFactory;
+        $this->configStorage = $configStorage;
+        $this->distributed = $distributed;
         $this->settings = $settings;
         $this->name = strtolower($name);
 
         $path = $this->settings->get('configPath') . $name . '.php';
 
-        $this->config = Cfg\Factory::storage()->get($path, !$force, false);
+        $this->config = $configStorage->get($path, !$force, false);
         $this->loadProperties();
     }
 
@@ -195,7 +210,7 @@ class Config
                     break;
             }
         }
-        $dataLink['fields'][$pKeyName] = Cfg::storage()->get(
+        $dataLink['fields'][$pKeyName] = $this->configStorage->get(
             $this->settings->get('configPath') . $keyConfig
         )->__toArray();
 
@@ -246,7 +261,7 @@ class Config
     protected function getVcFields(): array
     {
         if (!isset(self::$vcFields)) {
-            self::$vcFields = Cfg\Factory::storage()->get(
+            self::$vcFields = $this->configStorage->get(
                 $this->settings->get('configPath') . 'vc/vc_fields.php'
             )->__toArray();
         }
@@ -262,7 +277,7 @@ class Config
     protected function getEncryptionFields(): array
     {
         if (!isset(self::$cryptFields)) {
-            self::$cryptFields = Cfg\Factory::storage()->get(
+            self::$cryptFields = $this->configStorage->get(
                 $this->settings->get('configPath') . 'enc/fields.php'
             )->__toArray();
         }
@@ -369,11 +384,11 @@ class Config
 
     /**
      * Get the configuration of all fields
-     * @param boolean $includeSystem -optional default = true
+     * @param bool $includeSystem -optional default = true
      * @return array
      * @throws \Exception
      */
-    public function getFieldsConfig($includeSystem = true): array
+    public function getFieldsConfig(bool $includeSystem = true): array
     {
         $this->prepareTranslation();
 
@@ -665,7 +680,7 @@ class Config
     protected function initIndexIndexes(): array
     {
         $list = $this->config->get('indexes');
-        $shardingField = Cfg::storage()->get('sharding.php')->get('shard_field');
+        $shardingField = $this->configStorage->get('sharding.php')->get('shard_field');
 
         $list[$shardingField] = [
             'columns' => [$shardingField],
@@ -678,7 +693,7 @@ class Config
             'system' => true
         ];
 
-        $dataObject = Config::factory($this->getDataObject());
+        $dataObject = $this->createConfigObject($this->getDataObject());
         $dataIndexes = $dataObject->getIndexesConfig();
         $currentFields = $this->getFields();
 
@@ -687,9 +702,11 @@ class Config
             if (isset($list[$fieldName]) || $fieldName == $this->getPrimaryKey()) {
                 continue;
             }
-            if (isset($dataIndexes[$fieldName]) && count(
-                    $dataIndexes[$fieldName]['columns']
-                ) == 1 && $dataIndexes[$fieldName]['columns'][0] == $fieldName) {
+            if (
+                isset($dataIndexes[$fieldName]) &&
+                count($dataIndexes[$fieldName]['columns']) === 1 &&
+                $dataIndexes[$fieldName]['columns'][0] === $fieldName
+            ) {
                 $list[$fieldName] = $dataIndexes[$fieldName];
             } else {
                 $list[$fieldName] = [
@@ -728,7 +745,7 @@ class Config
 
         // Set Required Indexes
         if ($includeSystem) {
-            $shardingField = Cfg::storage()->get('sharding.php')->get('shard_field');
+            $shardingField = $this->configStorage->get('sharding.php')->get('shard_field');
             $primaryKey = $this->getPrimaryKey();
             $list[$primaryKey] = [
                 'field' => $primaryKey,
@@ -827,7 +844,7 @@ class Config
     public function hasEncrypted(): bool
     {
         foreach ($this->config['fields'] as $config) {
-            if (isset($config['type']) && $config['type'] == 'encrypted') {
+            if (isset($config['type']) && $config['type'] === 'encrypted') {
                 return true;
             }
         }
@@ -909,7 +926,7 @@ class Config
     /**
      * Check if object is sharding index
      */
-    public function isIndexObject()
+    public function isIndexObject() : bool
     {
         $link = &$this->config->dataLink();
         if (
@@ -921,12 +938,12 @@ class Config
             &&
             !empty($link['data_object'])
             &&
-            Config::factory($link['data_object'])->isDistributed()
+            ($this->createConfigObject($link['data_object']))->isDistributed()
         ) {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -951,7 +968,7 @@ class Config
     public function getField($name): Config\Field
     {
         $name = (string)$name;
-        return \Dvelum\Orm\Record\Config\FieldFactory::getField($this, $name);
+        return $this->fieldFactory->getField($this, $name);
     }
 
     /**
@@ -1031,10 +1048,9 @@ class Config
     public function getDistributedIndexObject()
     {
         if ($this->isDistributed()) {
-            return $this->getName() . Cfg::storage()->get('sharding.php')->get('dist_index_postfix');
-        } else {
-            throw new Exception('Object has no distribution');
+            return $this->getName() . $this->configStorage->get('sharding.php')->get('dist_index_postfix');
         }
+        throw new Exception('Object has no distribution');
     }
 
     /**
@@ -1059,7 +1075,7 @@ class Config
     public function getDistributedFields(): array
     {
         if (!isset($this->distributedFields)) {
-            $this->distributedFields = Cfg::storage()->get(
+            $this->distributedFields = $this->configStorage->get(
                 $this->settings->get('configPath') . 'distributed/fields.php'
             )->__toArray();
         }
@@ -1075,10 +1091,14 @@ class Config
             }
         }
 
-        if ($type == self::SHARDING_TYPE_VIRTUAL_BUCKET || ($this->isIndexObject() && self::factory(
-                    $this->getDataObject()
-                )->getShardingType() == self::SHARDING_TYPE_VIRTUAL_BUCKET)) {
-            $bucketFields = Cfg::storage()->get(
+        if (
+            $type === self::SHARDING_TYPE_VIRTUAL_BUCKET ||
+            (
+                $this->isIndexObject() &&
+                $this->createConfigObject($this->getDataObject())->getShardingType() === self::SHARDING_TYPE_VIRTUAL_BUCKET
+            )
+        ) {
+            $bucketFields = $this->configStorage->get(
                 $this->settings->get('configPath') . 'distributed/bucket_fields.php'
             )->__toArray();
             foreach ($bucketFields as $k => $v) {
@@ -1086,6 +1106,15 @@ class Config
             }
         }
         return $this->distributedFields;
+    }
+
+    /**
+     * @param string $name
+     * @return Config
+     */
+    private function createConfigObject(string $name) : Config
+    {
+        return new self($name, $this->settings, $this->configStorage, $this->fieldFactory, $this->distributed);
     }
 
     /**
@@ -1126,7 +1155,7 @@ class Config
                 }
                 break;
             case self::SHARDING_TYPE_VIRTUAL_BUCKET:
-                $key = Orm\Distributed::factory()->getBucketField();
+                $key = $this->distributed->getBucketField();
                 break;
         }
         return $key;

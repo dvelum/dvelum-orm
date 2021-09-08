@@ -24,15 +24,16 @@ namespace Dvelum\Orm\Distributed;
 use Dvelum\Config;
 use Dvelum\Config\ConfigInterface;
 use Dvelum\Orm\Distributed;
+use Dvelum\Orm\Orm;
 use Dvelum\Orm\RecordInterface;
 use Dvelum\Service;
 
-class Router
+class Router implements RouterInterface
 {
     /**
-     * @var ConfigInterface $config
+     * @var ConfigInterface<int|string,mixed> $config
      */
-    protected $config;
+    protected ConfigInterface $config;
 
     /**
      * @var array
@@ -43,19 +44,16 @@ class Router
      */
     protected $objectToRoute;
 
-    static public function factory(): self
-    {
-        return Service::get('ShardingRouter');
-    }
+    protected Orm $orm;
 
-    public function __construct(ConfigInterface $routes)
+    /**
+     * @param ConfigInterface<int|string,mixed> $routes
+     */
+    public function __construct(Orm $orm, ConfigInterface $routes)
     {
+        $this->orm = $orm;
         $this->config = $routes;
-        $this->init();
-    }
 
-    protected function init()
-    {
         foreach ($this->config as $route) {
             if (!$route['enabled']) {
                 continue;
@@ -97,14 +95,11 @@ class Router
         if (isset($this->objectToRoute[$objectName])) {
             $config = $this->routes[$this->objectToRoute[$objectName]];
             $adapterClass = $config['adapter'];
-            /**
-             * @var \Dvelum\Orm\Distributed\Router\RouteInterface $adapter
-             */
             $adapterConfig = Config\Factory::create(
                 $config['config'][$objectName],
                 'ROUTER_' . $config['id'] . '_' . $objectName
             );
-            $adapter = new $adapterClass(Distributed::factory(), $adapterConfig);
+            $adapter = new $adapterClass($this->orm, $adapterConfig);
             return $adapter->getShard($record);
         }
 

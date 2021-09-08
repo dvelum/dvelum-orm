@@ -4,58 +4,64 @@ use PHPUnit\Framework\TestCase;
 use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record;
 use Dvelum\Orm\Model;
+use Dvelum\Orm\Orm;
 
 class ConfigTest extends TestCase
 {
-    public function testGetObjectTtile()
+    protected function getOrm(): Orm
     {
-        $cfg = Record\Config::factory('User');
+        return \Dvelum\Test\ServiceLocator::factory()->getContainer()->get(Orm::class);
+    }
+
+    public function testGetObjectTtile(): void
+    {
+        $cfg = $this->getOrm()->config('User');
         $oldTitle = $cfg->getTitle();
         $cfg->setObjectTitle('My title');
         $this->assertEquals($cfg->getTitle(), 'My title');
         $cfg->setObjectTitle($oldTitle);
     }
 
-    public function testCanUseForeignKeys()
+    public function testCanUseForeignKeys(): void
     {
         $keyManager = new Record\Config\ForeignKey();
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertTrue($keyManager->canUseForeignKeys($cfg));
 
-        $cfg = Record\Config::factory('Historylog');
+        $cfg = $this->getOrm()->config('Historylog');
         $this->assertFalse($keyManager->canUseForeignKeys($cfg));
     }
 
-    public function testGetFields()
+    public function testGetFields(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $fields = $cfg->getFields();
         $this->assertArrayHasKey('id', $fields);
         $this->assertTrue($fields['id'] instanceof Record\Config\Field);
     }
 
-    public function testGetLinks()
+    public function testGetLinks(): void
     {
-        $cfg = Record\Config::factory('User_Auth');
+        $cfg = $this->getOrm()->config('User_Auth');
         $links = $cfg->getLinks();
         $this->assertTrue(isset($links['user']['user']));
     }
 
-    public function  testHasDbPrefix()
+    public function testHasDbPrefix(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertTrue($cfg->hasDbPrefix());
     }
 
-    public function testGetValidator()
+    public function testGetValidator(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertFalse($cfg->getValidator('id'));
     }
 
-    public function testToArray()
+    public function testToArray(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $array = $cfg->__toArray();
         $this->assertTrue(is_array($array));
         $this->assertTrue(isset($array['fields']));
@@ -67,29 +73,29 @@ class ConfigTest extends TestCase
     }
 
 
-    public function testIsReadOnly()
+    public function testIsReadOnly(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertFalse($cfg->isReadOnly());
     }
 
-    public function testIsLocked()
+    public function testIsLocked(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertFalse($cfg->isLocked());
     }
 
-    public function testIsTransact()
+    public function testIsTransact(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertTrue($cfg->isTransact());
-        $cfg = Record\Config::factory('bgtask_signal');
+        $cfg = $this->getOrm()->config('bgtask_signal');
         $this->assertFalse($cfg->isTransact());
     }
 
-    public function testSave()
+    public function testSave(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $oldTitle = $cfg->getTitle();
         $cfg->setObjectTitle('My title');
         $this->assertTrue($cfg->save());
@@ -97,9 +103,9 @@ class ConfigTest extends TestCase
         $this->assertTrue($cfg->save());
     }
 
-    public function testRemoveField()
+    public function testRemoveField(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $fldCfg = $cfg->getFieldConfig('name');
 
         $fieldManager = new Record\Config\FieldManager();
@@ -110,185 +116,185 @@ class ConfigTest extends TestCase
         $this->assertTrue($cfg->fieldExists('name'));
     }
 
-    public function testIsText()
+    public function testIsText(): void
     {
-        $cfg = Record\Config::factory('User_Auth');
+        $cfg = $this->getOrm()->config('User_Auth');
         $this->assertTrue($cfg->getField('config')->isText());
         $this->assertFalse($cfg->getField('id')->isText());
     }
 
-    public function testIndexExists()
+    public function testIndexExists(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $indexManager = new Record\Config\IndexManager;
 
         $this->assertTrue($indexManager->indexExists($cfg, 'PRIMARY'));
         $this->assertFalse($indexManager->indexExists($cfg, 'undefinedindex'));
     }
 
-    public function testIsUnique()
+    public function testIsUnique(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertTrue($cfg->getField('id')->isUnique());
         $this->assertTrue($cfg->getField('login')->isUnique());
         $this->assertFalse($cfg->getField('name')->isUnique());
     }
 
-    public function testIsHtml()
+    public function testIsHtml(): void
     {
-        $cfg = Record\Config::factory('User_Auth');
+        $cfg = $this->getOrm()->config('User_Auth');
         $this->assertTrue($cfg->getField('config')->isHtml());
         $this->assertFalse($cfg->getField('id')->isHtml());
     }
 
-    public function testIsNumeric()
+    public function testIsNumeric(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertTrue($cfg->getField('id')->isNumeric());
         $this->assertFalse($cfg->getField('name')->isNumeric());
     }
 
-    public function testIsInteger()
+    public function testIsInteger(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertTrue($cfg->getField('id')->isInteger());
         $this->assertFalse($cfg->getField('name')->isInteger());
     }
 
-    public function testIsSearch()
+    public function testIsSearch(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertTrue($cfg->getField('id')->isSearch());
         $this->assertTrue($cfg->getField('name')->isSearch());
     }
 
-    public function testGetLinkTittle()
+    public function testGetLinkTittle(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertEquals($cfg->getLinkTitle(), 'name');
     }
 
-    public function testIsFloat()
+    public function testIsFloat(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $this->assertFalse($cfg->getField('integer')->isFloat());
         $this->assertTrue($cfg->getField('float')->isFloat());
     }
 
-    public function testIsSystem()
+    public function testIsSystem(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $this->assertFalse($cfg->isSystem());
 
-        $cfg = Record\Config::factory('Page');
+        $cfg = $this->getOrm()->config('Page');
         $this->assertTrue($cfg->isSystem());
 
         $this->assertTrue($cfg->getField('id')->isSystem());
         $this->assertFalse($cfg->getField('code')->isSystem());
     }
 
-    public function testgetLinkTitle()
+    public function testgetLinkTitle(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $this->assertEquals($cfg->getLinkTitle(), $cfg->getPrimaryKey());
     }
 
-    public function testgetDbType()
+    public function testgetDbType(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $this->assertEquals('bigint', $cfg->getField($cfg->getPrimaryKey())->getDbType());
         $this->assertEquals('float', $cfg->getField('float')->getDbType());
     }
 
-    public function testHasHistory()
+    public function testHasHistory(): void
     {
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertTrue($cfg->hasHistory());
         $this->assertFalse($cfg->hasExtendedHistory());
-        $cfg = Record\Config::factory('Historylog');
+        $cfg = $this->getOrm()->config('Historylog');
         $this->assertFalse($cfg->hasHistory());
     }
 
-    public function testIsObjectLink()
+    public function testIsObjectLink(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $this->assertTrue($cfg->getField('link')->isObjectLink());
         $this->assertFalse($cfg->getField('multilink')->isObjectLink());
         $this->assertFalse($cfg->getField('integer')->isObjectLink());
         $this->assertFalse($cfg->getField('dictionary')->isObjectLink());
     }
 
-    public function testIsMultiLink()
+    public function testIsMultiLink(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $this->assertTrue($cfg->getField('multilink')->isMultiLink());
         $this->assertFalse($cfg->getField('link')->isMultiLink());
         $this->assertFalse($cfg->getField('dictionary')->isMultiLink());
         $this->assertFalse($cfg->getField('integer')->isMultiLink());
     }
 
-    public function testGetLinkedObject()
+    public function testGetLinkedObject(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $this->assertEquals('user', $cfg->getField('link')->getLinkedObject());
         $this->assertEquals('page', $cfg->getField('multilink')->getLinkedObject());
     }
 
-    public function testGetLinkedDictionary()
+    public function testGetLinkedDictionary(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $this->assertEquals('link_type', $cfg->getField('dictionary')->getLinkedDictionary());
     }
 
-    public function testGetSearchFields()
+    public function testGetSearchFields(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $searchFields = $cfg->getSearchFields();
         $this->assertEquals(2, sizeof($searchFields));
         $this->assertTrue(in_array('id', $searchFields, true));
         $this->assertTrue(in_array('varchar', $searchFields, true));
     }
 
-    public function testIsRevControl()
+    public function testIsRevControl(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $this->assertFalse($cfg->isRevControl());
 
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertFalse($cfg->isRevControl());
     }
 
-    public function testIsSystemField()
+    public function testIsSystemField(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $this->assertFalse($cfg->getField('varchar')->isSystem());
         $this->assertTrue($cfg->getField('id')->isSystem());
 
-        $cfg = Record\Config::factory('User');
+        $cfg = $this->getOrm()->config('User');
         $this->assertTrue($cfg->getField('id')->isSystem());
     }
 
-    public function testGetForeignKeys()
+    public function testGetForeignKeys(): void
     {
-        $cfg = Record\Config::factory('User_auth');
+        $cfg = $this->getOrm()->config('User_auth');
         $keyManager = new Record\Config\ForeignKey();
-        $keys = $keyManager->getForeignKeys($cfg);
+        $keys = $keyManager->getForeignKeys($cfg, $this->getOrm());
         $keys = \Dvelum\Utils::rekey('curField', $keys);
         $this->assertTrue(isset($keys['user']));
         $this->assertFalse(isset($keys['config']));
     }
 
 
-    public function testIsVcField()
+    public function testIsVcField(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $this->assertTrue($cfg->isVcField('author_id'));
         $this->assertFalse($cfg->isVcField('id'));
     }
 
-    public function testHasManyToMany()
+    public function testHasManyToMany(): void
     {
-        $cfg = Record\Config::factory('test');
+        $cfg = $this->getOrm()->config('test');
         $relation = new Record\Config\Relation();
         $this->assertFalse($relation->hasManyToMany($cfg));
     }

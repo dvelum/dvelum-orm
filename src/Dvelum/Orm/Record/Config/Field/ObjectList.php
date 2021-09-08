@@ -27,6 +27,16 @@ use Dvelum\Orm\Record\Config\Field;
 
 class ObjectList extends Field
 {
+    private Orm\Orm $orm;
+    /**
+     * @param Orm\Orm $orm
+     * @param array<string,mixed> $config
+     */
+    public function __construct(Orm\Orm $orm, array $config)
+    {
+        $this->orm = $orm;
+        parent::__construct($config);
+    }
     /**
      * Apply value filter
      * @param mixed $value
@@ -46,7 +56,7 @@ class ObjectList extends Field
                 $value = $value->getId();
             } else {
                 if (method_exists($value, '__toString')) {
-                    $value = intval($value->__toString());
+                    $value = (int)($value->__toString());
                 } else {
                     $value = [];
                 }
@@ -56,7 +66,7 @@ class ObjectList extends Field
         if (is_array($value)) {
             $linked = $this->getLinkedObject();
             if (!empty($linked)) {
-                $linkedObjectConfig = Orm\Record\Config::factory($linked);
+                $linkedObjectConfig = $this->orm->config($linked);
                 // convert numeric values for primary keys
                 if ($linkedObjectConfig->getField($linkedObjectConfig->getPrimaryKey())->isInteger()) {
                     $value = array_map('intval', $value);
@@ -88,7 +98,7 @@ class ObjectList extends Field
         }
 
         if (!empty($value[0])) {
-            return Orm\Record::objectExists($this->config['link_config']['object'], $value);
+            return $this->orm->recordsExists($this->config['link_config']['object'], $value);
         }
         return true;
     }

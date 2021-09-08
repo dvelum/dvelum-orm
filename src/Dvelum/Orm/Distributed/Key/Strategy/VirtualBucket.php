@@ -26,6 +26,7 @@ use Dvelum\Orm\Distributed\Key\Reserved;
 use Dvelum\Orm\Distributed\Key\Strategy\VirtualBucket\MapperInterface;
 use Dvelum\Orm\Distributed\Model;
 use Dvelum\Orm\Exception;
+use Dvelum\Orm\Orm;
 use Dvelum\Orm\Record\Config;
 use Dvelum\Orm\RecordInterface;
 
@@ -39,6 +40,7 @@ class VirtualBucket extends UserKeyNoID
     protected $options;
     protected $bucketField;
     protected $exceptIndexPrimaryKey = false;
+    protected Orm $orm;
 
     /**
      * @var MapperInterface $numericMapper
@@ -49,9 +51,9 @@ class VirtualBucket extends UserKeyNoID
      */
     protected $stringMapper = null;
 
-    public function __construct(ConfigInterface $config)
+    public function __construct(Orm $orm, ConfigInterface $config)
     {
-        parent::__construct($config);
+        parent::__construct($orm, $config);
         $this->bucketField = $config->get('bucket_field');
     }
 
@@ -135,7 +137,7 @@ class VirtualBucket extends UserKeyNoID
      */
     public function findObjectShard(string $objectName, $distributedKey)
     {
-        $config = Config::factory($objectName);
+        $config = $this->orm->config($objectName);
         $keyField = $config->getBucketMapperKey();
 
         $fieldObject = $config->getField($keyField);
@@ -150,7 +152,7 @@ class VirtualBucket extends UserKeyNoID
 
         $bucket = $mapper->keyToBucket($distributedKey);
         $indexObject = $config->getDistributedIndexObject();
-        $indexModel = Model::factory($indexObject);
+        $indexModel = $this->orm->model($indexObject);
         $shard = $indexModel->query()
             ->filters([$this->bucketField => $bucket->getId()])
             ->fields([$this->shardField])
@@ -171,7 +173,7 @@ class VirtualBucket extends UserKeyNoID
      */
     public function findObjectsShards(string $objectName, array $distributedKeys): array
     {
-        $config = Config::factory($objectName);
+        $config = $this->orm->config($objectName);
         $keyField = $config->getBucketMapperKey();
         $fieldObject = $config->getField($keyField);
 
@@ -184,7 +186,7 @@ class VirtualBucket extends UserKeyNoID
         }
 
         $indexObject = $config->getDistributedIndexObject();
-        $indexModel = Model::factory($indexObject);
+        $indexModel = $this->orm->model($indexObject);
 
         $result = [];
         $search = [];
