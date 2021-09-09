@@ -143,11 +143,11 @@ class IndexManager
      * Configure the index
      * @param Config $config
      * @param string $index
-     * @param array $data
+     * @param array<string,mixed> $data
      * @return void
      * @throws \Exception
      */
-    public function setIndexConfig(Config $config, $index, array $data): void
+    public function setIndexConfig(Config $config, string $index, array $data): void
     {
         $indexes = $config->getIndexesConfig();
         $indexes[$index] = $data;
@@ -158,10 +158,10 @@ class IndexManager
      * Configure distributed index
      * @param Config $config
      * @param string $index
-     * @param array $config
+     * @param array<string,mixed> $data
      * @throws \Exception
      */
-    public function setDistributedIndexConfig(Config $config, string $index, array $data)
+    public function setDistributedIndexConfig(Config $config, string $index, array $data): void
     {
         $indexes = $config->getDistributedIndexesConfig();
         $indexes[$index] = $data;

@@ -40,7 +40,7 @@ class DataModel
 
     /**
      * @param RecordInterface $record
-     * @return array
+     * @return array<int|string,mixed>
      * @throws Exception
      */
     public function load(RecordInterface $record): array
@@ -115,7 +115,7 @@ class DataModel
         }
 
         if ($recordConfig->isReadOnly()) {
-            $message = ErrorMessage::factory()->readOnly($record);
+            $message =  (new ErrorMessage())->readOnly($record);
             $record->addErrorMessage($message);
             if ($log) {
                 $log->log(LogLevel::ERROR, $message);
@@ -149,7 +149,7 @@ class DataModel
         $emptyFields = $this->getEmptyRequired($record);
 
         if (!empty($emptyFields)) {
-            $message = ErrorMessage::factory()->emptyFields($record, $emptyFields);
+            $message =  (new ErrorMessage())->emptyFields($record, $emptyFields);
             $record->addErrorMessage($message);
             if ($log) {
                 $log->log(LogLevel::ERROR, $message);
@@ -161,7 +161,7 @@ class DataModel
 
         if (!empty($values)) {
             foreach ($values as $field => $value) {
-                $message = ErrorMessage::factory()->uniqueValue($field, $record->get($field));
+                $message =  (new ErrorMessage())->uniqueValue((string)$field, $record->get((string)$field));
                 $record->addErrorMessage($message);
             }
 
@@ -198,7 +198,7 @@ class DataModel
     /**
      * Check for empty required fields
      * @param RecordInterface $record
-     * @return array
+     * @return array<string>
      * @throws \Exception
      */
     protected function getEmptyRequired(RecordInterface $record): array
@@ -221,9 +221,8 @@ class DataModel
 
         if (empty($emptyFields)) {
             return [];
-        } else {
-            return $emptyFields;
         }
+            return $emptyFields;
     }
 
     /**
@@ -333,7 +332,7 @@ class DataModel
         }
 
         if (empty($data)) {
-            $message = ErrorMessage::factory()->cantLoadVersion($record, $vers);
+            $message = (new ErrorMessage())->cantLoadVersion($record, $vers);
             $record->addErrorMessage($message);
             if ($log) {
                 $log->log(LogLevel::ERROR, $message);
@@ -363,7 +362,7 @@ class DataModel
                         $record->set((string)$k, $v);
                     }
                 } catch (Exception $e) {
-                    $message = ErrorMessage::factory()->cantLoadVersionIncompatible($record, $vers, $e->getMessage());
+                    $message =  (new ErrorMessage())->cantLoadVersionIncompatible($record, $vers, $e->getMessage());
                     $record->addErrorMessage($message);
                     if ($log) {
                         $log->log(LogLevel::ERROR, $message);
@@ -443,8 +442,8 @@ class DataModel
 
     /**
      * @param RecordInterface $record
-     * @param array $uniqGroups
-     * @return array|null
+     * @param array<string> $uniqGroups
+     * @return array<int|string,mixed>|null
      * @throws Exception
      */
     public function validateUniqueValues(RecordInterface $record, array $uniqGroups): ?array

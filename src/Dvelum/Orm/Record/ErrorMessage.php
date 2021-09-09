@@ -25,13 +25,13 @@ use Dvelum\Orm\RecordInterface;
 
 class ErrorMessage
 {
-    static public function factory()
+    /**
+     * @return mixed|static
+     * @deprecated
+     */
+    public static function factory()
     {
-        static $instance;
-        if (empty($instance)) {
-            $instance = new static();
-        }
-        return $instance;
+        return new static();
     }
 
     public function cantRead(RecordInterface $record): string
@@ -67,6 +67,11 @@ class ErrorMessage
         return 'ORM :: cannot save readonly object [' . $record->getName() . ':' . $record->getId() . '].';
     }
 
+    /**
+     * @param RecordInterface $record
+     * @param array<string> $fields
+     * @return string
+     */
     public function emptyFields(RecordInterface $record, array $fields): string
     {
         return 'ORM :: Fields can not be empty. [' . $record->getName() . ':' . $record->getId() . ' ' . implode(
@@ -75,6 +80,11 @@ class ErrorMessage
             ) . ']';
     }
 
+    /**
+     * @param string $field
+     * @param mixed $value
+     * @return string
+     */
     public function uniqueValue(string $field, $value): string
     {
         if (is_array($value) || is_object($value)) {

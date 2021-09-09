@@ -35,7 +35,7 @@ interface RecordInterface
 
     /**
      * Get object fields
-     * @return array<string,Field>
+     * @return array<string>
      */
     public function getFields(): array;
 

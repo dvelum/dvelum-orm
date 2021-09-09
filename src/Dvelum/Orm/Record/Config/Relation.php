@@ -50,7 +50,7 @@ class Relation
     /**
      * Get manyToMany relations
      * @param Config $config
-     * @return array
+     * @return array<string,array<string,string>>
      * @throws \Exception
      */
     public function getManyToMany(Config $config): array
@@ -65,7 +65,7 @@ class Relation
                 && isset($cfg['link_config']['relations_type'])
                 && $cfg['link_config']['relations_type'] == Config::RELATION_MANY_TO_MANY
             ) {
-                $result[$cfg['link_config']['object']][$field] = Config::RELATION_MANY_TO_MANY;
+                $result[(string)$cfg['link_config']['object']][(string)$field] = Config::RELATION_MANY_TO_MANY;
             }
         }
         return $result;
@@ -97,9 +97,9 @@ class Relation
     /**
      * Get a list of fields linking to external objects
      * @param Config $config
-     * @param array $linkTypes - optional link type filter
+     * @param array<string> $linkTypes - optional link type filter
      * @param boolean $groupByObject - group field by linked object, default true
-     * @return array  [objectName=>[field => link_type]] | [field =>["object"=>objectName,"link_type"=>link_type]]
+     * @return array<string,array>  [objectName=>[field => link_type]] | [field =>["object"=>objectName,"link_type"=>link_type]]
      * @throws \Exception
      */
     public function getLinks(

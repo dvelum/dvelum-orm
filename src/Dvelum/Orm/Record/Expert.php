@@ -19,7 +19,9 @@
 
 namespace Dvelum\Orm\Record;
 
+use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Orm\Model;
+use Dvelum\Orm\Orm;
 use Dvelum\Utils;
 use Dvelum\Orm\Record;
 
@@ -29,19 +31,32 @@ use Dvelum\Orm\Record;
  */
 class Expert
 {
-    static protected $objectAssociations = null;
+    protected Orm $orm;
+    protected Manager $recordManager;
+    protected StorageInterface $configStorage;
 
-    static protected function buildAssociations()
+    public function __construct(Orm $orm, StorageInterface $configSStorage, Manager $recordManager)
     {
-        if (!is_null(self::$objectAssociations)) {
+        $this->orm = $orm;
+        $this->recordManager = $recordManager;
+        $this->configStorage = $configSStorage;
+    }
+
+    /**
+     * @var array<string,mixed>|null
+     */
+    static protected ?array $objectAssociations = null;
+
+    protected function buildAssociations() : void
+    {
+        if (self::$objectAssociations !== null) {
             return;
         }
 
-        $manager = new Manager();
-        $objects = $manager->getRegisteredObjects();
+        $objects = $this->recordManager->getRegisteredObjects();
         if (!empty($objects)) {
             foreach ($objects as $name) {
-                $config = Record\Config::factory($name);
+                $config = $this->orm->config($name);
                 $links = $config->getLinks();
                 self::$objectAssociations[$name] = $links;
             }
@@ -51,7 +66,7 @@ class Expert
     /**
      * Get Associated objects
      * @param Record $object
-     * @return array   like
+     * @return array<string,array>   like
      * array(
      *      'single' => array(
      *            'objectName'=>array(id1,id2,id3),
@@ -65,11 +80,11 @@ class Expert
      *       )
      * )
      */
-    static public function getAssociatedObjects(Record $object)
+    public function getAssociatedObjects(Record $object)
     {
         $linkedObjects = ['single' => [], 'multi' => []];
 
-        self::buildAssociations();
+        $this->buildAssociations();
 
         $objectName = $object->getName();
         $objectId = $object->getId();
@@ -83,14 +98,14 @@ class Expert
                 continue;
             }
 
-            $sLinks = self::getSingleLinks($objectId, $testObject, $links[$objectName]);
+            $sLinks = $this->getSingleLinks($objectId, $testObject, $links[$objectName]);
 
             if (!empty($sLinks)) {
                 $linkedObjects['single'][$testObject] = $sLinks;
             }
         }
 
-        $linkedObjects['multi'] = self::getMultiLinks($objectName, $objectId);
+        $linkedObjects['multi'] = $this->getMultiLinks($objectName, $objectId);
 
         return $linkedObjects;
     }
@@ -100,19 +115,19 @@ class Expert
      * when object has link as own property
      * @param mixed $objectId
      * @param string $relatedObject - related object name
-     * @param array $links - links config like
+     * @param array<string,string> $links - links config like
      *    array(
      *        'field1'=>'object',
      *        'field2'=>'multi'
      *        ...
      *        'fieldN'=>'object',
      *  )
-     * @return array
+     * @return array<mixed>
      */
-    static protected function getSingleLinks($objectId, $relatedObject, $links): array
+     protected function getSingleLinks($objectId, $relatedObject, $links): array
     {
-        $relatedConfig = Config::factory($relatedObject);
-        $relatedObjectModel = Model::factory($relatedObject);
+        $relatedConfig = $this->orm->config($relatedObject);
+        $relatedObjectModel = $this->orm->model($relatedObject);
         $fields = [];
 
         foreach ($links as $field => $type) {
@@ -156,12 +171,12 @@ class Expert
      * when links stored  in external objects
      * @param string $objectName
      * @param mixed $objectId
-     * @return array
+     * @return array<int|string,mixed>
      */
-    static protected function getMultiLinks($objectName, $objectId): array
+     protected function getMultiLinks($objectName, $objectId): array
     {
-        $ormConfig = \Dvelum\Config::storage()->get('orm.php');
-        $linksModel = Model::factory($ormConfig->get('links_object'));
+        $ormConfig = $this->configStorage->get('orm.php');
+        $linksModel = $this->orm->model($ormConfig->get('links_object'));
         $db = $linksModel->getDbConnection();
         $linkTable = $linksModel->table();
 
@@ -185,19 +200,19 @@ class Expert
     /**
      * Check if Object has associated objects
      * @param string $objectName
-     * @return array - associations
+     * @return array<int,array> - associations
      */
-    static public function getAssociatedStructures($objectName)
+     public function getAssociatedStructures(string $objectName) : array
     {
         $objectName = strtolower($objectName);
 
-        self::buildAssociations();
+        $this->buildAssociations();
 
         if (empty(self::$objectAssociations)) {
-            return array();
+            return [];
         }
 
-        $associations = array();
+        $associations = [];
 
         foreach (self::$objectAssociations as $object => $data) {
             if (empty($data)) {

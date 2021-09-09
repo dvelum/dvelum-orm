@@ -11,20 +11,20 @@ class Api
     /**
      * @var Api\Request
      */
-    protected $apiRequest;
+    protected Api\Request $apiRequest;
     /**
      * @var array
      */
-    protected $fields = [];
+    protected array $fields = [];
 
     /**
      * @var Model\Query
      */
-    protected $dataQuery;
+    protected Model\Query $dataQuery;
     /**
      * @var bool $useApproximateCount
      */
-    protected $useApproximateCount = false;
+    protected bool $useApproximateCount = false;
 
     protected Orm\Orm $orm;
 
@@ -52,7 +52,7 @@ class Api
         }
     }
 
-    public function getList()
+    public function getList() : array
     {
         if (empty($this->fields)) {
             $fields = $this->getDefaultFields();
@@ -76,7 +76,7 @@ class Api
 
     /**
      * Set fields to be fetched
-     * @param array $fields
+     * @param array<int|string,string> $fields
      */
     public function setFields(array $fields): void
     {
@@ -85,7 +85,7 @@ class Api
 
     /**
      * Get list of fields to be fetched
-     * @return array
+     * @return array<int|string,string>
      */
     public function getFields(): array
     {
@@ -97,7 +97,7 @@ class Api
 
     /**
      * Get default field list
-     * @return array
+     * @return array<int|string,string>
      */
     protected function getDefaultFields(): array
     {

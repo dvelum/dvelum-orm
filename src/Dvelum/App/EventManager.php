@@ -60,7 +60,7 @@ class EventManager extends Orm\Record\Event\Manager
      * (non-PHPdoc)
      * @see Db_Object_Event_Manager::fireEvent()
      */
-    public function fireEvent(string $code, Orm\RecordInterface $object)
+    public function fireEvent(string $code, Orm\RecordInterface $object) : void
     {
         $objectName = ucfirst($object->getName());
 

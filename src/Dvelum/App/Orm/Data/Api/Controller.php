@@ -27,7 +27,7 @@ use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Designer\Manager;
 use Dvelum\Lang;
 use Dvelum\Request;
-use Dvelum\Response;
+use Dvelum\Response\Response;
 use Dvelum\Config;
 use Dvelum\App;
 use Dvelum\Orm;
@@ -60,38 +60,39 @@ abstract class Controller
      * List of ORM object field names displayed in the main list (listAction)
      * They may be assigned a value, as well as an array
      * Empty value means all fields will be fetched from DB, except long text fields
+     * @var array<int|string,string>
      */
-    protected $listFields = [];
+    protected array $listFields = [];
     /**
      * List of ORM objects accepted via linkedListAction and otitleAction
-     * @var array
+     * @var array<int|string,string>
      */
-    protected $canViewObjects = [];
+    protected array $canViewObjects = [];
     /**
      * List of ORM object link fields displayed with related values in the main list (listAction)
      * (dictionary, object link, object list) key - result field, value - object field
      * object field will be used as result field for numeric keys
      * Requires primary key in result set
-     * @var array
+     * @var array<int|string,string>
      */
-    protected $listLinks = [];
+    protected array $listLinks = [];
     /**
      * Controller events manager
      * @var App\Controller\EventManager
      */
-    protected $eventManager;
+    protected App\Controller\EventManager $eventManager;
 
     /**
      * API Request object
      * @var \Dvelum\App\Orm\Data\Api\Request
      */
-    protected $apiRequest;
+    protected \Dvelum\App\Orm\Data\Api\Request $apiRequest;
 
     /**
      * Object titles separator
      * @var string $linkedInfoSeparator
      */
-    protected $linkedInfoSeparator = '; ';
+    protected string $linkedInfoSeparator = '; ';
 
 
     protected string $objectName;
@@ -119,7 +120,7 @@ abstract class Controller
         $this->objectName = $this->getObjectName();
 
         /*
-         * @todo remove bakward compat
+         * @todo remove backward compatibility
          */
         \Dvelum\Orm::setContainer($container);
 
@@ -152,7 +153,7 @@ abstract class Controller
     /**
      *  Event listeners can be defined here
      */
-    public function initListeners()
+    public function initListeners() : void
     {
     }
 
@@ -168,7 +169,7 @@ abstract class Controller
 
     protected function getApiRequest(Request $request): Data\Api\Request
     {
-        $request = new \Dvelum\App\Orm\Data\Api\Request($request);
+        $request = new Data\Api\Request($request);
         $request->setObjectName($this->getObjectName());
         return $request;
     }
@@ -177,7 +178,7 @@ abstract class Controller
      * Get list of objects which can be linked
      * @throws Exception
      */
-    public function linkedListAction()
+    public function linkedListAction() : void
     {
         if (!$this->eventManager->fireEvent(EventManager::BEFORE_LINKED_LIST, new \stdClass())) {
             $this->response->error($this->eventManager->getError());
@@ -208,7 +209,7 @@ abstract class Controller
     }
 
     /**
-     * @return array
+     * @return array{data:array<int,array>,count:int}
      * @throws Exception|LoadException
      */
     public function getLinkedList(): array

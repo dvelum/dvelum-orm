@@ -23,6 +23,8 @@ declare(strict_types=1);
 namespace Dvelum\Orm\Record\Config\Field;
 
 use Dvelum\Orm\Orm;
+use Dvelum\Orm\Record;
+use Dvelum\Orm\RecordInterface;
 
 class ObjectItem extends \Dvelum\Orm\Record\Config\Field
 {
@@ -47,7 +49,7 @@ class ObjectItem extends \Dvelum\Orm\Record\Config\Field
     public function filter($value)
     {
         if (is_object($value)) {
-            if ($value instanceof Orm\Record) {
+            if ($value instanceof RecordInterface) {
                 if (!$value->isInstanceOf((string)$this->getLinkedObject())) {
                     throw new \Exception(
                         'Invalid value type for field ' . $this->getName() . ' expects ' . $this->getLinkedObject(

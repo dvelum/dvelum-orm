@@ -77,7 +77,7 @@ class FieldManager
      * Configure the field
      * @param Config $config
      * @param string $field
-     * @param array $data
+     * @param array<string,mixed> $data
      */
     public function setFieldConfig(Config $config, string $field, array $data): void
     {

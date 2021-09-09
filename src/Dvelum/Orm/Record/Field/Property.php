@@ -21,9 +21,9 @@ class Property
 {
     /**
      *  List of acceptable properties
-     * @var array
+     * @var array<string>
      */
-    public static $acceptedData = [
+    public static array $acceptedData = [
         'name',
         'title',
         'required',
@@ -53,8 +53,10 @@ class Property
         'data_object',
         'parent_object'
     ];
-
-    public static $numberLength = [
+    /**
+     * @var int[]
+     */
+    public static array $numberLength = [
         'tinyint' => 3,
         'smallint' => 5,
         'mediumint' => 8,
@@ -64,26 +66,27 @@ class Property
 
     /**
      * Properties data
-     * @var array
+     * @var array<mixed>
      */
-    protected $data = [];
-    protected $name = [];
+    protected array $data = [];
 
-    public function __construct($name)
+    protected string $name;
+
+    public function __construct(string $name)
     {
         $this->name = $name;
     }
 
     /**
      * Set property data
-     * @param array $data
+     * @param array<mixed> $data
      * @return void
      * @throws \Exception
      */
-    public function setData(array $data)
+    public function setData(array $data): void
     {
         foreach ($data as $key => $value) {
-            if (in_array($key, self::$acceptedData)) {
+            if (in_array($key, self::$acceptedData, true)) {
                 $this->data[$key] = $value;
             } else {
                 throw new Exception('Invalid property name "' . $key . '"');
@@ -95,7 +98,7 @@ class Property
      * Empty data
      * @return void
      */
-    public function clear()
+    public function clear(): void
     {
         $this->data = [];
     }
@@ -106,7 +109,7 @@ class Property
      * @return mixed
      * @throws \Exception
      */
-    public function __get($key)
+    public function __get(string $key)
     {
         if (isset($this->data[$key])) {
             return $this->data[$key];
@@ -115,7 +118,7 @@ class Property
         }
     }
 
-    public function __isset($key)
+    public function __isset(string $key): bool
     {
         return isset($this->data[$key]);
     }
@@ -145,9 +148,11 @@ class Property
 
                 $s .= '`' . $this->name . '` ' . $dbType . ' (' . $this->data['db_len'] . ')';
 
-                if (isset($this->data['db_unsigned']) && $this->data['db_unsigned'] && strtolower(
-                        $dbType
-                    ) != 'boolean') {
+                if (
+                    isset($this->data['db_unsigned']) &&
+                    $this->data['db_unsigned'] &&
+                    strtolower($dbType) !== 'boolean'
+                ) {
                     $s .= ' UNSIGNED ';
                 }
 
@@ -161,9 +166,11 @@ class Property
             case 'bit' :
                 $s .= '`' . $this->name . '` ' . $dbType . ' ';
 
-                if (isset($this->data['db_unsigned']) && $this->data['db_unsigned'] && strtolower(
-                        $dbType
-                    ) != 'boolean') {
+                if (
+                    isset($this->data['db_unsigned']) &&
+                    $this->data['db_unsigned'] &&
+                    strtolower($dbType) !== 'boolean'
+                ) {
                     $s .= ' UNSIGNED ';
                 }
 
@@ -182,11 +189,6 @@ class Property
 
                 $isNumber = true;
                 break;
-                http: //dvelum.demo/adminarea/news.html
-
-
-                break;
-
             case 'char' :
             case 'varchar' :
 
@@ -254,7 +256,7 @@ class Property
      * @param mixed $value
      * @throws \Exception
      */
-    public function __set($key, $value)
+    public function __set(string $key, $value): void
     {
         if (in_array($key, self::$acceptedData, true)) {
             $this->data[$key] = $value;
@@ -265,12 +267,12 @@ class Property
 
     /**
      * Property filter
-     * @param array $fieldInfo - property config data
+     * @param array<string,mixed> $fieldInfo - property config data
      * @param mixed $value
      * @return mixed
      * @throws \Exception
      */
-    static public function filter($fieldInfo, $value)
+    public static function filter(array $fieldInfo, $value)
     {
         switch (strtolower($fieldInfo['db_type'])) {
             case 'tinyint' :
@@ -308,9 +310,8 @@ class Property
                     $value = \Dvelum\Filter::filterValue('string', $value);
                 }
                 break;
-                //  case 'bit':
-                //		$value = preg_replace ('/[^01]*/', '', $value);
-                break;
+            //  case 'bit':
+            //		$value = preg_replace ('/[^01]*/', '', $value);
             default :
                 throw new \Exception('Invalid property type "' . $fieldInfo['db_type'] . '"');
         }

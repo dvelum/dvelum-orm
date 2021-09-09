@@ -53,5 +53,5 @@ abstract class Manager
      * @param string $code (action constant)
      * @param Orm\RecordInterface $object
      */
-    abstract public function fireEvent(string $code, Orm\RecordInterface $object);
+    abstract public function fireEvent(string $code, Orm\RecordInterface $object) : void;
 }

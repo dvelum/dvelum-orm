@@ -27,10 +27,13 @@ use Dvelum\Lang;
 
 class Translator
 {
-    protected $commonPath = '';
-    protected $localesDir = '';
+    protected string $commonPath = '';
+    protected string $localesDir = '';
 
-    protected $translation = false;
+    /**
+     * @var array<string,array>|null
+     */
+    protected ?array $translation = null;
 
     private StorageInterface $langStorage;
     private Lang $lang;
@@ -51,9 +54,9 @@ class Translator
      * Get object fields translation
      * @param string $objectName
      * @param bool $force
-     * @return array
+     * @return array<string,mixed>
      */
-    public function getTranslation(string $objectName, $force = false): array
+    public function getTranslation(string $objectName, bool $force = false): array
     {
         if (!$this->translation || $force) {
             $this->translation = $this->langStorage->get($this->commonPath, true, true)->__toArray();
@@ -69,9 +72,8 @@ class Translator
 
         if (isset($this->translation[$objectName])) {
             return $this->translation[$objectName];
-        } else {
-            return [];
         }
+        return [];
     }
 
     /**
@@ -95,10 +97,10 @@ class Translator
     /**
      * Translate Object config
      * @param string $objectName
-     * @param array $objectConfig
+     * @param array<int|string,mixed> $objectConfig
      * @throws \Exception
      */
-    public function translate(string $objectName, &$objectConfig)
+    public function translate(string $objectName, &$objectConfig): void
     {
         $translation = $this->getTranslation($objectName);
 
@@ -141,7 +143,7 @@ class Translator
     /**
      * Save object translation
      * @param string $objectName
-     * @param array $translationData
+     * @param array<string,string> $translationData
      * @return bool
      */
     public function save(string $objectName, array $translationData): bool
