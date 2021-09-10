@@ -74,26 +74,28 @@ class Orm
      */
     protected ?DistributedRecord\Store $distributedStorage = null;
 
-    protected $distributedStoreLoader;
-    /**
-     * @var EventManager $eventManager
-     */
-    protected $eventManager = null;
+    protected \Closure $distributedStoreLoader;
+
+    protected ?EventManager $eventManager = null;
     /**
      * @var ConfigInterface<int|string,mixed> $config
      */
-    protected $config;
+    protected ConfigInterface $config;
     /**
      * @var LoggerInterface|null $log
      */
     protected ?LoggerInterface $log = null;
-
+    /**
+     * @var Record\Config\Translator|false
+     */
     protected $translator = false;
 
-    protected $language;
+    protected string $language;
 
-    protected $storeLoader;
-
+    protected \Closure $storeLoader;
+    /**
+     * @var mixed
+     */
     protected $store;
 
     protected Lang $lang;
@@ -343,7 +345,7 @@ class Orm
         $linksData = [];
 
         if (!empty($links)) {
-            foreach ($links as $object => $fields) {
+            foreach ($links as $fields) {
                 foreach ($fields as $field => $linkType) {
                     $fieldObject = $config->getField($field);
                     if ($fieldObject->isManyToManyLink()) {
@@ -352,10 +354,12 @@ class Orm
                             throw new \Exception('Undefined relations object for field ' . $field);
                         }
                         $relationsData = $this->model((string)$relationsObject)->query()
-                            ->params([
-                                         'sort' => 'order_no',
-                                         'dir' => 'ASC'
-                                     ])
+                            ->params(
+                                [
+                                    'sort' => 'order_no',
+                                    'dir' => 'ASC'
+                                ]
+                            )
                             ->filters(['source_id' => $id])
                             ->fields(['target_id', 'source_id'])
                             ->fetchAll();
@@ -368,12 +372,14 @@ class Orm
                         $linksModel = $this->model($linksObject);
                         $relationsData = $linksModel->query()
                             ->params(['sort' => 'order', 'dir' => 'ASC'])
-                            ->filters([
-                                          'src' => $name,
-                                          'src_id' => $id,
-                                          'src_field' => $field,
-                                          'target' => $linkedObject
-                                      ])
+                            ->filters(
+                                [
+                                    'src' => $name,
+                                    'src_id' => $id,
+                                    'src_field' => $field,
+                                    'target' => $linkedObject
+                                ]
+                            )
                             ->fields(['target_id', 'source_id' => 'src_id'])
                             ->fetchAll();
                     }
@@ -413,7 +419,7 @@ class Orm
     /**
      * Instantiate data structure for the objects named $name
      * @param string $name - object name
-     * @param boolean $force - reload config
+     * @param bool $force - reload config
      * @return Record\Config
      * @throws Exception
      */

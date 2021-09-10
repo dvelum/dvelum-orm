@@ -59,7 +59,11 @@ class Translator
     public function getTranslation(string $objectName, bool $force = false): array
     {
         if (!$this->translation || $force) {
-            $this->translation = $this->langStorage->get($this->commonPath, true, true)->__toArray();
+            /**
+             * @var array<string,array<string,string>>
+             */
+            $translations = $this->langStorage->get($this->commonPath, true, true)->__toArray();
+            $this->translation = $translations;
         }
 
         if (!isset($this->translation[$objectName])) {

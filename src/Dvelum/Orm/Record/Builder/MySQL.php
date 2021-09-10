@@ -51,9 +51,8 @@ class MySQL extends AbstractAdapter
 
         if (!empty($engineUpdate)) {
             return false;
-        } else {
-            return true;
         }
+        return true;
     }
 
     /**
@@ -76,9 +75,8 @@ class MySQL extends AbstractAdapter
         $result = $this->changeTableEngine($this->objectConfig->get('engine'), true);
         if (!empty($result)) {
             return (string)$result;
-        } else {
-            return null;
         }
+        return null;
     }
 
     /**
@@ -540,11 +538,11 @@ class MySQL extends AbstractAdapter
     /**
      * Compare existed index and its system config
      *
-     * @param array $cfg1
-     * @param array $cfg2
-     * @return boolean
+     * @param array<string,mixed> $cfg1
+     * @param array<string,mixed> $cfg2
+     * @return bool
      */
-    protected function isSameIndexes(array $cfg1, array $cfg2)
+    protected function isSameIndexes(array $cfg1, array $cfg2): bool
     {
         $colDiff = array_diff($cfg1['columns'], $cfg2['columns']);
         $colDiffReverse = array_diff($cfg2['columns'], $cfg1['columns']);
@@ -567,11 +565,11 @@ class MySQL extends AbstractAdapter
      * Prepare Add INDEX command
      *
      * @param string $index
-     * @param array $config
-     * @param boolean $create - optional use create table mode
+     * @param array<string,mixed> $config
+     * @param bool $create - optional use create table mode
      * @return string
      */
-    protected function prepareIndex($index, array $config, $create = false)
+    protected function prepareIndex($index, array $config, bool $create = false): string
     {
         if (isset($config['primary']) && $config['primary']) {
             if (!isset($config['columns'][0])) {
@@ -610,9 +608,8 @@ class MySQL extends AbstractAdapter
 
         if ($create) {
             return "\n" . ' ' . $createType . ' KEY ' . $str;
-        } else {
-            return "\n" . ' ADD ' . $indexType . ' ' . $str;
         }
+        return "\n" . ' ADD ' . $indexType . ' ' . $str;
     }
 
     /**
@@ -621,7 +618,7 @@ class MySQL extends AbstractAdapter
      * @param Orm\Record\Config\Field $field
      * @return string
      */
-    protected function getPropertySql($name, Orm\Record\Config\Field $field): string
+    protected function getPropertySql(string $name, Orm\Record\Config\Field $field): string
     {
         $property = new Orm\Record\Field\Property((string)$name);
         $property->setData($field->__toArray());
@@ -633,7 +630,7 @@ class MySQL extends AbstractAdapter
      * @return string
      * @throws \Exception
      */
-    protected function sqlCreate()
+    protected function sqlCreate(): string
     {
         $fields = $this->objectConfig->get('fields');
 
@@ -665,9 +662,9 @@ class MySQL extends AbstractAdapter
 
     /**
      * Build indexes for "create" query
-     * @return array - sql parts
+     * @return array<string> - sql parts
      */
-    protected function createIndexes()
+    protected function createIndexes(): array
     {
         $cmd = [];
         $configIndexes = $this->objectConfig->getIndexesConfig();

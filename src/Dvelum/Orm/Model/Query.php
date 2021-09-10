@@ -30,26 +30,38 @@ use Dvelum\Orm\Stat;
 
 class Query
 {
-    const SEARCH_TYPE_STARTS_WITH = 'starts';
-    const SEARCH_TYPE_CONTAINS = 'contains';
-    const SEARCH_TYPE_ENDS_WITH = 'ends';
+    public const SEARCH_TYPE_STARTS_WITH = 'starts';
+    public const SEARCH_TYPE_CONTAINS = 'contains';
+    public const SEARCH_TYPE_ENDS_WITH = 'ends';
     /**
      * @var Model $model
      */
-    protected $model;
+    protected Model $model;
     /**
      * @var Adapter $db
      */
     protected Adapter $db;
 
-    protected $search = null;
-    protected $searchType = self::SEARCH_TYPE_CONTAINS;
-    protected $filters = null;
-    protected $params = null;
-    protected $fields = ['*'];
-    protected $joins = null;
-    protected $table = null;
-    protected $tableAlias = null;
+    protected ?string $search = null;
+    protected ?string  $searchType = self::SEARCH_TYPE_CONTAINS;
+    /**
+     * @var array<int|string,mixed>|null
+     */
+    protected ?array $filters = null;
+    /**
+     * @var array<int|string,mixed>|null
+     */
+    protected ?array $params = null;
+    /**
+     * @var array<int|string,mixed>|null
+     */
+    protected ?array $fields = ['*'];
+    /**
+     * @var array<int|string,mixed>|null
+     */
+    protected ?array $joins = null;
+    protected ?string $table = null;
+    protected ?string $tableAlias = null;
 
     protected Orm $orm;
 
@@ -83,7 +95,7 @@ class Query
     }
 
     /**
-     * @param string $alias
+     * @param string|null $alias
      * @return Query
      */
     public function tableAlias(?string $alias): Query
@@ -93,7 +105,7 @@ class Query
     }
 
     /**
-     * @param array|null $filters
+     * @param array<int|string,mixed>|null $filters
      * @return Query
      */
     public function filters(?array $filters): Query
@@ -103,8 +115,8 @@ class Query
     }
 
     /**
-     * @param string $query
-     * @param string $queryType
+     * @param string|null $query
+     * @param string|null $queryType
      * @return Query
      */
     public function search(?string $query, ?string $queryType = self::SEARCH_TYPE_CONTAINS): Query
@@ -115,7 +127,7 @@ class Query
     }
 
     /**
-     * @param array|null $params
+     * @param array<int|string,mixed>|null $params
      * @return Query
      */
     public function params(?array $params): Query
@@ -125,17 +137,17 @@ class Query
     }
 
     /**
-     * @param mixed $fields
+     * @param array<int|string,mixed>|null $fields
      * @return Query
      */
-    public function fields($fields): Query
+    public function fields(?array $fields): Query
     {
         $this->fields = $fields;
         return $this;
     }
 
     /**
-     * @param array|null $joins
+     * @param array<int|string,mixed>|null $joins
      * Config Example:
      * array(
      *        array(
@@ -157,7 +169,7 @@ class Query
     /**
      * Apply query filters
      * @param Db\Select $sql
-     * @param array $filters
+     * @param array<int|string,mixed> $filters
      * @return void
      */
     public function applyFilters(Db\Select $sql, array $filters): void
@@ -171,7 +183,7 @@ class Query
                 if (is_array($v) && !empty($v)) {
                     $sql->where($this->db->quoteIdentifier($k) . ' IN(?)', $v);
                 } elseif (is_bool($v)) {
-                    $sql->where($this->db->quoteIdentifier($k) . ' = ' . intval($v));
+                    $sql->where($this->db->quoteIdentifier($k) . ' = ' . ((int)$v));
                 } elseif ((is_string($v) && strlen($v)) || is_numeric($v)) {
                     $sql->where($this->db->quoteIdentifier($k) . ' =?', $v);
                 } elseif (is_null($v)) {
@@ -188,7 +200,7 @@ class Query
      * @param string $queryType
      * @return void
      */
-    public function applySearch(Db\Select $sql, $query, string $queryType): void
+    public function applySearch(Db\Select $sql, string $query, string $queryType): void
     {
         $searchFields = $this->model->getSearchFields();
 
@@ -221,16 +233,16 @@ class Query
     /**
      * Apply query params (sorting and pagination)
      * @param Db\Select $sql
-     * @param array $params
+     * @param array{limit:int,start:int,sort:string,dir:string} $params
      */
-    public function applyParams($sql, array $params): void
+    public function applyParams(Db\Select $sql, array $params): void
     {
         if (isset($params['limit'])) {
-            $sql->limit(intval($params['limit']));
+            $sql->limit((int)($params['limit']));
         }
 
         if (isset($params['start'])) {
-            $sql->offset(intval($params['start']));
+            $sql->offset((int)($params['start']));
         }
 
         if (!empty($params['sort']) && !empty($params['dir'])) {
@@ -239,7 +251,7 @@ class Query
                 foreach ($params['sort'] as $key => $field) {
                     if (!is_int($key)) {
                         $order = trim(strtolower($field));
-                        if ($order == 'asc' || $order == 'desc') {
+                        if ($order === 'asc' || $order === 'desc') {
                             $sort[$key] = $order;
                         }
                     } else {
@@ -256,9 +268,9 @@ class Query
     /**
      * Apply Join conditions
      * @param Db\Select $sql
-     * @param array $joins
+     * @param array<array{joinType:string,table:mixed,condition:string,fields:array}> $joins
      */
-    public function applyJoins($sql, array $joins)
+    public function applyJoins(Db\Select $sql, array $joins) : void
     {
         foreach ($joins as $config) {
             switch ($config['joinType']) {
@@ -280,8 +292,8 @@ class Query
 
     /**
      * Prepare filter values , clean empty filters
-     * @param array $filters
-     * @return array
+     * @param array<string,mixed> $filters
+     * @return array<string,mixed>
      */
     public function clearFilters(array $filters): array
     {
@@ -350,7 +362,7 @@ class Query
 
     /**
      * Fetch all records
-     * @return array
+     * @return array<int,array>
      * @throws \Exception
      */
     public function fetchAll(): array
@@ -380,7 +392,7 @@ class Query
 
     /**
      * Fetch first result row
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     public function fetchRow(): array
@@ -399,7 +411,7 @@ class Query
 
     /**
      * Fetch column
-     * @return array
+     * @return array<mixed>
      * @throws \Exception
      */
     public function fetchCol(): array

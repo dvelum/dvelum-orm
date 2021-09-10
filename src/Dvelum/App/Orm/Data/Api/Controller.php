@@ -97,6 +97,8 @@ abstract class Controller
 
     protected string $objectName;
 
+    protected App\Session\UserInterface $user;
+
     public function __construct(
         Request $request,
         Response $response,
@@ -118,6 +120,8 @@ abstract class Controller
         $this->canViewObjects = \array_map('strtolower', $this->canViewObjects);
 
         $this->objectName = $this->getObjectName();
+
+        $this->user = \Dvelum\App\Session\User::factory();
 
         /*
          * @todo remove backward compatibility
@@ -276,7 +280,7 @@ abstract class Controller
                 $objectIds = Utils::fetchCol('id', $data);
 
                 try {
-                    $objects = $this->orm->record($object, $objectIds);
+                    $objects = $this->orm->records($object, $objectIds);
                 } catch (\Exception $e) {
                     $this->orm->model($object)->logError('linkedlistAction ->' . $e->getMessage());
                     throw new LoadException($this->lang->get('CANT_EXEC'));
@@ -311,7 +315,7 @@ abstract class Controller
     /**
      * @deprecated
      */
-    public function oTitleAction()
+    public function oTitleAction() :void
     {
         $this->objectTitleAction();
     }
@@ -320,7 +324,7 @@ abstract class Controller
      * Get object title
      * @throws Exception
      */
-    public function objectTitleAction()
+    public function objectTitleAction() : void
     {
         $object = $this->request->post('object', 'string', false);
         $id = $this->request->post('id', 'string', false);
@@ -357,7 +361,7 @@ abstract class Controller
      * @return void
      * @throws \Exception
      */
-    public function listAction()
+    public function listAction() : void
     {
         if (!$this->eventManager->fireEvent(EventManager::BEFORE_LIST, new \stdClass())) {
             $this->response->error($this->eventManager->getError());
@@ -381,10 +385,10 @@ abstract class Controller
     /**
      * Prepare data for listAction
      * backward compatibility
-     * @return array
+     * @return array{data:array,count:int}
      * @throws \Exception
      */
-    protected function getList()
+    protected function getList() : array
     {
         $api = $this->getApi($this->apiRequest);
 
@@ -414,7 +418,7 @@ abstract class Controller
      * Sends JSON reply in the result and
      * closes the application
      */
-    public function editAction()
+    public function editAction() : void
     {
         $id = $this->request->post('id', 'integer', false);
         if (!$id) {
@@ -429,7 +433,7 @@ abstract class Controller
      * Sends JSON reply in the result and
      * closes the application
      */
-    public function createAction()
+    public function createAction() : void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -448,7 +452,7 @@ abstract class Controller
      * Sends JSON reply in the result and
      * closes the application
      */
-    public function updateAction()
+    public function updateAction() : void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -466,7 +470,7 @@ abstract class Controller
      * Sends JSON reply in the result and
      * closes the application
      */
-    public function deleteAction()
+    public function deleteAction() : void
     {
         if (!$this->checkCanDelete()) {
             return;
@@ -520,7 +524,7 @@ abstract class Controller
      * @param RecordInterface $object
      * @return void
      */
-    public function insertObject(RecordInterface $object)
+    public function insertObject(RecordInterface $object) : void
     {
         $objectConfig = $object->getConfig();
         $isRevControl = $objectConfig->isRevControl();
@@ -592,7 +596,7 @@ abstract class Controller
      * closes the application
      * @param RecordInterface $object
      */
-    public function updateObject(RecordInterface $object)
+    public function updateObject(RecordInterface $object) :void
     {
         $objectConfig = $object->getConfig();
         $isRevControl = $objectConfig->isRevControl();
@@ -655,7 +659,7 @@ abstract class Controller
 
     /**
      * Get controller configuration
-     * @return ConfigInterface
+     * @return ConfigInterface<int|string,mixed>
      */
     protected function getConfig(): ConfigInterface
     {
@@ -669,7 +673,7 @@ abstract class Controller
      * @return Record | null
      * @throws Exception
      */
-    public function getPostedData($objectName): ?Record
+    public function getPostedData(string $objectName): ?Record
     {
         $formCfg = $this->getConfig()->get('form');
         $adapterConfig = $this->configStorage->get($formCfg['config']);
@@ -704,7 +708,7 @@ abstract class Controller
      * Sends a JSON reply in the result and
      * closes the application
      */
-    public function loadDataAction()
+    public function loadDataAction() : void
     {
         if (!$this->eventManager->fireEvent(EventManager::BEFORE_LOAD, new \stdClass())) {
             $this->response->error($this->eventManager->getError());
@@ -735,18 +739,16 @@ abstract class Controller
         if (empty($eventData->data)) {
             $this->response->error($this->lang->get('CANT_EXEC'));
             return;
-        } else {
-            $this->response->success($eventData->data);
-            return;
         }
+        $this->response->success($eventData->data);
     }
 
     /**
      * Prepare data for loadDataAction
-     * @return array
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
-    protected function getData()
+    protected function getData() : array
     {
         $id = $this->request->post('id', 'int', false);
         $objectName = $this->getObjectName();
@@ -822,13 +824,13 @@ abstract class Controller
     /**
      * Add related objects info into getList results
      * @param Orm\Record\Config $cfg
-     * @param array $fieldsToShow list of link fields to process ( key - result field, value - object field)
+     * @param array<string> $fieldsToShow list of link fields to process ( key - result field, value - object field)
      * object field will be used as result field for numeric keys
-     * @param array & $data rows from  Model::getList result
+     * @param array<int|string,mixed> & $data rows from  Model::getList result
      * @param string $pKey - name of Primary Key field in $data
      * @throws \Exception
      */
-    protected function addLinkedInfo(Orm\Record\Config $cfg, array $fieldsToShow, array &$data, $pKey)
+    protected function addLinkedInfo(Orm\Record\Config $cfg, array $fieldsToShow, array &$data, $pKey) : void
     {
         $fieldsToKeys = [];
         foreach ($fieldsToShow as $key => $val) {
@@ -948,9 +950,9 @@ abstract class Controller
      * @param string $fieldName
      * @param RecordInterface $object
      * @param string $targetObjectName
-     * @return array
+     * @return array<int,array{id:int,deleted:bool,title:string,published:bool}>
      */
-    protected function collectLinksData($fieldName, RecordInterface $object, $targetObjectName)
+    protected function collectLinksData(string $fieldName, RecordInterface $object, string $targetObjectName) : array
     {
         $result = [];
 
@@ -967,14 +969,14 @@ abstract class Controller
                 if (isset($list[$id])) {
                     $result[] = [
                         'id' => $id,
-                        'deleted' => 0,
+                        'deleted' => false,
                         'title' => $list[$id]->getTitle(),
                         'published' => $isVc ? $list[$id]->get('published') : 1
                     ];
                 } else {
                     $result[] = [
                         'id' => $id,
-                        'deleted' => 1,
+                        'deleted' => true,
                         'title' => $id,
                         'published' => 0
                     ];
@@ -1023,7 +1025,7 @@ abstract class Controller
      * Sends JSON reply in the result
      * and closes the application.
      */
-    public function publishAction()
+    public function publishAction() : void
     {
         $objectName = $this->getObjectName();
         $objectConfig = $this->orm->config($objectName);
@@ -1079,7 +1081,7 @@ abstract class Controller
      * Sends JSON reply in the result
      * and closes the application.
      */
-    public function unpublishAction()
+    public function unpublishAction() : void
     {
         $objectName = $this->getObjectName();
         $objectConfig = $this->orm->config($objectName);

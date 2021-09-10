@@ -25,6 +25,7 @@ use Dvelum\Config;
 use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Lang\Dictionary;
 use Dvelum\Orm;
+use Laminas\Db\Adapter\Platform\PlatformInterface;
 
 /**
  * Builder for Orm\Record
@@ -89,8 +90,10 @@ class BuilderFactory
         );
 
         $model = $orm->model($objectName);
+        /**
+         * @var PlatformInterface|null
+         */
         $platform = $model->getDbConnection()->getAdapter()->getPlatform();
-
         if ($platform === null) {
             throw new Orm\Exception('Undefined Platform');
         }
@@ -112,12 +115,17 @@ class BuilderFactory
         throw new Orm\Exception('Undefined Platform');
     }
 
-    public static $booleanTypes = [
+    /**
+     * @var string[]
+     */
+    public static array $booleanTypes = [
         'bool',
         'boolean'
     ];
-
-    public static $numTypes = [
+    /**
+     * @var string[]
+     */
+    public static array $numTypes = [
         'tinyint',
         'smallint',
         'mediumint',
@@ -130,8 +138,10 @@ class BuilderFactory
         'bit',
         'biginteger'
     ];
-
-    public static $intTypes = [
+    /**
+     * @var string[]
+     */
+    public static array $intTypes = [
         'tinyint',
         'smallint',
         'mediumint',
@@ -141,33 +151,43 @@ class BuilderFactory
         'bit',
         'biginteger'
     ];
-
-    public static $floatTypes = [
+    /**
+     * @var string[]
+     */
+    public static array $floatTypes = [
         'decimal',
         'float',
         'double'
     ];
-
-    public static $charTypes = [
+    /**
+     * @var string[]
+     */
+    public static array $charTypes = [
         'char',
         'varchar'
     ];
-
-    public static $textTypes = [
+    /**
+     * @var string[]
+     */
+    public static array $textTypes = [
         'tinytext',
         'text',
         'mediumtext',
         'longtext'
     ];
-
-    public static $dateTypes = [
+    /**
+     * @var string[]
+     */
+    public static array $dateTypes = [
         'date',
         'datetime',
         'time',
         'timestamp'
     ];
-
-    public static $blobTypes = [
+    /**
+     * @var string[]
+     */
+    public static array $blobTypes = [
         'tinyblob',
         'blob',
         'mediumblob',

@@ -6,12 +6,22 @@ use Dvelum\Config;
 
 class Request
 {
-    protected $object;
-    protected $pagination;
-    protected $query;
-    protected $filters;
-    protected $config;
-    protected $shard;
+    protected string $object;
+    /**
+     * @var array<mixed>
+     */
+    protected array $pagination;
+    protected ?string $query;
+    /**
+     * @var array<mixed>
+     */
+    protected array $filters;
+    /**
+     * @var Config\ConfigInterface<string,mixed>
+     */
+    protected Config\ConfigInterface $config;
+
+    protected string $shard;
 
     public function __construct(\Dvelum\Request $request)
     {
@@ -26,12 +36,12 @@ class Request
         $this->shard = $request->post($this->config->get('shardParam'), 'string', '');
     }
 
-    public function getFilters()
+    public function getFilters() : array
     {
         return $this->filters;
     }
 
-    public function getFilter($name)
+    public function getFilter(string $name)
     {
         if (isset($this->filters[$name])) {
             return $this->filters[$name];
@@ -39,7 +49,7 @@ class Request
         return null;
     }
 
-    public function addFilter($key, $val)
+    public function addFilter(string $key, $val) : void
     {
         $this->filters[$key] = $val;
     }

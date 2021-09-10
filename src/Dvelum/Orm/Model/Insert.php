@@ -29,11 +29,11 @@ class Insert implements InsertInterface
     /**
      * @var Model $model
      */
-    protected $model;
+    protected Model $model;
     /**
      * @var Adapter $db
      */
-    protected $db;
+    protected Adapter $db;
 
     public function __construct(Model $model)
     {
@@ -43,7 +43,7 @@ class Insert implements InsertInterface
 
     /**
      * Insert multiple rows (not safe but fast)
-     * @param array $records
+     * @param array<int,array> $records
      * @param int $chunkSize , optional default 500
      * @param bool $ignore - optional default false Ignore errors
      * @return bool
@@ -104,7 +104,7 @@ class Insert implements InsertInterface
 
     /**
      * Insert single record on duplicate key update
-     * @param array $data
+     * @param array<string,mixed> $data
      * @return bool
      */
     public function onDuplicateKeyUpdate(array $data): bool

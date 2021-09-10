@@ -36,13 +36,13 @@ class Router implements RouterInterface
     protected ConfigInterface $config;
 
     /**
-     * @var array
+     * @var array<mixed>
      */
-    protected $routes = [];
+    protected array $routes = [];
     /**
-     * @var array
+     * @var array<string,mixed>
      */
-    protected $objectToRoute;
+    protected array $objectToRoute;
 
     protected Orm $orm;
 

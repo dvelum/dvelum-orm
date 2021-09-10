@@ -36,7 +36,7 @@ use Psr\Log\LoggerInterface;
 class Model
 {
     /**
-     * @var Config\ConfigInterface
+     * @var Config\ConfigInterface<string,mixed>
      *
      * // Global (For all Models) Hard caching time
      * 'hardCacheTime'  => 60,
@@ -49,7 +49,7 @@ class Model
      * // Default error log adapter
      * 'errorLog' =>false
      */
-    protected $settings;
+    protected Config\ConfigInterface $settings;
     /**
      * DB Object Storage
      * @var Orm\Record\Store
@@ -66,24 +66,24 @@ class Model
      * Db_Object config
      * @var Orm\Record\Config | null
      */
-    private $objectConfig = null;
+    private ?Orm\Record\Config $objectConfig = null;
 
     /**
-     * @var Config\ConfigInterface
+     * @var Config\ConfigInterface<string,mixed>
      */
-    private $lightConfig;
+    private Config\ConfigInterface $lightConfig;
 
     /**
      * Object / model name
      * @var string
      */
-    protected $name;
+    protected string $name;
 
     /**
      * Hard caching time (without validation) for frondend , seconds
      * @var int
      */
-    protected $cacheTime;
+    protected int $cacheTime;
 
     /**
      * Current Cache Interface
@@ -96,19 +96,19 @@ class Model
      * DB table prefix
      * @var string
      */
-    protected $dbPrefix = '';
+    protected string $dbPrefix = '';
 
     /**
      * Connection manager
      * @var Db\OrmManager|Db\ManagerInterface
      */
-    protected $dbManager;
+    protected Db\ManagerInterface $dbManager;
 
     /**
      * Table name
      * @var string
      */
-    protected $table;
+    protected string $table;
 
     /**
      * Current error log adapter
@@ -118,9 +118,9 @@ class Model
 
     /**
      * List of search fields
-     * @var array | null
+     * @var array<string> | null
      */
-    protected $searchFields = null;
+    protected ?array $searchFields = null;
 
     protected \Dvelum\Orm\Orm $orm;
 
@@ -137,8 +137,8 @@ class Model
 
     /**
      * @param string $objectName
-     * @param Config\ConfigInterface $settings
-     * @param Config\ConfigInterface $ormConfig
+     * @param Config\ConfigInterface<int|string,mixed> $settings
+     * @param Config\ConfigInterface<int|string,mixed> $ormConfig
      * @throws \Exception
      */
     public function __construct(
@@ -613,7 +613,7 @@ class Model
 
     /**
      * Get Orm\Record config array
-     * @return Config\ConfigInterface
+     * @return Config\ConfigInterface<int|string,mixed>
      */
     public function getLightConfig(): Config\ConfigInterface
     {

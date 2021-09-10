@@ -43,12 +43,23 @@ class Record implements RecordInterface
      * @var Record\Config
      */
     protected $config;
-
+    /**
+     * @var false|int
+     */
     protected $id;
-    protected $primaryKey;
-    protected $data = [];
-    protected $updates = [];
-    protected $errors = [];
+    protected string $primaryKey;
+    /**
+     * @var array<string,mixed>
+     */
+    protected array $data = [];
+    /**
+     * @var array<string,mixed>
+     */
+    protected array $updates = [];
+    /**
+     * @var array<string,string>
+     */
+    protected array $errors = [];
 
     /**
      * Insert ID
@@ -70,7 +81,7 @@ class Record implements RecordInterface
     /**
      * @var DataModel|null
      */
-    protected $dataModel = null;
+    protected ?DataModel $dataModel = null;
 
     protected Orm\Orm $orm;
 
@@ -124,7 +135,7 @@ class Record implements RecordInterface
 
     /**
      * Set raw data from storage
-     * @param array $data
+     * @param array<string,mixed> $data
      * @return void
      * @throws \Exception
      */
@@ -164,7 +175,7 @@ class Record implements RecordInterface
 
     /**
      * Get object fields
-     * @return array
+     * @return array<string>
      */
     public function getFields(): array
     {
@@ -173,10 +184,10 @@ class Record implements RecordInterface
 
     /**
      * Get the object data, returns the associative array ‘field name’
-     * @param boolean $withUpdates , optional default true
+     * @param bool $withUpdates , optional default true
      * @return array
      */
-    public function getData($withUpdates = true): array
+    public function getData(bool $withUpdates = true): array
     {
         $data = $this->data;
         $data[$this->primaryKey] = $this->id;
@@ -229,7 +240,7 @@ class Record implements RecordInterface
 
     /**
      * Get updated, but not saved object data
-     * @return array
+     * @return array<string,mixed>
      * @throws Exception
      */
     public function getUpdates(): array
@@ -239,13 +250,12 @@ class Record implements RecordInterface
 
     /**
      * Set the object identifier (existing DB ID)
-     * @param mixed $id
+     * @param int $id
      * @return void
-     * @throws Exception
      */
-    public function setId($id): void
+    public function setId(int $id): void
     {
-        $this->id = (int)$id;
+        $this->id = $id;
     }
 
     /**

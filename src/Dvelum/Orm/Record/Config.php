@@ -394,7 +394,7 @@ class Config
     /**
      * Get the configuration of all fields
      * @param bool $includeSystem -optional default = true
-     * @return array<int|string,mixed>
+     * @return array<string,mixed>
      * @throws \Exception
      */
     public function getFieldsConfig(bool $includeSystem = true): array
@@ -618,11 +618,10 @@ class Config
      */
     public function isTransact(): bool
     {
-        if (strtolower($this->config->get('engine')) == 'innodb') {
+        if (strtolower($this->config->get('engine')) === 'innodb') {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
@@ -775,7 +774,7 @@ class Config
 
     /**
      * Get Config object
-     * @return Cfg\ConfigInterface
+     * @return Cfg\ConfigInterface<int|string,mixed>
      */
     public function getConfig(): Cfg\ConfigInterface
     {
@@ -1063,7 +1062,7 @@ class Config
     /**
      * Check if object has global distributed index
      */
-    public function hasDistributedIndexRecord()
+    public function hasDistributedIndexRecord() : bool
     {
         if ($this->isDistributed()) {
             $sharding = $this->getShardingType();

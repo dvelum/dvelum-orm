@@ -41,29 +41,29 @@ use \Exception;
 abstract class AbstractAdapter implements BuilderInterface
 {
     /**
-     * @var array
+     * @var array<string>
      */
-    protected $errors = [];
+    protected array $errors = [];
 
     /**
      * @var \Dvelum\Db\Adapter
      */
-    protected $db;
+    protected \Dvelum\Db\Adapter $db;
 
     /**
      * @var string $objectName
      */
-    protected $objectName;
+    protected string $objectName;
 
     /**
      * @var Orm\Record\Config
      */
-    protected $objectConfig;
+    protected Orm\Record\Config $objectConfig;
 
     /**
      * @var string
      */
-    protected $dbPrefix;
+    protected string $dbPrefix;
 
     /**
      * @var Log\File | false
@@ -73,32 +73,41 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * @var bool
      */
-    protected $useForeignKeys = false;
+    protected bool $useForeignKeys = false;
 
     /**
      * @var Model
      */
-    protected $model;
+    protected Model $model;
 
     /**
      * @var string $configPath
      */
-    protected $configPath;
-
-    protected $validationErrors = [];
+    protected string $configPath;
+    /**
+     * @var array<string,mixed>
+     */
+    protected array $validationErrors = [];
 
     protected Orm\Orm $orm;
     protected StorageInterface $configStorage;
     protected Dictionary $lang;
 
-    abstract public function prepareColumnUpdates();
-
-    abstract public function prepareIndexUpdates();
-
-    abstract public function prepareKeysUpdate();
+    /**
+     * @return array<int,array>
+     */
+    abstract public function prepareColumnUpdates() : array;
+    /**
+     * @return array<int,array>
+     */
+    abstract public function prepareIndexUpdates(): array;
+    /**
+     * @return array<int,array>
+     */
+    abstract public function prepareKeysUpdate(): array;
 
     /**
-     * @param ConfigInterface $config
+     * @param ConfigInterface<int|string,mixed> $config
      * @throws \Exception
      */
     public function __construct(
@@ -130,23 +139,23 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * @param \Dvelum\Db\Adapter $db
      */
-    public function setConnection(\Dvelum\Db\Adapter $db)
+    public function setConnection(\Dvelum\Db\Adapter $db) : void
     {
         $this->db = $db;
     }
 
     /**
      * Get error messages
-     * @return array
+     * @return array<string>
      */
-    public function getErrors()
+    public function getErrors() : array
     {
         return $this->errors;
     }
 
     /**
      * Check for broken object links
-     * @return array
+     * @return array<string>
      */
     public function getBrokenLinks(): array
     {
@@ -178,9 +187,8 @@ abstract class AbstractAdapter implements BuilderInterface
 
         if (!empty($shardUpdates) || !empty($linksUpdates)) {
             return false;
-        } else {
-            return true;
         }
+        return true;
     }
 
     /**
@@ -229,11 +237,13 @@ abstract class AbstractAdapter implements BuilderInterface
 
         if (!empty($updateKeys) || !empty($shardUpdates) || !empty($linksUpdates)) {
             return false;
-        } else {
-            return true;
         }
+        return true;
     }
 
+    /**
+     * @return array<string,mixed>
+     */
     public function getValidationErrors(): array
     {
         return $this->validationErrors;
@@ -241,7 +251,7 @@ abstract class AbstractAdapter implements BuilderInterface
 
     /**
      * Get Existing Columns
-     * @return \Dvelum\Db\Metadata\ColumnObject[]
+     * @return array<string,\Laminas\Db\Metadata\Object\ColumnObject>
      */
     protected function getExistingColumns(): array
     {
@@ -276,7 +286,7 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * Check relation objects
      */
-    protected function checkRelations()
+    protected function checkRelations() : bool
     {
         $relation = new Orm\Record\Config\Relation();
         $list = $relation->getManyToMany($this->objectConfig);
@@ -285,7 +295,7 @@ abstract class AbstractAdapter implements BuilderInterface
             return true;
         }
 
-        foreach ($list as $objectName => $fields) {
+        foreach ($list as $fields) {
             if (empty($fields)) {
                 continue;
             }
@@ -350,7 +360,7 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * Generate index name  for constraint key
      * Mysql limits with 64 chars
-     * @param array $item
+     * @param array<string,mixed> $item
      * @return string
      */
     public function createForeignKeyName(array $item): string
@@ -380,7 +390,7 @@ abstract class AbstractAdapter implements BuilderInterface
 
     /**
      * Get updates information
-     * @return array
+     * @return array<string,array<string,string>>
      */
     public function getRelationUpdates(): array
     {
@@ -390,10 +400,13 @@ abstract class AbstractAdapter implements BuilderInterface
 
         foreach ($list as $fields) {
             if (!empty($fields)) {
+                /**
+                 * @var array<string,mixed> $fields
+                 */
                 foreach ($fields as $fieldName => $linkType) {
                     $relationObjectName = $this->objectConfig->getRelationsObject($fieldName);
                     if (!is_string($relationObjectName) || !$this->orm->configExists($relationObjectName)) {
-                        $updates[$fieldName] = ['name' => $relationObjectName, 'action' => 'add'];
+                        $updates[$fieldName] = ['name' => (string) $relationObjectName, 'action' => 'add'];
                     }
                 }
             }
@@ -403,7 +416,7 @@ abstract class AbstractAdapter implements BuilderInterface
 
     /**
      * Check for broken object links
-     * return array | boolean false
+     * @return array<string,mixed>|false
      */
     public function hasBrokenLinks()
     {
@@ -414,6 +427,9 @@ abstract class AbstractAdapter implements BuilderInterface
             $brokenFields = [];
             foreach ($links as $o => $fieldList) {
                 if (!$this->orm->configExists($o)) {
+                    /**
+                     * @var array<string,mixed> $fieldList
+                     */
                     foreach ($fieldList as $field => $cfg) {
                         $brokenFields[$field] = $o;
                     }
@@ -467,7 +483,7 @@ abstract class AbstractAdapter implements BuilderInterface
      * @param string $newName
      * @return bool
      */
-    public function renameField($oldName, $newName): bool
+    public function renameField(string $oldName, string $newName): bool
     {
         if ($this->objectConfig->isLocked() || $this->objectConfig->isReadOnly()) {
             $this->errors[] = 'Can not build locked object ' . $this->objectConfig->getName();
@@ -502,7 +518,7 @@ abstract class AbstractAdapter implements BuilderInterface
 
     /**
      * Update distributed objects
-     * @param array $list
+     * @param array<int,array> $list
      * @return bool
      * @throws \Exception
      */
@@ -607,7 +623,7 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * Create Db_Object`s for relations
      * @throw Exception
-     * @param array $list
+     * @param array<int,array> $list
      * @return bool
      */
     protected function updateRelations(array $list): bool
@@ -726,9 +742,9 @@ abstract class AbstractAdapter implements BuilderInterface
     }
 
     /**
-     * @return array
+     * @return array<int,array<string,string>>
      */
-    public function getDistributedObjectsUpdatesInfo()
+    public function getDistributedObjectsUpdatesInfo():array
     {
         if (!$this->objectConfig->isDistributed()) {
             return [];
@@ -785,19 +801,22 @@ abstract class AbstractAdapter implements BuilderInterface
     }
 
     /**
-     * @return array
+     * @return array<string,array<string,string>>
      */
-    public function getObjectsUpdatesInfo()
+    public function getObjectsUpdatesInfo() : array
     {
         $updates = [];
         $relation = new Config\Relation();
         $list = $relation->getManyToMany($this->objectConfig);
         foreach ($list as $fields) {
             if (!empty($fields)) {
+                /**
+                 * @var array<string,string> $fields
+                 */
                 foreach ($fields as $fieldName => $linkType) {
                     $relationObjectName = $this->objectConfig->getRelationsObject($fieldName);
                     if (!is_string($relationObjectName) || !$this->orm->configExists($relationObjectName)) {
-                        $updates[$fieldName] = ['name' => $relationObjectName, 'action' => 'add'];
+                        $updates[$fieldName] = ['name' => (string)$relationObjectName, 'action' => 'add'];
                     }
                 }
             }

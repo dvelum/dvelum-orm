@@ -31,21 +31,22 @@ use Dvelum\Orm\Orm;
 interface BuilderInterface
 {
     /**
-     * @param ConfigInterface $config
+     * @param ConfigInterface<int|string,mixed> $config
      * @param Orm $orm
      * @param StorageInterface $configStorage
+     * @param Dictionary $lang
      */
     public function __construct(ConfigInterface $config, Orm $orm, StorageInterface $configStorage, Dictionary $lang);
 
     /**
      * Get error messages
-     * @return array
+     * @return array<string>
      */
-    public function getErrors();
+    public function getErrors():array;
 
     /**
      * Check for broken object links
-     * @return array
+     * @return array<mixed>
      */
     public function getBrokenLinks(): array;
 
@@ -57,19 +58,19 @@ interface BuilderInterface
 
     /**
      * Get object foreign keys
-     * @return array
+     * @return array<string,mixed>
      */
     public function getOrmForeignKeys(): array;
 
     /**
      * Get updates information
-     * @return array
+     * @return array<string>
      */
     public function getRelationUpdates(): array;
 
     /**
      * Check for broken object links
-     * return array | boolean false
+     * @return array<string>|false
      */
     public function hasBrokenLinks();
 
@@ -77,7 +78,7 @@ interface BuilderInterface
      * Create / alter db table
      * @param bool $buildForeignKeys
      * @param bool $buildShards
-     * @return boolean
+     * @return bool
      */
     public function build(bool $buildForeignKeys = true, bool $buildShards = false): bool;
 
@@ -85,9 +86,9 @@ interface BuilderInterface
      * Build Foreign Keys
      * @param bool $remove - remove keys
      * @param bool $create - create keys
-     * @return boolean
+     * @return bool
      */
-    public function buildForeignKeys($remove = true, $create = true): bool;
+    public function buildForeignKeys(bool $remove = true, bool $create = true): bool;
 
     /**
      * Remove object

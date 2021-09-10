@@ -33,7 +33,7 @@ class Store extends \Dvelum\Orm\Record\Store
     /**
      * @var Distributed $sharding
      */
-    protected $sharding;
+    protected Distributed $sharding;
 
     /**
      * @var string
@@ -42,7 +42,7 @@ class Store extends \Dvelum\Orm\Record\Store
 
     /**
      * @param Distributed $distributed
-     * @param array<int|string,mixed> $config
+     * @param array<string,mixed> $config
      */
     public function __construct(Distributed $distributed, Orm\Orm $orm, array $config = [])
     {
@@ -59,9 +59,9 @@ class Store extends \Dvelum\Orm\Record\Store
      * Load record data
      * @param string $objectName
      * @param int $id
-     * @return array
+     * @return array<string,mixed>
      */
-    public function load($objectName, $id): array
+    public function load(string $objectName, int $id): array
     {
         /**
          * @var \Dvelum\Orm\Distributed\Model $model
@@ -84,7 +84,7 @@ class Store extends \Dvelum\Orm\Record\Store
     /**
      * Insert record
      * @param Orm\RecordInterface $object
-     * @param array $data
+     * @param array<int|string,mixed> $data
      * @return int|null record id
      */
     protected function insertRecord(Orm\RecordInterface $object, array $data): ?int
@@ -138,7 +138,7 @@ class Store extends \Dvelum\Orm\Record\Store
             if ($this->log) {
                 $this->log->log(LogLevel::ERROR, $object->getName() . '::insert ' . $e->getMessage());
             }
-            return false;
+            return null;
         }
         return $insertId;
     }
@@ -186,8 +186,6 @@ class Store extends \Dvelum\Orm\Record\Store
      */
     protected function getDbConnection(Orm\RecordInterface $object): Db\Adapter
     {
-        $shardId = null;
-
         $field = $this->sharding->getShardField();
         $shardId = $object->get($field);
 
@@ -277,8 +275,8 @@ class Store extends \Dvelum\Orm\Record\Store
      */
     public function validateUniqueValues(string $objectName, $recordId, array $groupsData): ?array
     {
-        $objectConfig = Orm\Record\Config::factory($objectName);
-        $model = Model::factory($objectConfig->getDistributedIndexObject());
+        $objectConfig = $this->orm->config($objectName);
+        $model = $this->orm->model($objectConfig->getDistributedIndexObject());
 
         $db = $model->getDbConnection();
         $primaryKey = $model->getPrimaryKey();
@@ -312,7 +310,6 @@ class Store extends \Dvelum\Orm\Record\Store
             }
             return null;
         }
-
         return null;
     }
 }

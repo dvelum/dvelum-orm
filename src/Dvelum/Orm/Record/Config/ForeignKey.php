@@ -53,7 +53,7 @@ class ForeignKey
     /**
      * Get list of foreign keys
      * @param Config $config
-     * @return array
+     * @return array<int,array>
      * array(
      *    array(
      *      'curDb' => string,

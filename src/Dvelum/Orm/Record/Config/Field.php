@@ -28,6 +28,7 @@ use Dvelum\Orm\Record\Config;
 /**
  * Class Field
  * @package Dvelum\Orm\Record\Config
+ * @implements \ArrayAccess<string,mixed>
  */
 class Field implements \ArrayAccess
 {
@@ -407,12 +408,15 @@ class Field implements \ArrayAccess
 
     //====End of ArrayAccess implementation ====
 
+    /**
+     * @return array<string,mixed>
+     */
     public function __toArray(): array
     {
         return $this->config;
     }
 
-    public function __isset($name)
+    public function __isset(string $name): bool
     {
         return isset($this->config[$name]);
     }

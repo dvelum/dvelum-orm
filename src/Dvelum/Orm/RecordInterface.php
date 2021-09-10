@@ -44,7 +44,7 @@ interface RecordInterface
      * @param bool $withUpdates , optional default true
      * @return array<int|string,mixed>
      */
-    public function getData($withUpdates = true): array;
+    public function getData(bool $withUpdates = true): array;
 
     /**
      * Get object name

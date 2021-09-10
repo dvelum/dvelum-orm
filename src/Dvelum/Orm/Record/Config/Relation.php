@@ -108,6 +108,9 @@ class Relation
         $groupByObject = true
     ): array {
         $data = [];
+        /**
+         * @var array<string,array<string,mixed>> $fields
+         */
         $fields = $config->getFieldsConfig(true);
         foreach ($fields as $name => $cfg) {
             if (isset($cfg['type']) && $cfg['type'] === 'link'
@@ -116,9 +119,9 @@ class Relation
                 && isset($cfg['link_config']['object'])
             ) {
                 if ($groupByObject) {
-                    $data[$cfg['link_config']['object']][$name] = $cfg['link_config']['link_type'];
+                    $data[(string)$cfg['link_config']['object']][$name] = $cfg['link_config']['link_type'];
                 } else {
-                    $data[$name] = [
+                    $data[(string)$name] = [
                         'object' => $cfg['link_config']['object'],
                         'link_type' => $cfg['link_config']['link_type']
                     ];

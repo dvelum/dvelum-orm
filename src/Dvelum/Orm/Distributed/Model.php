@@ -59,11 +59,11 @@ class Model extends Orm\Model
     /**
      * Get record by id
      * @param int $id
-     * @param array|string $fields — optional — the list of fields to retrieve
-     * @return array
+     * @param array<int|string,string> $fields — optional — the list of fields to retrieve
+     * @return array<string,mixed>
      * @throws \Exception
      */
-    public function getItem($id, $fields = ['*']): array
+    public function getItem(int $id, array $fields = ['*']): array
     {
         $sharding = $this->distributed;
         $shard = $sharding->findObjectShard($this->orm->config($this->getObjectName()), $id);
@@ -88,12 +88,12 @@ class Model extends Orm\Model
 
     /**
      * Get record by id from shard
-     * @param mixed $id
+     * @param int $id
      * @param string $shard
-     * @return array
+     * @return array<string,mixed>
      * @throws \Exception
      */
-    public function getItemFromShard($id, string $shard): array
+    public function getItemFromShard(int $id, string $shard): array
     {
         $db = $this->getDbShardConnection($shard);
         $primaryKey = $this->getPrimaryKey();
@@ -111,8 +111,8 @@ class Model extends Orm\Model
     /**
      * Get data record by field value using cache. Returns first occurrence
      * @param string $field - field name
-     * @param string $value - field value
-     * @return array
+     * @param mixed $value - field value
+     * @return array<string,mixed>
      * @throws Exception
      */
     public function getCachedItemByField(string $field, $value): array
@@ -147,7 +147,7 @@ class Model extends Orm\Model
      * @param string $fieldName
      * @param mixed $value
      * @param string|array $fields
-     * @return array|null
+     * @return array<string,mixed>
      * @throws Exception
      */
     public function getItemByField(string $fieldName, $value, $fields = '*'): array
@@ -167,7 +167,7 @@ class Model extends Orm\Model
      * @param array $ids - list of IDs
      * @param mixed $fields - optional - the list of fields to retrieve
      * @param bool $useCache - optional, default false
-     * @return array / false
+     * @return array<string,mixed>
      * @throws Exception
      */
     final public function getItems(array $ids, $fields = '*', bool $useCache = false): array
