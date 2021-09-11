@@ -54,7 +54,7 @@ interface RecordInterface
 
     /**
      * Get object identifier
-     * @return int|false
+     * @return int|null
      */
     public function getId();
 
@@ -201,12 +201,12 @@ interface RecordInterface
 
     /**
      * Publish VC object
-     * @param bool|int $version - optional, default current version
+     * @param int|null $version - optional, default current version
      * @param bool $useTransaction — using a transaction when changing data is optional.
      * @return bool
      * @throws Exception
      */
-    public function publish($version = false, bool $useTransaction = true): bool;
+    public function publish(?int $version = null, bool $useTransaction = true): bool;
 
     /**
      * Get loaded version

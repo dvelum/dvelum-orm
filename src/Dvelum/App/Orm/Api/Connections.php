@@ -28,33 +28,44 @@ use Dvelum\Config\ConfigInterface;
 class Connections
 {
     /**
-     * @var array
+     * @var array<string,mixed>
      */
-    protected $config;
+    protected array $config;
 
-    public function __construct(array $config)
+    protected Config\Storage\StorageInterface $configStorage;
+
+    protected Lang\Dictionary $lang;
+
+    /**
+     * @param array<string,mixed> $config
+     * @param Config\Storage\StorageInterface $configStorage
+     * @param Lang\Dictionary $lang
+     */
+    public function __construct(array $config, Config\Storage\StorageInterface $configStorage, Lang\Dictionary $lang)
     {
         $this->config = $config;
+        $this->configStorage = $configStorage;
+        $this->lang = $lang;
     }
 
-    public function typeExists($devType)
+    public function typeExists(int $devType): bool
     {
         return isset($this->config[$devType]);
     }
 
     /**
      * Get connections list
-     * @param integer $devType
-     * @return array
+     * @param int $devType
+     * @return array<string,ConfigInterface>
      * @throws \Exception
      */
-    public function getConnections($devType)
+    public function getConnections(int $devType)
     {
         if (!$this->typeExists($devType)) {
             throw new \Exception('Backend_Orm_Connections_Manager :: getConnections undefined dev type ' . $devType);
         }
 
-        $dbPath = Config::storage()->get('main.php')->get('db_config_path');
+        $dbPath = $this->configStorage->get('main.php')->get('db_config_path');
 
         $dir = dirname($this->config[$devType]['dir'] . '/' . $dbPath);
 
@@ -93,13 +104,13 @@ class Connections
         }
 
         if (!empty($errors)) {
-            throw new \Exception(Lang::lang()->get('CANT_WRITE_FS') . ' ' . implode(', ', $errors));
+            throw new \Exception($this->lang->get('CANT_WRITE_FS') . ' ' . implode(', ', $errors));
         }
 
         foreach ($this->config as $devType => $data) {
             $file = $data['dir'] . $id . '.php';
             if (!@unlink($file)) {
-                throw new \Exception(Lang::lang()->get('CANT_WRITE_FS') . ' ' . $file);
+                throw new \Exception($this->lang->get('CANT_WRITE_FS') . ' ' . $file);
             }
         }
     }
@@ -140,19 +151,22 @@ class Connections
         foreach ($this->config as $devType => $data) {
             $path = $this->config[$devType]['dir'] . $id . '.php';
 
-            $c = Config\Factory::create([
-                                            'username' => '',
-                                            'password' => '',
-                                            'dbname' => '',
-                                            'host' => '',
-                                            'charset' => 'UTF8',
-                                            'prefix' => '',
-                                            'adapter' => 'Mysqli',
-                                            'driver' => 'Mysqli',
-                                            'transactionIsolationLevel' => 'default'
-                                        ], $path);
+            $c = Config\Factory::create(
+                [
+                    'username' => '',
+                    'password' => '',
+                    'dbname' => '',
+                    'host' => '',
+                    'charset' => 'UTF8',
+                    'prefix' => '',
+                    'adapter' => 'Mysqli',
+                    'driver' => 'Mysqli',
+                    'transactionIsolationLevel' => 'default'
+                ],
+                $path
+            );
 
-            if (!Config::storage()->save($c)) {
+            if (!$this->configStorage->save($c)) {
                 return false;
             }
         }
@@ -187,11 +201,11 @@ class Connections
 
     /**
      * Check if DB Connection exists
-     * @param integer $devType
+     * @param int $devType
      * @param string $id
-     * @return boolean
+     * @return bool
      */
-    public function connectionExists($devType, $id)
+    public function connectionExists(int $devType, string $id):bool
     {
         if (!$this->typeExists($devType)) {
             return false;
@@ -202,9 +216,9 @@ class Connections
 
     /**
      * Get connections config
-     * @return array
+     * @return array<string,mixed>
      */
-    public function getConfig()
+    public function getConfig() : array
     {
         return $this->config;
     }

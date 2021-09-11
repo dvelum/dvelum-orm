@@ -137,10 +137,10 @@ class Query
     }
 
     /**
-     * @param array<int|string,mixed>|null $fields
+     * @param mixed|null $fields
      * @return Query
      */
-    public function fields(?array $fields): Query
+    public function fields($fields): Query
     {
         $this->fields = $fields;
         return $this;
@@ -174,6 +174,9 @@ class Query
      */
     public function applyFilters(Db\Select $sql, array $filters): void
     {
+        /**
+         * @var array<string,mixed> $filters
+         */
         $filters = $this->clearFilters($filters);
 
         foreach ($filters as $k => $v) {
@@ -292,8 +295,8 @@ class Query
 
     /**
      * Prepare filter values , clean empty filters
-     * @param array<string,mixed> $filters
-     * @return array<string,mixed>
+     * @param array<int|string,mixed> $filters
+     * @return array<int|string,mixed>
      */
     public function clearFilters(array $filters): array
     {

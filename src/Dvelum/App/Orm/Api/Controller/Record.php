@@ -25,16 +25,17 @@ namespace Dvelum\App\Orm\Api\Controller;
 use Dvelum\App\Orm\Api\Manager;
 use Dvelum\App\Orm\Api\Controller;
 use Dvelum\Config;
+use Dvelum\Lang;
 use Dvelum\Orm;
 
 class Record extends Controller
 {
 
-    public function indexAction()
+    public function indexAction(): void
     {
     }
 
-    public function validateRecordAction()
+    public function validateRecordAction(): void
     {
         $object = $this->request->post('object', 'string', '');
         $shard = $this->request->post('shard', 'string', '');
@@ -67,7 +68,7 @@ class Record extends Controller
     /**
      * Validate Object Db Structure
      */
-    public function validateAction()
+    public function validateAction(): void
     {
         $engineUpdate = false;
 
@@ -165,7 +166,7 @@ class Record extends Controller
     /**
      * Build object action
      */
-    public function buildAction()
+    public function buildAction(): void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -207,7 +208,7 @@ class Record extends Controller
     /**
      * Get object fields
      */
-    public function fieldsAction()
+    public function fieldsAction(): void
     {
         $object = $this->request->post('object', 'string', false);
 
@@ -263,7 +264,7 @@ class Record extends Controller
     /**
      * Get object indexes
      */
-    public function indexesAction()
+    public function indexesAction(): void
     {
         $object = $this->request->post('object', 'string', false);
 
@@ -293,7 +294,7 @@ class Record extends Controller
     /**
      * Remove Db_Object from system
      */
-    public function removeAction()
+    public function removeAction(): void
     {
         if (!$this->checkCanDelete()) {
             return;
@@ -422,7 +423,7 @@ class Record extends Controller
         foreach ($reqStrings as $v) {
             $value = $this->request->post($v, 'string', '');
 
-            if (!strlen($value)) {
+            if (!strlen((string)$value)) {
                 $errors[] = array('id' => $v, 'msg' => $this->lang->get('CANT_BE_EMPTY'));
             }
 
@@ -455,26 +456,25 @@ class Record extends Controller
         $data['sharding_type'] = $shardingType;
         $data['sharding_key'] = $shardingKey;
 
-
         $this->checkExternalProperties($data, $errors);
         if (!empty($errors)) {
             $this->response->error($this->lang->get('FILL_FORM'), $errors);
         }
 
-
         $name = strtolower($name);
 
         if ($recordId === '') {
             $this->createObject($name, $data);
-        } else {
-            $this->updateObject($recordId, $name, $data);
         }
+        $this->updateObject($recordId, $name, $data);
     }
 
     /**
      * Check properties from external modules (plugins)
+     * @param array<string,mixed> $data
+     * @param array<mixed> $errors
      */
-    protected function checkExternalProperties(array &$data, array &$errors)
+    protected function checkExternalProperties(array &$data, array &$errors): void
     {
         $properties = $this->configStorage->get('orm/properties.php')->__toArray();
         if (empty($properties)) {
@@ -500,9 +500,9 @@ class Record extends Controller
     /**
      * Create Db_Object
      * @param string $name - object name
-     * @param array $data - object config
+     * @param array<string,mixed> $data - object config
      */
-    protected function createObject($name, array $data)
+    protected function createObject(string $name, array $data): void
     {
         $usePrefix = $data['use_db_prefix'];
         $connectionManager = new \Dvelum\Db\Manager($this->container->get('config.main'));
@@ -586,7 +586,7 @@ class Record extends Controller
         $this->response->success();
     }
 
-    protected function updateObject($recordId, $name, array $data)
+    protected function updateObject($recordId, $name, array $data): void
     {
         $ormConfig = $this->configStorage->get('orm.php');
         $dataDir = $this->configStorage->getWrite() . $ormConfig->get('object_configs');
@@ -605,7 +605,7 @@ class Record extends Controller
         /*
          * Rename object
         */
-        if ($recordId != $name) {
+        if ($recordId !== $name) {
             $this->renameObject($recordId, $name);
         }
 
@@ -672,7 +672,7 @@ class Record extends Controller
         $this->response->success();
     }
 
-    protected function renameObject($oldName, $newName)
+    protected function renameObject(string $oldName, string $newName): void
     {
         $ormConfig = $this->configStorage->get('orm.php');
 
@@ -687,7 +687,7 @@ class Record extends Controller
             return;
         }
 
-        $manager = new Manager($this->ormService);
+        $manager = new Manager($this->ormService, $this->container->get(Lang::class), $this->configStorage);
         $renameResult = $manager->renameObject($ormConfig->get('object_configs'), $oldName, $newName);
 
         switch ($renameResult) {

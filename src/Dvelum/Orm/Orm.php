@@ -56,15 +56,15 @@ class Orm
     /**
      * @var ConfigInterface<int|string,mixed>
      */
-    protected $configSettings;
+    protected ConfigInterface $configSettings;
     /**
      * @var ConfigInterface<int|string,mixed>
      */
-    protected $modelSettings;
+    protected ConfigInterface $modelSettings;
     /**
      * @var CryptServiceInterface;
      */
-    private $cryptService;
+    private CryptServiceInterface $cryptService;
     /**
      * @var Record\Store|null $storage
      */
@@ -92,7 +92,10 @@ class Orm
 
     protected string $language;
 
-    protected \Closure $storeLoader;
+    /**
+     * @var callable $storeLoader
+     */
+    protected $storeLoader;
     /**
      * @var mixed
      */
@@ -172,10 +175,10 @@ class Orm
             ]
         );
 
-        $this->storeLoader = function () use ($orm) {
+        $this->storeLoader = static function () use ($orm) {
             return $orm->storage();
         };
-        $this->distributedStoreLoader = function () use ($orm) {
+        $this->distributedStoreLoader = static function () use ($orm) {
             return $orm->distributedStorage();
         };
     }
@@ -285,13 +288,13 @@ class Orm
 
     /**
      * @param string $name
-     * @param bool $id
+     * @param int|null $id
      * @param string|bool $shard
-     * @return mixed
+     * @return RecordInterface
      * @throws \Exception
      * @deprecated
      */
-    public function object(string $name, $id = false, $shard = false)
+    public function object(string $name, ?int $id = null, $shard = false): RecordInterface
     {
         return $this->record($name, $id, $shard);
     }
@@ -299,37 +302,37 @@ class Orm
     /**
      * Factory method of object creation is preferable to use, cf. method  __construct() description
      * @param string $name
-     * @param int|bool $id , optional default false
+     * @param int|null $id , optional default false
      * @param string|null $shard . optional
      * @return RecordInterface
      * @throws \Exception
      */
-    public function record(string $name, $id = false, ?string $shard = null): RecordInterface
+    public function record(string $name, ?int $id = null, ?string $shard = null): RecordInterface
     {
         $config = $this->config($name);
 
         if (!$config->isDistributed()) {
             $recordClass = $this->config->get('record');
             return new $recordClass($this, $config, $id);
-        } else {
-            if ($config->isShardRequired() && !empty($id) && empty($shard)) {
-                throw new \InvalidArgumentException('Shard is required for Object ' . $name);
-            }
-            $recordClass = $this->config->get('distributed_record');
-            return new $recordClass($this->distributed(), $this, $config, $id, $shard);
         }
+
+        if ($config->isShardRequired() && $id !== null && empty($shard)) {
+            throw new \InvalidArgumentException('Shard is required for Object ' . $name);
+        }
+        $recordClass = $this->config->get('distributed_record');
+        return new $recordClass($this->distributed(), $this, $config, $id, $shard);
     }
 
 
     /**
      * Factory method of object creation is preferable to use, cf. method  __construct() description
      * @param string $name
-     * @param int|int[]|bool $id , optional default false
-     * @param string|bool $shard . optional
+     * @param int[] $id , optional default false
+     * @param string|null $shard . optional
      * @return RecordInterface[]
      * @throws \Exception
      */
-    public function records(string $name, array $id, $shard = false): array
+    public function records(string $name, array $id, ?string $shard = null): array
     {
         $recordClass = $this->config->get('record');
         $config = $this->config($name);

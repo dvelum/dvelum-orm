@@ -29,6 +29,7 @@ use Dvelum\Config;
 use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record\Config\Translator;
 use Exception;
+use Dvelum\Config\Storage\StorageInterface;
 
 class Manager
 {
@@ -41,10 +42,14 @@ class Manager
     public const ERROR_HAS_LINKS = 7;
 
     private Orm\Orm $orm;
+    private Lang $lanService;
+    private StorageInterface $configStorage;
 
-    public function __construct(Orm\Orm $orm)
+    public function __construct(Orm\Orm $orm, Lang $langService, StorageInterface $configStorage)
     {
         $this->orm = $orm;
+        $this->lanService = $langService;
+        $this->configStorage = $configStorage;
     }
 
     /**
@@ -91,8 +96,8 @@ class Manager
         }
 
         $localisations = $this->getLocalisations();
-        $langWritePath = Lang::storage()->getWrite();
-        $objectsWrite = Config::storage()->getWrite();
+        $langWritePath = $this->lanService->getStorage()->getWrite();
+        $objectsWrite = $this->configStorage->getWrite();
 
         foreach ($localisations as $file) {
             if (file_exists($langWritePath . $file) && !is_writable($langWritePath . $file)) {
@@ -106,7 +111,7 @@ class Manager
             }
         }
 
-        $path = $objectsWrite . Config::storage()->get('orm.php')->get('object_configs') . $name . '.php';
+        $path = $objectsWrite . $this->configStorage->get('orm.php')->get('object_configs') . $name . '.php';
 
         try {
             $cfg = $this->orm->config($name);
@@ -127,7 +132,7 @@ class Manager
         }
 
         $localisationKey = strtolower($name);
-        $langStorage = Lang::storage();
+        $langStorage = $this->lanService->getStorage();
 
         foreach ($localisations as $file) {
             $cfg = $langStorage->get($file);
@@ -145,10 +150,11 @@ class Manager
 
     /**
      * Get list of localization files
+     * @return array<string>
      */
-    public function getLocalisations()
+    public function getLocalisations() : array
     {
-        $paths = Lang::storage()->getPaths();
+        $paths = $this->lanService->getStorage()->getPaths();
         $dirs = [];
 
         foreach ($paths as $path) {
@@ -172,18 +178,18 @@ class Manager
      * Get field config
      * @param string $object
      * @param string $field
-     * @return false|array
+     * @return null|array<string,mixed>
      */
-    public function getFieldConfig($object, $field)
+    public function getFieldConfig(string $object, string $field): ?array
     {
         try {
             $cfg = $this->orm->config($object);
         } catch (\Exception $e) {
-            return false;
+            return null;
         }
 
         if (!$cfg->fieldExists($field)) {
-            return false;
+            return null;
         }
 
         $fieldCfg = $cfg->getFieldConfig($field);
@@ -212,19 +218,19 @@ class Manager
      * Get index config
      * @param string $object
      * @param string $index
-     * @return false|array
+     * @return array<string,mixed>|null
      */
-    public function getIndexConfig($object, $index)
+    public function getIndexConfig(string $object, string $index) : ?array
     {
         try {
             $cfg = $this->orm->config($object);
         } catch (\Exception $e) {
-            return false;
+            return null;
         }
 
         $indexManager = new Orm\Record\Config\IndexManager();
         if (!$indexManager->indexExists($cfg, $index)) {
-            return false;
+            return null;
         }
 
         $data = $cfg->getIndexConfig($index);
@@ -238,7 +244,7 @@ class Manager
      * @param string $fieldName
      * @return int  - 0 - success or error code
      */
-    public function removeField($objectName, $fieldName): int
+    public function removeField(string $objectName, string $fieldName): int
     {
         try {
             $objectCfg = $this->orm->config($objectName);
@@ -269,7 +275,7 @@ class Manager
 
             unset($translation['fields'][$fieldName]);
 
-            $langStorage = Lang::storage();
+            $langStorage = $this->lanService->getStorage();
             $cfg = $langStorage->get($file);
 
             if ($cfg->offsetExists($localisationKey)) {
@@ -297,7 +303,7 @@ class Manager
     public function renameField(Orm\Record\Config $cfg, string $oldName, string $newName): int
     {
         $localisations = $this->getLocalisations();
-        $langWritePath = Lang::storage()->getWrite();
+        $langWritePath = $this->lanService->getStorage()->getWrite();
 
         foreach ($localisations as $file) {
             if (file_exists($langWritePath . $file) && !is_writable($langWritePath . $file)) {
@@ -311,7 +317,7 @@ class Manager
         }
 
         $localisationKey = strtolower($cfg->getName());
-        $langStorage = Lang::storage();
+        $langStorage = $this->lanService->getStorage();
 
         foreach ($localisations as $file) {
             $langCfg = $langStorage->get($file, true, true);
@@ -365,17 +371,18 @@ class Manager
      * @return int 0 on success or error code
      * @throws \Exception
      */
-    public function renameObject($path, $oldName, $newName): int
+    public function renameObject(string $path, string $oldName, string $newName): int
     {
         $objectConfig = $this->orm->config($oldName);
         /*
          * Check fs write permissions for associated objects
          */
-        $assoc = Orm\Record\Expert::getAssociatedStructures($oldName);
+        $expert = new Orm\Record\Expert($this->orm, $this->configStorage, new Orm\Record\Manager($this->configStorage, $this->orm));
+        $assoc = $expert->getAssociatedStructures($oldName);
 
         if (!empty($assoc)) {
             foreach ($assoc as $config) {
-                if (!is_writable(Config::storage()->getPath($path) . strtolower($config['object']) . '.php')) {
+                if (!is_writable($this->configStorage->getPath($path) . strtolower($config['object']) . '.php')) {
                     return self::ERROR_FS_LOCALISATION;
                 }
             }
@@ -384,7 +391,7 @@ class Manager
         /*
          * Check fs write permissions for localisation files
          */
-        $langStorage = Lang::storage();
+        $langStorage = $this->lanService->getStorage();
         $localisations = $this->getLocalisations();
         $langWritePath = $langStorage->getWrite();
 
@@ -426,8 +433,8 @@ class Manager
             }
         }
 
-        $newFileName = Config::storage()->getWrite() . $path . $newName . '.php';
-        $oldFileName = Config::storage()->getPath($path) . $oldName . '.php';
+        $newFileName = $this->configStorage->getWrite() . $path . $newName . '.php';
+        $oldFileName = $this->configStorage->getPath($path) . $oldName . '.php';
 
         if (!@rename($oldFileName, $newFileName)) {
             return self::ERROR_FS;
@@ -477,11 +484,11 @@ class Manager
         $fieldManager = new Orm\Record\Config\FieldManager();
 
         foreach ($distIndexes as $name => $info) {
-            if ($name == $idObjectConfig->getPrimaryKey()) {
+            if ($name === $idObjectConfig->getPrimaryKey()) {
                 continue;
             }
 
-            $cfg = $oConfig->getFieldConfig($name);
+            $cfg = $oConfig->getFieldConfig((string)$name);
             $cfg['system'] = false;
             $cfg['db_isNull'] = true;
 
@@ -502,9 +509,9 @@ class Manager
 
     public function getTranslator(string $locale, string $objectName): Translator
     {
-        $ormConfig = Config::storage()->get('orm.php');
+        $ormConfig = $this->configStorage->get('orm.php');
         $commonFile = $locale . '/objects.php';
         $objectsDir = $locale . '/' . $ormConfig->get('translations_dir');
-        return new Translator($commonFile, $objectsDir);
+        return new Translator($commonFile, $objectsDir, $this->lanService);
     }
 }

@@ -36,14 +36,14 @@ use Dvelum\Cache\CacheInterface;
 class Trigger
 {
     /**
-     * @var Config\ConfigInterface $ormConfig
+     * @var Config\ConfigInterface<string,mixed> $ormConfig
      */
-    protected $ormConfig;
+    protected Config\ConfigInterface $ormConfig;
 
     /**
-     * @var Config\ConfigInterface $appConfig
+     * @var Config\ConfigInterface<string,mixed> $appConfig
      */
-    protected $appConfig;
+    protected Config\ConfigInterface $appConfig;
 
     protected Orm\Orm $orm;
     protected Config\Storage\StorageInterface $storage;
@@ -57,41 +57,45 @@ class Trigger
     }
 
     /**
-     * @var CacheInterface | false
+     * @var CacheInterface | null
      */
-    protected $cache = false;
+    protected ?CacheInterface $cache = null;
 
-    public function setCache(CacheInterface $cache)
+    public function setCache(?CacheInterface $cache) : void
     {
         $this->cache = $cache;
     }
 
-    protected function getItemCacheKey(Orm\RecordInterface $object)
+    protected function getItemCacheKey(Orm\RecordInterface $object) : string
     {
         $objectModel = $this->orm->model($object->getName());
         return $objectModel->getCacheKey(array('item', $object->getId()));
     }
 
-    public function onBeforeAdd(Orm\RecordInterface $object)
+    public function onBeforeAdd(Orm\RecordInterface $object) : void
     {
     }
 
-    public function onBeforeUpdate(Orm\RecordInterface $object)
+    public function onBeforeUpdate(Orm\RecordInterface $object): void
     {
     }
 
-    public function onBeforeDelete(Orm\RecordInterface $object)
+    public function onBeforeDelete(Orm\RecordInterface $object): void
     {
     }
 
-    public function onAfterAdd(Orm\RecordInterface $object)
+    public function onAfterAdd(Orm\RecordInterface $object): void
     {
         $config = $object->getConfig();
         $logObject = $this->ormConfig->get('history_object');
+        /**
+         * @var Historylog $model
+         */
+        $model = $this->orm->model($logObject);
 
         if ($config->hasHistory()) {
             if ($config->hasExtendedHistory()) {
-                $this->orm->model($logObject)->saveState(
+                $model->saveState(
                     Historylog::Create,
                     $object->getName(),
                     $object->getId(),
@@ -101,7 +105,7 @@ class Trigger
                     json_encode($object->getData())
                 );
             } else {
-                $this->orm->model($logObject)->log(
+                $model->log(
                     User::factory()->getId(),
                     $object->getId(),
                     Historylog::Create,
@@ -117,7 +121,7 @@ class Trigger
         $this->cache->remove($this->getItemCacheKey($object));
     }
 
-    public function onAfterUpdate(Orm\RecordInterface $object)
+    public function onAfterUpdate(Orm\RecordInterface $object): void
     {
         if (!$this->cache) {
             return;
@@ -126,14 +130,18 @@ class Trigger
         $this->cache->remove($this->getItemCacheKey($object));
     }
 
-    public function onAfterDelete(Orm\RecordInterface $object)
+    public function onAfterDelete(Orm\RecordInterface $object): void
     {
         $config = $object->getConfig();
         $logObject = $this->ormConfig->get('history_object');
+        /**
+         * @var Historylog $model
+         */
+        $model = $this->orm->model($logObject);
 
         if ($object->getConfig()->hasHistory()) {
             if ($config->hasExtendedHistory()) {
-                $this->orm->model($logObject)->saveState(
+                $model->saveState(
                     Historylog::Delete,
                     $object->getName(),
                     $object->getId(),
@@ -143,7 +151,7 @@ class Trigger
                     null
                 );
             } else {
-                $this->orm->model($logObject)->log(
+                $model->log(
                     User::factory()->getId(),
                     $object->getId(),
                     Historylog::Delete,
@@ -159,11 +167,14 @@ class Trigger
         $this->cache->remove($this->getItemCacheKey($object));
     }
 
-    public function onAfterUpdateBeforeCommit(Orm\RecordInterface $object)
+    public function onAfterUpdateBeforeCommit(Orm\RecordInterface $object): void
     {
         $config = $object->getConfig();
         $logObject = $this->ormConfig->get('history_object');
-
+        /**
+         * @var Historylog $model
+         */
+        $model = $this->orm->model($logObject);
         if ($object->getConfig()->hasHistory() && $object->hasUpdates()) {
             $before = $object->getData(false);
             $after = $object->getUpdates();
@@ -175,7 +186,7 @@ class Trigger
             }
 
             if ($config->hasExtendedHistory()) {
-                $this->orm->model($logObject)->saveState(
+                $model->saveState(
                     Historylog::Update,
                     $object->getName(),
                     $object->getId(),
@@ -185,7 +196,7 @@ class Trigger
                     json_encode($after)
                 );
             } else {
-                $this->orm->model($logObject)->log(
+                $model->log(
                     User::factory()->getId(),
                     $object->getId(),
                     Historylog::Update,
@@ -195,12 +206,16 @@ class Trigger
         }
     }
 
-    public function onAfterPublish(Orm\RecordInterface $object)
+    public function onAfterPublish(Orm\RecordInterface $object): void
     {
         $logObject = $this->ormConfig->get('history_object');
 
         if ($object->getConfig()->hasHistory()) {
-            $this->orm->model($logObject)->log(
+            /**
+             * @var Historylog $model
+             */
+            $model = $this->orm->model($logObject);
+            $model->log(
                 User::factory()->getId(),
                 $object->getId(),
                 Historylog::Publish,
@@ -209,15 +224,18 @@ class Trigger
         }
     }
 
-    public function onAfterUnpublish(Orm\RecordInterface $object)
+    public function onAfterUnpublish(Orm\RecordInterface $object):void
     {
         if (!$object->getConfig()->hasHistory()) {
             return;
         }
 
         $logObject = $this->ormConfig->get('history_object');
-
-        $this->orm->model($logObject)->log(
+        /**
+         * @var Historylog $model
+         */
+        $model = $this->orm->model($logObject);
+        $model->log(
             User::factory()->getId(),
             $object->getId(),
             Historylog::Unpublish,
@@ -225,15 +243,18 @@ class Trigger
         );
     }
 
-    public function onAfterAddVersion(Orm\RecordInterface $object)
+    public function onAfterAddVersion(Orm\RecordInterface $object):void
     {
         if (!$object->getConfig()->hasHistory()) {
             return;
         }
 
         $logObject = $this->ormConfig->get('history_object');
-
-        $this->orm->model($logObject)->log(
+        /**
+         * @var Historylog $model
+         */
+        $model = $this->orm->model($logObject);
+        $model->log(
             User::factory()->getId(),
             $object->getId(),
             Historylog::NewVersion,
@@ -241,11 +262,11 @@ class Trigger
         );
     }
 
-    public function onAfterInsertBeforeCommit(Orm\RecordInterface $object)
+    public function onAfterInsertBeforeCommit(Orm\RecordInterface $object):void
     {
     }
 
-    public function onAfterDeleteBeforeCommit(Orm\RecordInterface $object)
+    public function onAfterDeleteBeforeCommit(Orm\RecordInterface $object):void
     {
     }
 }

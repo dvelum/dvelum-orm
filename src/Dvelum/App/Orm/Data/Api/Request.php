@@ -8,7 +8,7 @@ class Request
 {
     protected string $object;
     /**
-     * @var array<mixed>
+     * @var array{start:int,limit:int,sort:string,dir:string}
      */
     protected array $pagination;
     protected ?string $query;
@@ -23,10 +23,23 @@ class Request
 
     protected string $shard;
 
-    public function __construct(\Dvelum\Request $request)
+    /**
+     * @param Config\ConfigInterface<string,mixed> $config
+     * @param \Dvelum\Request $request
+     * @throws \Exception
+     */
+    public function __construct(Config\ConfigInterface $config, \Dvelum\Request $request)
     {
-        $this->config = Config::storage()->get('api/request.php');
-        $this->pagination = $request->post($this->config->get('paginationParam'), 'array', []);
+        $this->config = $config;
+        $pagination = $request->post($this->config->get('paginationParam'), 'array', []);
+
+        if (isset($pagination['start'])) {
+            $this->pagination['start'] = (int)$pagination['start'];
+        }
+        if (isset($pagination['limit'])) {
+            $this->pagination['limit'] = (int)$pagination['limit'];
+        }
+
         $this->filters = array_merge(
             $request->post($this->config->get('filterParam'), 'array', []),
             $request->extFilters()
@@ -36,11 +49,18 @@ class Request
         $this->shard = $request->post($this->config->get('shardParam'), 'string', '');
     }
 
-    public function getFilters() : array
+    /**
+     * @return array<int|string,mixed>
+     */
+    public function getFilters(): array
     {
         return $this->filters;
     }
 
+    /**
+     * @param string $name
+     * @return mixed|null
+     */
     public function getFilter(string $name)
     {
         if (isset($this->filters[$name])) {
@@ -49,7 +69,11 @@ class Request
         return null;
     }
 
-    public function addFilter(string $key, $val) : void
+    /**
+     * @param string $key
+     * @param mixed $val
+     */
+    public function addFilter(string $key, $val): void
     {
         $this->filters[$key] = $val;
     }
@@ -70,18 +94,18 @@ class Request
      * @param int|null $start
      * @param int|null $limit
      */
-    public function addLimit(?int $start, ?int $limit)
+    public function addLimit(?int $start, ?int $limit): void
     {
         $this->pagination['start'] = $start;
         $this->pagination['limit'] = $limit;
     }
 
-    public function resetFilter($key)
+    public function resetFilter($key): void
     {
         unset($this->filters[$key]);
     }
 
-    public function setObjectName(string $name)
+    public function setObjectName(string $name): void
     {
         $this->object = $name;
     }
@@ -91,21 +115,24 @@ class Request
         return $this->object;
     }
 
-    public function getPagination()
+    /**
+     * @return array{start:int,limit:int,sort:string,dir:string}|null
+     */
+    public function getPagination(): ?array
     {
         return $this->pagination;
     }
 
-    public function getQuery()
+    public function getQuery(): ?string
     {
         return $this->query;
     }
 
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getShard()
+    public function getShard(): string
     {
         return $this->shard;
     }

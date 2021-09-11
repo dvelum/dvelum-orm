@@ -150,7 +150,7 @@ class MySQL extends AbstractAdapter
      * @return bool | string
      * @throws \Exception
      */
-    public function changeTableEngine($engine, $returnQuery = false)
+    public function changeTableEngine(string $engine, $returnQuery = false)
     {
         if ($this->objectConfig->isLocked() || $this->objectConfig->isReadOnly()) {
             $this->errors[] = 'Can not build locked object ' . $this->objectConfig->getName();
@@ -179,7 +179,7 @@ class MySQL extends AbstractAdapter
      *         'name'=>'SomeName',
      *         'action'=>[drop/add/change],
      *         ]
-     * @return array
+     * @return array<int,array{name:string,action:string}>
      */
     public function prepareColumnUpdates(): array
     {
@@ -192,11 +192,8 @@ class MySQL extends AbstractAdapter
             $fields = $this->getExistingColumns();
         }
 
-        /**
-         * @var ColumnObject $column
-         * @var ColumnObject[] $columns
-         */
         $columns = [];
+
         foreach ($fields as $column) {
             $columns[$column->getName()] = $column;
         }
@@ -268,7 +265,7 @@ class MySQL extends AbstractAdapter
             /**
              * @var \Dvelum\Db\Metadata\ColumnObject $column
              */
-            if ($name == $this->objectConfig->getPrimaryKey() && $column->isAutoIncrement(
+            if ($name === $this->objectConfig->getPrimaryKey() && $column->isAutoIncrement(
                 ) !== (bool)$v['db_auto_increment']) {
                 $incrementCmp = true;
             }
@@ -286,8 +283,10 @@ class MySQL extends AbstractAdapter
                     /*
                      * @note ZF3 has inverted scale and precision values
                      */
-                    if ((int)$v['db_scale'] != $column->getNumericPrecision(
-                        ) || (int)$v['db_precision'] != $column->getNumericScale()) {
+                    if (
+                        (int)$v['db_scale'] !== $column->getNumericPrecision() ||
+                        (int)$v['db_precision'] !== $column->getNumericScale()
+                    ) {
                         $lenCmp = true;
                     }
                 } elseif (in_array(
@@ -302,7 +301,7 @@ class MySQL extends AbstractAdapter
                     // $lenCmp = (int) Orm\Record\Field\Property::$numberLength[$v['db_type']] != (int) $column->getNumericPrecision();
                 } else {
                     if (isset($v['db_len'])) {
-                        if ((int)$v['db_len'] != (int)$column->getCharacterMaximumLength()) {
+                        if ((int)$v['db_len'] !== (int)$column->getCharacterMaximumLength()) {
                             $lenCmp = true;
                         }
                     }
@@ -335,11 +334,11 @@ class MySQL extends AbstractAdapter
                 }
             }
 
-            if (!((boolean)$v['db_isNull']) && !in_array($v['db_type'], BuilderFactory::$dateTypes, true) && !in_array(
-                    $v['db_type'],
-                    BuilderFactory::$textTypes,
-                    true
-                )) {
+            if (
+                    !((bool)$v['db_isNull']) &&
+                    !in_array($v['db_type'], BuilderFactory::$dateTypes, true) &&
+                    !in_array($v['db_type'], BuilderFactory::$textTypes, true)
+            ) {
                 $columnDefault = $column->getColumnDefault();
                 // Zend Send '' as empty default for strings
                 if (is_string($columnDefault)) {
@@ -349,18 +348,21 @@ class MySQL extends AbstractAdapter
                     $defaultCmp = true;
                 }
                 if (isset($v['db_default'])) {
-                    if ((is_null($columnDefault) && $v['db_default'] !== false) || (!is_null(
-                                $columnDefault
-                            ) && $v['db_default'] === false)) {
+                    if (
+                        (is_null($columnDefault) && $v['db_default'] !== false) ||
+                        (!is_null($columnDefault) && $v['db_default'] === false)
+                    ) {
                         $defaultCmp = true;
                     } else {
-                        $defaultCmp = (string)$v['db_default'] != (string)$columnDefault;
+                        $defaultCmp = (string)$v['db_default'] !== (string)$columnDefault;
                     }
                 }
             }
             // Compare PRIMARY KEY Sequence
-            if ($name == $this->objectConfig->getPrimaryKey() && $column->isAutoIncrement(
-                ) !== (bool)$v['db_auto_increment']) {
+            if (
+                $name === $this->objectConfig->getPrimaryKey() &&
+                $column->isAutoIncrement() !== (bool)$v['db_auto_increment']
+            ) {
                 $incrementCmp = true;
             }
 
@@ -390,7 +392,8 @@ class MySQL extends AbstractAdapter
 
     /**
      * Prepare list of indexes to be updated
-     * @return array (
+     * @return array<int,array{name:string,action:string}>
+     *         (
      *         'name'=>'indexname',
      *         'action'=>[drop/add],
      *         )
@@ -473,7 +476,7 @@ class MySQL extends AbstractAdapter
     /**
      * Prepare list of Foreign Keys to be updated
      * @param bool $dropOnly
-     * @return array
+     * @return array<int,array{name:string,action:string,config:mixed}>
      */
     public function prepareKeysUpdate(bool $dropOnly = false): array
     {
@@ -520,10 +523,10 @@ class MySQL extends AbstractAdapter
     /**
      * Get list of foreign keys for DB Table
      * @param string $dbTable
-     * @return array
+     * @return array<int|string,mixed>
      * @todo refactor into Zend Metadata
      */
-    public function getForeignKeys(string $dbTable)
+    public function getForeignKeys(string $dbTable) : array
     {
         $dbConfig = $this->db->getConfig();
         $sql = 'SELECT * FROM `information_schema`.`TABLE_CONSTRAINTS`
@@ -714,9 +717,8 @@ class MySQL extends AbstractAdapter
                 $this->logSql($sql);
                 if ($buildForeignKeys) {
                     return $this->buildForeignKeys();
-                } else {
-                    return true;
                 }
+                return true;
             } catch (\Exception $e) {
                 $this->errors[] = $e->getMessage() . ' <br><b>SQL:</b> ' . $sql;
                 return false;
@@ -830,9 +832,9 @@ class MySQL extends AbstractAdapter
 
         if (empty($this->errors)) {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -841,7 +843,7 @@ class MySQL extends AbstractAdapter
      * @param bool $create - create keys
      * @return boolean
      */
-    public function buildForeignKeys($remove = true, $create = true): bool
+    public function buildForeignKeys(bool $remove = true, bool $create = true): bool
     {
         if ($this->objectConfig->isLocked() || $this->objectConfig->isReadOnly()) {
             $this->errors[] = 'Can not build locked object ' . $this->objectConfig->getName();
@@ -913,10 +915,10 @@ class MySQL extends AbstractAdapter
      * Rename database table
      *
      * @param string $newName - new table name (without prefix)
-     * @return boolean
+     * @return bool
      * @throws \Exception
      */
-    public function renameTable($newName)
+    public function renameTable(string $newName) : bool
     {
         if ($this->objectConfig->isLocked() || $this->objectConfig->isReadOnly()) {
             $this->errors[] = 'Can not build locked object ' . $this->objectConfig->getName();

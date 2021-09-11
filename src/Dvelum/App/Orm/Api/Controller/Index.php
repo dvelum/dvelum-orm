@@ -18,6 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api\Controller;
@@ -28,7 +29,7 @@ use Dvelum\Orm;
 
 class Index extends Controller
 {
-    public function indexAction()
+    public function indexAction() : void
     {
     }
 
@@ -36,7 +37,7 @@ class Index extends Controller
      * Save Object indexes
      * @todo validate index columns, check if they exists in config
      */
-    public function saveAction()
+    public function saveAction() : void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -103,7 +104,7 @@ class Index extends Controller
     /**
      * Delete object index
      */
-    public function deleteAction()
+    public function deleteAction() : void
     {
         if (!$this->checkCanDelete()) {
             return;
@@ -137,7 +138,7 @@ class Index extends Controller
     /**
      * Load index config action
      */
-    public function loadAction()
+    public function loadAction() : void
     {
         $object = $this->request->post('object', 'string', false);
         $index = $this->request->post('index', 'string', false);

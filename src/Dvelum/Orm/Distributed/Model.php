@@ -60,7 +60,7 @@ class Model extends Orm\Model
      * Get record by id
      * @param int $id
      * @param array<int|string,string> $fields — optional — the list of fields to retrieve
-     * @return array<string,mixed>
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
     public function getItem(int $id, array $fields = ['*']): array

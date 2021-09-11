@@ -1,8 +1,5 @@
 <?php
 
-/** @noinspection PhpMissingParentCallCommonInspection */
-
-/** @noinspection PhpMissingParentCallCommonInspection */
 /**
  *  DVelum project https://github.com/dvelum/dvelum
  *  Copyright (C) 2011-2017  Kirill Yegorov
@@ -20,6 +17,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api\Controller;
@@ -41,7 +39,7 @@ class Connections extends Controller
     /**
      * @var \Dvelum\App\Orm\Api\Connections $connections
      */
-    protected $connections;
+    protected \Dvelum\App\Orm\Api\Connections $connections;
 
     public function __construct(
         Request $request,
@@ -51,7 +49,11 @@ class Connections extends Controller
         bool $canDelete = true
     ) {
         parent::__construct($request, $response, $container, $canEdit, $canDelete);
-        $this->connections = new \Dvelum\App\Orm\Api\Connections($container->get('config.main')->get('db_configs'));
+        $this->connections = new \Dvelum\App\Orm\Api\Connections(
+            $container->get('config.main')->get('db_configs'),
+            $this->configStorage,
+            $this->lang
+        );
     }
 
     public function indexAction(): void

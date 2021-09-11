@@ -28,10 +28,9 @@ use Dvelum\Designer\Manager;
 use Dvelum\Lang;
 use Dvelum\Request;
 use Dvelum\Response\Response;
-use Dvelum\Config;
 use Dvelum\App;
 use Dvelum\Orm;
-use Dvelum\Service;
+
 use Dvelum\Utils;
 use Psr\Container\ContainerInterface;
 use Dvelum\Orm\RecordInterface;
@@ -40,7 +39,8 @@ use Dvelum\Orm\Record;
 use Dvelum\App\Orm\Data;
 use Dvelum\App\Dictionary;
 use Dvelum\App\Controller\EventManager;
-
+use Dvelum\App\Orm\Data\Api\Request as ApiRequest;
+use Dvelum\App\Orm\Data\Api;
 use Exception;
 
 abstract class Controller
@@ -162,7 +162,7 @@ abstract class Controller
     }
 
 
-    protected function getApi(Data\Api\Request $request): Data\Api
+    protected function getApi(\Dvelum\App\Orm\Data\Api\Request $request): Data\Api
     {
         $api = new App\Orm\Data\Api($request, $this->orm);
         if (!empty($this->listFields)) {
@@ -171,9 +171,9 @@ abstract class Controller
         return $api;
     }
 
-    protected function getApiRequest(Request $request): Data\Api\Request
+    protected function getApiRequest(Request $request): ApiRequest
     {
-        $request = new Data\Api\Request($request);
+        $request = new ApiRequest($this->configStorage->get('api/request.php'), $request);
         $request->setObjectName($this->getObjectName());
         return $request;
     }

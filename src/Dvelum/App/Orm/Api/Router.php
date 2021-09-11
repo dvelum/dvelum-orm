@@ -88,7 +88,7 @@ class Router implements RouterInterface
         return $response;
     }
 
-    public function indexAction()
+    public function indexAction(): void
     {
         $this->response->error($this->lang->get('WRONG_REQUEST'));
     }
@@ -96,7 +96,7 @@ class Router implements RouterInterface
     /**
      * Get DB Objects list
      */
-    public function listAction()
+    public function listAction(): void
     {
         /**
          * @var Orm\Stat $stat
@@ -118,7 +118,7 @@ class Router implements RouterInterface
     /**
      * Get Data info
      */
-    public function listDetailsAction()
+    public function listDetailsAction(): void
     {
         /**
          * @var Orm\Orm $orm
@@ -159,7 +159,7 @@ class Router implements RouterInterface
     /**
      * Build all objects action
      */
-    public function buildAllAction()
+    public function buildAllAction(): void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -255,12 +255,11 @@ class Router implements RouterInterface
             }
         }
 
-
         if ($flag) {
             $this->response->error($this->lang->get('CANT_EXEC'));
-        } else {
-            $this->response->success();
+            return;
         }
+        $this->response->success();
     }
 
     /**
@@ -280,7 +279,7 @@ class Router implements RouterInterface
     /**
      * Get list of database connections
      */
-    public function connectionsListAction()
+    public function connectionsListAction(): void
     {
         $manager = new Connections($this->container->get('config.main')->get('db_configs'));
         $list = $manager->getConnections(0);
@@ -296,7 +295,7 @@ class Router implements RouterInterface
     /*
      * Get connection types (prod , dev , test ... etc)
     */
-    public function connectionTypesAction()
+    public function connectionTypesAction(): void
     {
         $config = $this->container->get('config.main');
         $data = [];
@@ -309,14 +308,14 @@ class Router implements RouterInterface
     /*
      * Get list of field validators
      */
-    public function listValidatorsAction()
+    public function listValidatorsAction(): void
     {
         $validators = [];
         $files = File::scanFiles('./extensions/dvelum-core/src/Dvelum/Validator', ['.php'], false, File::FILES_ONLY);
 
         foreach ($files as $v) {
             $name = substr(basename($v), 0, -4);
-            if ($name != 'ValidatorInterface') {
+            if ($name !== 'ValidatorInterface') {
                 $validators[] = ['id' => '\\Dvelum\\Validator\\' . $name, 'title' => $name];
             }
         }
@@ -327,7 +326,7 @@ class Router implements RouterInterface
     /**
      * Dev. method. Compile JavaScript sources
      */
-    public function compileAction()
+    public function compileAction(): void
     {
         $config = $this->container->get('config.main');
 
@@ -415,11 +414,11 @@ class Router implements RouterInterface
         $controller->setRouter($this);
 
         if ($response->isSent()) {
-            return $response->getPsrResponse();
+            return $response;
         }
 
         if ($controller instanceof RouterInterface) {
-            $controller->route($request->getPsrRequest(), $response->getPsrResponse());
+            $controller->route($request, $response);
         } else {
             if (empty($action)) {
                 $action = 'index';
@@ -431,7 +430,7 @@ class Router implements RouterInterface
                     $response->error(
                         $this->container->get(Lang::class)->lang()->get('WRONG_REQUEST') . ' ' . $request->getUri()
                     );
-                    return $response->getPsrResponse();
+                    return $response;
                 }
             }
             if ($action !== 'index') {
@@ -446,5 +445,4 @@ class Router implements RouterInterface
         }
         return $response;
     }
-
 }

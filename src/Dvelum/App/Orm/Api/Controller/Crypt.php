@@ -18,6 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api\Controller;
@@ -30,8 +31,8 @@ use Dvelum\Store\Factory;
 
 class Crypt extends Controller
 {
-    protected $encryptContainerPrefix = 'encrypt_';
-    protected $decryptContainerPrefix = 'decrypt_';
+    protected string $encryptContainerPrefix = 'encrypt_';
+    protected string $decryptContainerPrefix = 'decrypt_';
 
     public function getModule(): string
     {
@@ -95,7 +96,7 @@ class Crypt extends Controller
     /**
      * Encrypt object data (background)
      */
-    public function encryptAction()
+    public function encryptAction() : void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -145,7 +146,7 @@ class Crypt extends Controller
     /**
      * Check background process status
      */
-    public function taskStatAction()
+    public function taskStatAction() : void
     {
         $object = $this->request->post('object', 'string', false);
         $type = $this->request->post('type', 'string', false);

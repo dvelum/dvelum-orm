@@ -17,6 +17,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api\Controller;
@@ -29,7 +30,7 @@ use Dvelum\File;
 
 class Log extends Controller
 {
-    public function indexAction()
+    public function indexAction() : void
     {
     }
 
@@ -37,7 +38,7 @@ class Log extends Controller
      * Get DB_Object_Builder log contents
      * for current development version
      */
-    public function getlogAction()
+    public function getlogAction() : void
     {
         $file = $this->request->post('file', Filter::FILTER_STRING, false);
 
@@ -53,7 +54,7 @@ class Log extends Controller
         $this->response->json(['success' => true, 'data' => $data]);
     }
 
-    public function getLogFilesAction()
+    public function getLogFilesAction() : void
     {
         $ormConfig = Config::storage()->get('orm.php');
         $logPath = $ormConfig->get('log_path');

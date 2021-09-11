@@ -530,10 +530,10 @@ class Store
     /**
      * Insert Db object
      * @param Orm\RecordInterface $object
-     * @param boolean $transaction - optional , use transaction if available
-     * @return int | false -  inserted id
+     * @param bool $transaction - optional , use transaction if available
+     * @return bool
      */
-    public function insert(Orm\RecordInterface $object, $transaction = true)
+    public function insert(Orm\RecordInterface $object, bool $transaction = true) : bool
     {
         if ($object->getConfig()->isReadOnly()) {
             if ($this->log) {
@@ -577,7 +577,7 @@ class Store
             $this->eventManager->fireEvent(Event\Manager::AFTER_ADD, $object);
         }
 
-        return $object->getId();
+        return true;
     }
 
     /**

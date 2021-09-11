@@ -33,23 +33,20 @@ use Dvelum\Orm\RecordInterface;
 class VirtualBucket extends UserKeyNoID
 {
     /**
-     * @var ConfigInterface $config
+     * @var ConfigInterface<string,mixed> $config
      */
-    protected $config;
-    protected $shardField;
-    protected $options;
-    protected $bucketField;
-    protected $exceptIndexPrimaryKey = false;
+    protected ConfigInterface $config;
+    protected string $shardField;
+    /**
+     * @var array<string,mixed>
+     */
+    protected array $options;
+    protected string $bucketField;
+    protected bool $exceptIndexPrimaryKey = false;
     protected Orm $orm;
 
-    /**
-     * @var MapperInterface $numericMapper
-     */
-    protected $numericMapper = null;
-    /**
-     * @var MapperInterface $stringMapper
-     */
-    protected $stringMapper = null;
+    protected ?MapperInterface $numericMapper = null;
+    protected ?MapperInterface $stringMapper = null;
 
     public function __construct(Orm $orm, ConfigInterface $config)
     {
@@ -86,7 +83,7 @@ class VirtualBucket extends UserKeyNoID
     /**
      * Reserve
      * @param RecordInterface $object
-     * @param array $keyData
+     * @param array<int|string,mixed> $keyData
      * @return Reserved|null
      */
     public function reserveKey(RecordInterface $object, array $keyData): ?Reserved
@@ -102,7 +99,7 @@ class VirtualBucket extends UserKeyNoID
 
         $bucket = null;
 
-        if ($keyField == $config->getPrimaryKey()) {
+        if ($keyField === $config->getPrimaryKey()) {
             $value = $object->getInsertId();
         } else {
             $value = $object->get($keyField);

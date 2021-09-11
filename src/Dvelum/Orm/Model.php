@@ -250,7 +250,7 @@ class Model
 
     /**
      * Get storage adapter
-     * @return Orm\Distributed\Record\Store
+     * @return Orm\Record\Store
      */
     public function getStore(): Orm\Record\Store
     {
@@ -271,7 +271,7 @@ class Model
 
     /**
      * Get key for cache
-     * @param array $params - parameters can not contain arrays, objects and resources
+     * @param array<mixed> $params - parameters can not contain arrays, objects and resources
      * @return string
      */
     public function getCacheKey(array $params): string
@@ -291,11 +291,11 @@ class Model
     /**
      * Get record by id
      * @param int $id
-     * @param array<int|string,string>|string $fields — optional — the list of fields to retrieve
-     * @return array<int|string,string>
+     * @param array<int|string,string> $fields — optional — the list of fields to retrieve
+     * @return array<int|string,mixed>
      * @throws \Exception
      */
-    public function getItem(int $id, $fields = ['*']): array
+    public function getItem(int $id, array $fields = ['*']): array
     {
         $primaryKey = $this->getPrimaryKey();
         $query = $this->query()->filters([$primaryKey => $id])->fields($fields);
@@ -315,7 +315,7 @@ class Model
      * @return array<int|string,string>
      * @throws \Exception
      */
-    public function getCachedItem(int $id, $lifetime = false)
+    public function getCachedItem(int $id, $lifetime = false) : array
     {
         if (!$this->cache) {
             return $this->getItem($id);

@@ -33,11 +33,11 @@ use \Exception;
 class UserKeyNoID implements GeneratorInterface
 {
     /**
-     * @var ConfigInterface $config
+     * @var ConfigInterface<string,mixed> $config
      */
-    protected $config;
-    protected $shardField;
-    protected $exceptIndexPrimaryKey = true;
+    protected ConfigInterface $config;
+    protected string $shardField;
+    protected bool $exceptIndexPrimaryKey = true;
     protected Orm $orm;
 
     public function __construct(Orm $orm, ConfigInterface $config)

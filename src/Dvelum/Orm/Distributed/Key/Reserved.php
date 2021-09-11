@@ -24,57 +24,36 @@ namespace Dvelum\Orm\Distributed\Key;
 
 class Reserved
 {
-    protected $shard = null;
-    protected $id = null;
-    /**
-     * @var null
-     */
-    protected $bucket = null;
+    protected ?string $shard = null;
+    protected ?int $id = null;
+    protected ?int $bucket = null;
 
-    /**
-     * @return mixed
-     */
-    public function getBucket()
+    public function getBucket(): ?int
     {
         return $this->bucket;
     }
 
-    /**
-     * @param mixed $bucket
-     */
-    public function setBucket($bucket): void
+    public function setBucket(int $bucket): void
     {
         $this->bucket = $bucket;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getShard()
+    public function getShard(): ?string
     {
         return $this->shard;
     }
 
-    /**
-     * @param mixed $shard
-     */
-    public function setShard($shard)
+    public function setShard(string $shard): void
     {
         $this->shard = $shard;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * @param mixed $id
-     */
-    public function setId($id)
+    public function setId(int $id): void
     {
         $this->id = $id;
     }

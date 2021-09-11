@@ -33,10 +33,10 @@ use \Exception;
 class UniqueID implements GeneratorInterface
 {
     /**
-     * @var ConfigInterface $config
+     * @var ConfigInterface<string,mixed> $config
      */
-    protected $config;
-    protected $shardField;
+    protected ConfigInterface $config;
+    protected string $shardField;
     protected Orm $orm;
 
     public function __construct(Orm $orm, ConfigInterface $config)
@@ -94,7 +94,7 @@ class UniqueID implements GeneratorInterface
         foreach ($fieldList as $field) {
             $fieldName = $field->getName();
 
-            if ($fieldName == $primary || $fieldName == $this->shardField) {
+            if ($fieldName === $primary || $fieldName === $this->shardField) {
                 continue;
             }
 
@@ -152,8 +152,8 @@ class UniqueID implements GeneratorInterface
     /**
      * Get shards for list of objects
      * @param string $objectName
-     * @param array $distributedKeys
-     * @return array  [shard_id=>[key1,key2,key3], shard_id2=>[...]]
+     * @param array<string> $distributedKeys
+     * @return array<string,array<int,string>>  [shard_id=>[key1,key2,key3], shard_id2=>[...]]
      * @throws Exception
      */
     public function findObjectsShards(string $objectName, array $distributedKeys): array

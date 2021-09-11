@@ -18,6 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api\Controller;
@@ -30,14 +31,14 @@ use Dvelum\Orm\Exception;
 class Field extends Controller
 {
 
-    public function indexAction()
+    public function indexAction() : void
     {
     }
 
     /**
      * Save field configuration options
      */
-    public function saveAction()
+    public function saveAction() : void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -293,7 +294,7 @@ class Field extends Controller
     /**
      * Delete object field
      */
-    public function deleteAction()
+    public function deleteAction() : void
     {
         if (!$this->checkCanDelete()) {
             return;
@@ -332,7 +333,7 @@ class Field extends Controller
     /**
      * Load Field config
      */
-    public function loadAction()
+    public function loadAction() : void
     {
         $object = $this->request->post('object', 'string', false);
         $field = $this->request->post('field', 'string', false);

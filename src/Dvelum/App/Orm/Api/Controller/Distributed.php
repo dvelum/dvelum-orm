@@ -18,6 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api\Controller;
@@ -32,14 +33,14 @@ use Dvelum\Orm\Record;
 
 class Distributed extends Controller
 {
-    public function indexAction()
+    public function indexAction() : void
     {
     }
 
     /**
      * Add distributed index
      */
-    public function addDistributedIndexAction()
+    public function addDistributedIndexAction() : void
     {
         $object = $this->request->post('object', 'string', false);
         $field = $this->request->post('field', 'string', false);
@@ -85,7 +86,7 @@ class Distributed extends Controller
     /**
      * Get distributed indexes
      */
-    public function distIndexesAction()
+    public function distIndexesAction() : void
     {
         $object = $this->request->post('object', 'string', false);
 
@@ -114,7 +115,7 @@ class Distributed extends Controller
     /**
      * Delete distributed index
      */
-    public function deleteDistributedIndexAction()
+    public function deleteDistributedIndexAction() : void
     {
         if (!$this->checkCanDelete()) {
             return;
@@ -150,7 +151,7 @@ class Distributed extends Controller
      * Sharding types for combobox
      * @throws Exception
      */
-    public function listShardingTypesAction()
+    public function listShardingTypesAction() : void
     {
         $config = $this->configStorage->get('sharding.php')->get('sharding_types');
         $data = [];
@@ -167,7 +168,7 @@ class Distributed extends Controller
      * Sharding types for combobox
      * @throws Exception
      */
-    public function listShardingFieldsAction()
+    public function listShardingFieldsAction() : void
     {
         $object = $this->request->post('object', 'string', '');
 
@@ -211,7 +212,7 @@ class Distributed extends Controller
     /**
      * Get list of fields that can be added as distributed index
      */
-    public function acceptedDistributedFieldsAction()
+    public function acceptedDistributedFieldsAction() : void
     {
         $object = $this->request->post('object', 'string', false);
 

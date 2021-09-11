@@ -57,13 +57,13 @@ class Historylog extends Model
     /**
      * Log action. Fill history table
      * @param int|null $userId
-     * @param int $recordId
+     * @param int|null $recordId
      * @param int $type
      * @param string $object
      * @return bool
      * @throws Exception
      */
-    public function log(?int $userId, $recordId, $type, $object): bool
+    public function log(?int $userId, int $recordId, ?int $type, string $object): bool
     {
         if (!is_int($type)) {
             throw new Exception('History::log Invalid type');
@@ -125,15 +125,22 @@ class Historylog extends Model
      * Save object state
      * @param int $operation
      * @param string $objectName
-     * @param int $objectId
-     * @param int $userId
+     * @param int|null $objectId
+     * @param int|null $userId
      * @param string $date
      * @param string $before
      * @param string $after
-     * @return int | false
+     * @return bool
      */
-    public function saveState($operation, $objectName, $objectId, $userId, $date, $before = null, $after = null)
-    {
+    public function saveState(
+        int $operation,
+        string $objectName,
+        ?int $objectId,
+        ?int $userId,
+        string $date,
+        string $before = null,
+        string $after = null
+    ): bool {
         // Check object type
         if (!$this->orm->configExists($objectName)) {
             $this->logError('Invalid object name "' . $objectName . '"');
@@ -142,22 +149,23 @@ class Historylog extends Model
 
         try {
             $o = $this->orm->record('Historylog');
-            $o->setValues(array(
-                              'type' => $operation,
-                              'object' => $objectName,
-                              'record_id' => $objectId,
-                              'user_id' => $userId,
-                              'date' => $date,
-                              'before' => $before,
-                              'after' => $after
-                          ));
+            $o->setValues(
+                array(
+                    'type' => $operation,
+                    'object' => $objectName,
+                    'record_id' => $objectId,
+                    'user_id' => $userId,
+                    'date' => $date,
+                    'before' => $before,
+                    'after' => $after
+                )
+            );
 
-            $id = $o->save(false);
-            if (!$id) {
+            $success = $o->save(false);
+            if (!$success) {
                 throw new Exception('Cannot save object state ' . $objectName . '::' . $objectId);
             }
-
-            return $id;
+            return true;
         } catch (Exception $e) {
             $this->logError($e->getMessage());
             return false;

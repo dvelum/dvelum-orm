@@ -173,11 +173,9 @@ class DataModel
 
         try {
             if (!$record->getId()) {
-                $id = $store->insert($record, $useTransaction);
-                if (empty($id)) {
+                if (!$store->insert($record, $useTransaction)) {
                     return false;
                 }
-                $record->setId($id);
             } else {
                 if (!$store->update($record, $useTransaction)) {
                     return false;

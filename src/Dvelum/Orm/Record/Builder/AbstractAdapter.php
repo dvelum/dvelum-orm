@@ -94,15 +94,15 @@ abstract class AbstractAdapter implements BuilderInterface
     protected Dictionary $lang;
 
     /**
-     * @return array<int,array>
+     * @return array<int,array{name:string,action:string}>
      */
     abstract public function prepareColumnUpdates() : array;
     /**
-     * @return array<int,array>
+     * @return array<int,array{name:string,action:string}>
      */
     abstract public function prepareIndexUpdates(): array;
     /**
-     * @return array<int,array>
+     * @return array<int,array{name:string,action:string,config:mixed}>
      */
     abstract public function prepareKeysUpdate(): array;
 

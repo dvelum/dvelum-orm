@@ -17,6 +17,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api\Controller;
@@ -27,12 +28,12 @@ use Dvelum\Orm;
 
 class Uml extends Controller
 {
-    protected $mapConfig = 'umlMap.php';
+    protected string $mapConfig = 'umlMap.php';
 
     /**
      * Get data for UML diagram
      */
-    public function loadMapAction()
+    public function loadMapAction() : void
     {
         $ormConfig = $this->configStorage->get('orm.php');
         $config = $this->configStorage->get($ormConfig->get('uml_map_data'), true, false);
@@ -138,7 +139,7 @@ class Uml extends Controller
     /**
      * Save object coordinates
      */
-    public function saveMapAction()
+    public function saveMapAction() : void
     {
         if (!$this->checkCanEdit()) {
             return;

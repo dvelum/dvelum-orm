@@ -44,9 +44,9 @@ class Record implements RecordInterface
      */
     protected $config;
     /**
-     * @var false|int
+     * @var null|int
      */
-    protected $id;
+    protected ?int $id;
     protected string $primaryKey;
     /**
      * @var array<string,mixed>
@@ -57,7 +57,7 @@ class Record implements RecordInterface
      */
     protected array $updates = [];
     /**
-     * @var array<string,string>
+     * @var array<int,string>
      */
     protected array $errors = [];
 
@@ -74,9 +74,9 @@ class Record implements RecordInterface
 
     /**
      * Loaded version of VC object
-     * @var integer
+     * @var int
      */
-    protected $version = 0;
+    protected int $version = 0;
 
     /**
      * @var DataModel|null
@@ -94,10 +94,10 @@ class Record implements RecordInterface
      * Using this method is highly undesirable,
      * the $orm->record($name, $id) is more advisable to use
      * @param Config $config
-     * @param bool|int $id - optional
+     * @param null|int $id - optional
      * @throws Exception | \Exception
      */
-    public function __construct(Orm\Orm $orm, Config $config, $id = false)
+    public function __construct(Orm\Orm $orm, Config $config, ?int $id = null)
     {
         $this->config = $config;
         $this->name = $config->getName();
@@ -129,6 +129,9 @@ class Record implements RecordInterface
     protected function loadData(): void
     {
         $dataModel = $this->getDataModel();
+        /**
+         * @var array<string,mixed> $data
+         */
         $data = $dataModel->load($this);
         $this->setRawData($data);
     }
@@ -175,7 +178,7 @@ class Record implements RecordInterface
 
     /**
      * Get object fields
-     * @return array<string>
+     * @return array<string|int>
      */
     public function getFields(): array
     {
@@ -185,7 +188,7 @@ class Record implements RecordInterface
     /**
      * Get the object data, returns the associative array ‘field name’
      * @param bool $withUpdates , optional default true
-     * @return array
+     * @return array<string,mixed>
      */
     public function getData(bool $withUpdates = true): array
     {
@@ -212,9 +215,9 @@ class Record implements RecordInterface
 
     /**
      * Get object identifier
-     * @return int|bool
+     * @return int|null
      */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -253,8 +256,7 @@ class Record implements RecordInterface
      * @param int $id
      * @return void
      */
-    public function setId(int $id): void
-    {
+    public function setId(int $id): void {
         $this->id = $id;
     }
 
@@ -303,7 +305,7 @@ class Record implements RecordInterface
     /**
      * Check if the listed objects exist
      * @param string $name
-     * @param integer|array $ids
+     * @param int|array $ids
      * @return bool
      * @throws \Exception
      * @deprecated
@@ -343,7 +345,7 @@ class Record implements RecordInterface
 
     /**
      * Set the object properties using the associative array of fields and values
-     * @param array<int|string,mixed> $values
+     * @param array<string,mixed> $values
      * @return void
      * @throws Exception
      */
@@ -377,10 +379,11 @@ class Record implements RecordInterface
 
         // Validate value using special validator
         // Skip validation if value is null and object field can be null
-        if ($validator && (!$field->isNull() || !is_null($value)) && !call_user_func_array(
-                [$validator, 'validate'],
-                [$value]
-            )) {
+        if (
+            $validator &&
+            (!$field->isNull() || !is_null($value)) &&
+            !call_user_func_array([$validator, 'validate'], [$value])
+        ) {
             throw new Exception('Invalid value for field ' . $name . ' (' . $this->getName() . ')');
         }
 
@@ -392,9 +395,10 @@ class Record implements RecordInterface
         }
 
         if (isset($propConf['db_len']) && $propConf['db_len']) {
-            if ($propConf['db_type'] == 'bit' && (strlen($value) > $propConf['db_len'] || strlen(
-                        $value
-                    ) < $propConf['db_len'])) {
+            if (
+                $propConf['db_type'] === 'bit' &&
+                (strlen($value) > $propConf['db_len'] || strlen($value) < $propConf['db_len'])
+            ) {
                 throw new Exception('Invalid length for bit value [' . $name . ']  (' . $this->getName() . ')');
             }
         }
@@ -420,7 +424,7 @@ class Record implements RecordInterface
      * @return void
      * @throws Exception
      */
-    public function __set($key, $value): void
+    public function __set(string $key, $value): void
     {
         if ($key === $this->primaryKey) {
             $this->setId($value);
@@ -429,7 +433,7 @@ class Record implements RecordInterface
         }
     }
 
-    public function __isset($key): bool
+    public function __isset(string $key): bool
     {
         if ($key === $this->primaryKey) {
             return isset($this->id);
@@ -513,21 +517,20 @@ class Record implements RecordInterface
 
     /**
      * Save changes
-     * @param boolean $useTransaction — using a transaction when changing data is optional.
+     * @param bool $useTransaction — using a transaction when changing data is optional.
      * If data update in your code is carried out within an external transaction
      * set the value to  false,
      * otherwise, the first update will lead to saving the changes
-     * @return int | bool;
+     * @return bool;
      * @throws Exception
      */
-    public function save($useTransaction = true)
+    public function save(bool $useTransaction = true): bool
     {
         $dataModel = $this->getDataModel();
         if ($dataModel->save($this, $useTransaction)) {
-            return $this->getId();
-        } else {
-            return false;
+            return true;
         }
+        return false;
     }
 
     /**
@@ -538,7 +541,7 @@ class Record implements RecordInterface
      * otherwise, the first update will lead to saving the changes
      * @return bool - success flag
      */
-    public function delete($useTransaction = true): bool
+    public function delete(bool $useTransaction = true): bool
     {
         $dataModel = $this->getDataModel();
         return $dataModel->delete($this, $useTransaction);
@@ -546,8 +549,8 @@ class Record implements RecordInterface
 
     /**
      * Serialize Object List properties
-     * @param array $data
-     * @return array
+     * @param array<string,mixed> $data
+     * @return array<string,mixed>
      */
     public function serializeLinks(array $data): array
     {
@@ -562,7 +565,7 @@ class Record implements RecordInterface
     /**
      * Validate unique fields, object field groups
      * Returns array of errors or null .
-     * @return  array | null
+     * @return  array<string,mixed> | null
      * @throws \Exception
      */
     public function validateUniqueValues(): ?array
@@ -592,7 +595,7 @@ class Record implements RecordInterface
                     $uniqGroups[$val][$k] = $value;
                 }
             } else {
-                $v['unique'] = strval($v['unique']);
+                $v['unique'] = (string) $v['unique'];
 
                 if (!isset($uniqGroups[$v['unique']])) {
                     $uniqGroups[$v['unique']] = [];
@@ -648,7 +651,7 @@ class Record implements RecordInterface
 
     /**
      * Get errors
-     * @return array
+     * @return array<string>
      */
     public function getErrors(): array
     {
@@ -661,7 +664,7 @@ class Record implements RecordInterface
      * @param bool $useTransaction — using a transaction when changing data is optional.
      * @return bool
      */
-    public function unpublish($useTransaction = true): bool
+    public function unpublish(bool $useTransaction = true): bool
     {
         $dataModel = $this->getDataModel();
         return $dataModel->unpublish($this, $useTransaction);
@@ -674,12 +677,9 @@ class Record implements RecordInterface
      * @return bool
      * @throws \Exception
      */
-    public function publish($version = null, $useTransaction = true): bool
+    public function publish(?int $version = null, bool $useTransaction = true): bool
     {
         $dataModel = $this->getDataModel();
-        if (empty($version)) {
-            $version = null;
-        }
         return $dataModel->publish($this, $version, $useTransaction);
     }
 
@@ -694,14 +694,14 @@ class Record implements RecordInterface
 
     /**
      * Load version
-     * @param int $vers
+     * @param int $version
      * @return bool
      * @throws \Exception
      */
-    public function loadVersion(int $vers): bool
+    public function loadVersion(int $version): bool
     {
         $dataModel = $this->getDataModel();
-        return $dataModel->loadVersion($this, $vers);
+        return $dataModel->loadVersion($this, $version);
     }
 
     /**
@@ -731,7 +731,7 @@ class Record implements RecordInterface
      * Set insert id for object (Should not exist in the database)
      * @param int $id
      */
-    public function setInsertId(int $id) : void
+    public function setInsertId(int $id): void
     {
         $this->insertId = $id;
     }
@@ -740,7 +740,7 @@ class Record implements RecordInterface
      * Get insert ID
      * @return int|null
      */
-    public function getInsertId() : ?int
+    public function getInsertId(): ?int
     {
         return $this->insertId;
     }
