@@ -1,20 +1,31 @@
 <?php
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2017  Kirill Yegorov
+
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
 
 declare(strict_types=1);
@@ -30,7 +41,6 @@ use Dvelum\Request;
 use Dvelum\Response\Response;
 use Dvelum\App;
 use Dvelum\Orm;
-
 use Dvelum\Utils;
 use Psr\Container\ContainerInterface;
 use Dvelum\Orm\RecordInterface;
@@ -157,7 +167,7 @@ abstract class Controller
     /**
      *  Event listeners can be defined here
      */
-    public function initListeners() : void
+    public function initListeners(): void
     {
     }
 
@@ -182,7 +192,7 @@ abstract class Controller
      * Get list of objects which can be linked
      * @throws Exception
      */
-    public function linkedListAction() : void
+    public function linkedListAction(): void
     {
         if (!$this->eventManager->fireEvent(EventManager::BEFORE_LINKED_LIST, new \stdClass())) {
             $this->response->error($this->eventManager->getError());
@@ -315,7 +325,7 @@ abstract class Controller
     /**
      * @deprecated
      */
-    public function oTitleAction() :void
+    public function oTitleAction(): void
     {
         $this->objectTitleAction();
     }
@@ -324,7 +334,7 @@ abstract class Controller
      * Get object title
      * @throws Exception
      */
-    public function objectTitleAction() : void
+    public function objectTitleAction(): void
     {
         $object = $this->request->post('object', 'string', false);
         $id = $this->request->post('id', 'string', false);
@@ -361,7 +371,7 @@ abstract class Controller
      * @return void
      * @throws \Exception
      */
-    public function listAction() : void
+    public function listAction(): void
     {
         if (!$this->eventManager->fireEvent(EventManager::BEFORE_LIST, new \stdClass())) {
             $this->response->error($this->eventManager->getError());
@@ -388,7 +398,7 @@ abstract class Controller
      * @return array{data:array,count:int}
      * @throws \Exception
      */
-    protected function getList() : array
+    protected function getList(): array
     {
         $api = $this->getApi($this->apiRequest);
 
@@ -418,7 +428,7 @@ abstract class Controller
      * Sends JSON reply in the result and
      * closes the application
      */
-    public function editAction() : void
+    public function editAction(): void
     {
         $id = $this->request->post('id', 'integer', false);
         if (!$id) {
@@ -433,7 +443,7 @@ abstract class Controller
      * Sends JSON reply in the result and
      * closes the application
      */
-    public function createAction() : void
+    public function createAction(): void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -452,7 +462,7 @@ abstract class Controller
      * Sends JSON reply in the result and
      * closes the application
      */
-    public function updateAction() : void
+    public function updateAction(): void
     {
         if (!$this->checkCanEdit()) {
             return;
@@ -470,7 +480,7 @@ abstract class Controller
      * Sends JSON reply in the result and
      * closes the application
      */
-    public function deleteAction() : void
+    public function deleteAction(): void
     {
         if (!$this->checkCanDelete()) {
             return;
@@ -524,7 +534,7 @@ abstract class Controller
      * @param RecordInterface $object
      * @return void
      */
-    public function insertObject(RecordInterface $object) : void
+    public function insertObject(RecordInterface $object): void
     {
         $objectConfig = $object->getConfig();
         $isRevControl = $objectConfig->isRevControl();
@@ -540,7 +550,8 @@ abstract class Controller
                 }
             }
         }
-        $objectModel = Model::factory($object->getName());
+        $orm = $this->container->get(Orm\Orm::class);
+        $objectModel = $orm->model($object->getName());
         $db = $objectModel->getDbConnection();
         $db->beginTransaction();
 
@@ -596,7 +607,7 @@ abstract class Controller
      * closes the application
      * @param RecordInterface $object
      */
-    public function updateObject(RecordInterface $object) :void
+    public function updateObject(RecordInterface $object): void
     {
         $objectConfig = $object->getConfig();
         $isRevControl = $objectConfig->isRevControl();
@@ -612,8 +623,8 @@ abstract class Controller
                 }
             }
         }
-
-        $objectModel = Model::factory($object->getName());
+        $orm = $this->container->get(Orm\Orm::class);
+        $objectModel = $orm->model($object->getName());
         $db = $objectModel->getDbConnection();
         $db->beginTransaction();
 
@@ -641,6 +652,9 @@ abstract class Controller
         }
 
         if ($objectConfig->isShardRequired()) {
+            /**
+             * @var Orm\Distributed\Record $object
+             */
             $result['shard'] = $object->getShard();
         }
 
@@ -708,7 +722,7 @@ abstract class Controller
      * Sends a JSON reply in the result and
      * closes the application
      */
-    public function loadDataAction() : void
+    public function loadDataAction(): void
     {
         if (!$this->eventManager->fireEvent(EventManager::BEFORE_LOAD, new \stdClass())) {
             $this->response->error($this->eventManager->getError());
@@ -748,7 +762,7 @@ abstract class Controller
      * @return array<int|string,mixed>
      * @throws \Exception
      */
-    protected function getData() : array
+    protected function getData(): array
     {
         $id = $this->request->post('id', 'int', false);
         $objectName = $this->getObjectName();
@@ -826,11 +840,11 @@ abstract class Controller
      * @param Orm\Record\Config $cfg
      * @param array<string> $fieldsToShow list of link fields to process ( key - result field, value - object field)
      * object field will be used as result field for numeric keys
-     * @param array<int|string,mixed> & $data rows from  Model::getList result
+     * @param array<int|string,mixed> $data &$data rows from  Model::getList result
      * @param string $pKey - name of Primary Key field in $data
      * @throws \Exception
      */
-    protected function addLinkedInfo(Orm\Record\Config $cfg, array $fieldsToShow, array &$data, $pKey) : void
+    protected function addLinkedInfo(Orm\Record\Config $cfg, array $fieldsToShow, array &$data, $pKey): void
     {
         $fieldsToKeys = [];
         foreach ($fieldsToShow as $key => $val) {
@@ -889,7 +903,9 @@ abstract class Controller
                 }
             }
         }
-
+        /**
+         * @var array<string,array<int>> $listedObjects
+         */
         foreach ($listedObjects as $object => $ids) {
             $listedObjects[$object] = $this->orm->records($object, array_unique($ids));
         }
@@ -924,10 +940,14 @@ abstract class Controller
 
                     foreach ($value as $oId) {
                         if (isset($listedObjects[$config['object']][$oId])) {
+                            /**
+                             * @var RecordInterface $object
+                             */
+                            $object = $listedObjects[$config['object']][$oId];
                             $list[] = $this->linkedInfoObjectRenderer(
                                 $rowObject,
                                 $field,
-                                $listedObjects[$config['object']][$oId]
+                                $object
                             );
                         } else {
                             $list[] = '[' . $oId . '] (' . $this->lang->get('DELETED') . ')';
@@ -952,7 +972,7 @@ abstract class Controller
      * @param string $targetObjectName
      * @return array<int,array{id:int,deleted:bool,title:string,published:bool}>
      */
-    protected function collectLinksData(string $fieldName, RecordInterface $object, string $targetObjectName) : array
+    protected function collectLinksData(string $fieldName, RecordInterface $object, string $targetObjectName): array
     {
         $result = [];
 
@@ -1025,7 +1045,7 @@ abstract class Controller
      * Sends JSON reply in the result
      * and closes the application.
      */
-    public function publishAction() : void
+    public function publishAction(): void
     {
         $objectName = $this->getObjectName();
         $objectConfig = $this->orm->config($objectName);
@@ -1081,7 +1101,7 @@ abstract class Controller
      * Sends JSON reply in the result
      * and closes the application.
      */
-    public function unpublishAction() : void
+    public function unpublishAction(): void
     {
         $objectName = $this->getObjectName();
         $objectConfig = $this->orm->config($objectName);

@@ -1,21 +1,31 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2021  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
 declare(strict_types=1);
 
@@ -256,7 +266,8 @@ class Record implements RecordInterface
      * @param int $id
      * @return void
      */
-    public function setId(int $id): void {
+    public function setId(int $id): void
+    {
         $this->id = $id;
     }
 
@@ -300,47 +311,6 @@ class Record implements RecordInterface
             return null;
         }
         return $link;
-    }
-
-    /**
-     * Check if the listed objects exist
-     * @param string $name
-     * @param int|array $ids
-     * @return bool
-     * @throws \Exception
-     * @deprecated
-     */
-    static public function objectExists(string $name, $ids): bool
-    {
-        if (!Record\Config::configExists($name)) {
-            return false;
-        }
-
-        try {
-            $cfg = Record\Config::factory($name);
-        } catch (Exception $e) {
-            return false;
-        }
-
-        if (!is_array($ids)) {
-            $ids = [$ids];
-        }
-
-        $model = Model::factory($name);
-        $data = $model->getItems($ids);
-
-        if (empty($data)) {
-            return false;
-        }
-
-        $data = Utils::fetchCol($cfg->getPrimaryKey(), $data);
-
-        foreach ($ids as $v) {
-            if (!in_array((int)$v, $data, true)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**
@@ -589,13 +559,13 @@ class Record implements RecordInterface
             if (is_array($v['unique'])) {
                 foreach ($v['unique'] as $val) {
                     if (!isset($uniqGroups[$val])) {
-                        $uniqGroups[$val] = [];
+                        $uniqGroups[(string)$val] = [];
                     }
 
-                    $uniqGroups[$val][$k] = $value;
+                    $uniqGroups[(string)$val][$k] = $value;
                 }
             } else {
-                $v['unique'] = (string) $v['unique'];
+                $v['unique'] = (string)$v['unique'];
 
                 if (!isset($uniqGroups[$v['unique']])) {
                     $uniqGroups[$v['unique']] = [];
@@ -608,8 +578,7 @@ class Record implements RecordInterface
             return null;
         }
 
-        $dataModel = $this->getDataModel();
-        return $dataModel->validateUniqueValues($this, $uniqGroups);
+        return $this->getDataModel()->validateUniqueValues($this, $uniqGroups);
     }
 
     /**
@@ -632,24 +601,6 @@ class Record implements RecordInterface
     }
 
     /**
-     * Factory method of object creation is preferable to use, cf. method  __construct() description
-     * @param string $name
-     * @param int|int[]|bool $id , optional default false
-     * @param string|bool $shard
-     * @return RecordInterface
-     * @throws \Exception
-     * @deprecated
-     */
-    static public function factory(string $name, $id = false, $shard = false): RecordInterface
-    {
-        /**
-         * @var \Dvelum\Orm\Orm $service
-         */
-        return Orm::factory()->record($name, $id, $shard);
-    }
-
-
-    /**
      * Get errors
      * @return array<string>
      */
@@ -657,7 +608,6 @@ class Record implements RecordInterface
     {
         return $this->errors;
     }
-
 
     /**
      * Unpublish VC object

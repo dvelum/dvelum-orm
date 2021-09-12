@@ -1,22 +1,33 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2017  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\Orm\Record\Builder;
@@ -34,9 +45,7 @@ use Dvelum\Db\Metadata\Object\ColumnObject;
 use Laminas\Db\Sql\Ddl;
 use Dvelum\Config\Storage\StorageInterface;
 use Dvelum\Config as Cfg;
-
-use \Exception;
-
+use Exception;
 
 abstract class AbstractAdapter implements BuilderInterface
 {
@@ -96,11 +105,13 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * @return array<int,array{name:string,action:string}>
      */
-    abstract public function prepareColumnUpdates() : array;
+    abstract public function prepareColumnUpdates(): array;
+
     /**
      * @return array<int,array{name:string,action:string}>
      */
     abstract public function prepareIndexUpdates(): array;
+
     /**
      * @return array<int,array{name:string,action:string,config:mixed}>
      */
@@ -139,7 +150,7 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * @param \Dvelum\Db\Adapter $db
      */
-    public function setConnection(\Dvelum\Db\Adapter $db) : void
+    public function setConnection(\Dvelum\Db\Adapter $db): void
     {
         $this->db = $db;
     }
@@ -148,7 +159,7 @@ abstract class AbstractAdapter implements BuilderInterface
      * Get error messages
      * @return array<string>
      */
-    public function getErrors() : array
+    public function getErrors(): array
     {
         return $this->errors;
     }
@@ -286,7 +297,7 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * Check relation objects
      */
-    protected function checkRelations() : bool
+    protected function checkRelations(): bool
     {
         $relation = new Orm\Record\Config\Relation();
         $list = $relation->getManyToMany($this->objectConfig);
@@ -406,42 +417,12 @@ abstract class AbstractAdapter implements BuilderInterface
                 foreach ($fields as $fieldName => $linkType) {
                     $relationObjectName = $this->objectConfig->getRelationsObject($fieldName);
                     if (!is_string($relationObjectName) || !$this->orm->configExists($relationObjectName)) {
-                        $updates[$fieldName] = ['name' => (string) $relationObjectName, 'action' => 'add'];
+                        $updates[$fieldName] = ['name' => (string)$relationObjectName, 'action' => 'add'];
                     }
                 }
             }
         }
         return $updates;
-    }
-
-    /**
-     * Check for broken object links
-     * @return array<string,mixed>|false
-     */
-    public function hasBrokenLinks()
-    {
-        $links = $this->objectConfig->getLinks();
-        $brokenFields = [];
-
-        if (!empty($links)) {
-            $brokenFields = [];
-            foreach ($links as $o => $fieldList) {
-                if (!$this->orm->configExists($o)) {
-                    /**
-                     * @var array<string,mixed> $fieldList
-                     */
-                    foreach ($fieldList as $field => $cfg) {
-                        $brokenFields[$field] = $o;
-                    }
-                }
-            }
-        }
-
-        if (empty($brokenFields)) {
-            return false;
-        }
-
-        return $brokenFields;
     }
 
     /**
@@ -493,9 +474,9 @@ abstract class AbstractAdapter implements BuilderInterface
         $fieldConfig = $this->objectConfig->getField($newName);
 
         $sql = ' ALTER TABLE ' . $this->model->table() . ' CHANGE `' . $oldName . '` ' . $this->getPropertySql(
-                $newName,
-                $fieldConfig
-            );
+            $newName,
+            $fieldConfig
+        );
 
         try {
             $this->db->query($sql);
@@ -623,7 +604,7 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * Create Db_Object`s for relations
      * @throw Exception
-     * @param array<int,array> $list
+     * @param array<string,array<string,string>> $list
      * @return bool
      */
     protected function updateRelations(array $list): bool
@@ -709,7 +690,7 @@ abstract class AbstractAdapter implements BuilderInterface
             }
 
             /**
-             * @var ConfigInterface
+             * @var ConfigInterface<string,mixed> $cfg
              */
             $cfg = Cfg\Factory::create($objectData, $configDir . $newObjectName . '.php');
             /*
@@ -744,7 +725,7 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * @return array<int,array<string,string>>
      */
-    public function getDistributedObjectsUpdatesInfo():array
+    public function getDistributedObjectsUpdatesInfo(): array
     {
         if (!$this->objectConfig->isDistributed()) {
             return [];
@@ -803,7 +784,7 @@ abstract class AbstractAdapter implements BuilderInterface
     /**
      * @return array<string,array<string,string>>
      */
-    public function getObjectsUpdatesInfo() : array
+    public function getObjectsUpdatesInfo(): array
     {
         $updates = [];
         $relation = new Config\Relation();

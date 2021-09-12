@@ -1,5 +1,7 @@
 <?php
 
+namespace Dvelum\Orm;
+
 use PHPUnit\Framework\TestCase;
 use Dvelum\Orm\Model;
 use Dvelum\Orm\Record;
@@ -90,7 +92,7 @@ class ModelTest extends TestCase
         $this->assertEquals($dbCfg['prefix'] . 'user', $userModel->table());
     }
 
-    public function testGetItem() : void
+    public function testGetItem(): void
     {
         $pageModel = $this->getOrm()->model('Page');
         $page = $this->createPage();
@@ -129,8 +131,10 @@ class ModelTest extends TestCase
     {
         $pageModel = $this->getOrm()->model('Page');
         $page = $this->createPage();
-        $items = $pageModel->query()->filters(array('code' => $page->get('code')))->fields(array('id', 'code')
-        )->fetchAll();
+        $items = $pageModel->query()
+            ->filters(array('code' => $page->get('code')))
+            ->fields(array('id', 'code'))
+            ->fetchAll();
         $this->assertEquals($page->get('code'), $items[0]['code']);
     }
 

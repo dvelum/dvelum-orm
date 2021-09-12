@@ -1,48 +1,57 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2019  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\Orm\Record;
 
 use Dvelum\Orm;
 use Dvelum\Security\CryptServiceInterface;
-
 use Dvelum\Config as Cfg;
 use Dvelum\Orm\Exception;
-
 
 /**
  * Orm Record structure config
  */
 class Config
 {
-    const LINK_OBJECT = 'object';
-    const LINK_OBJECT_LIST = 'multi';
-    const LINK_DICTIONARY = 'dictionary';
+    public const LINK_OBJECT = 'object';
+    public const LINK_OBJECT_LIST = 'multi';
+    public const LINK_DICTIONARY = 'dictionary';
 
-    const RELATION_MANY_TO_MANY = 'many_to_many';
+    public const RELATION_MANY_TO_MANY = 'many_to_many';
 
-    const SHARDING_TYPE_GLOABAL_ID = 'global_id';
-    const SHARDING_TYPE_KEY = 'sharding_key';
-    const SHARDING_TYPE_KEY_NO_INDEX = 'sharding_key_no_index';
-    const SHARDING_TYPE_VIRTUAL_BUCKET = 'virtual_bucket';
+    public const SHARDING_TYPE_GLOABAL_ID = 'global_id';
+    public const SHARDING_TYPE_KEY = 'sharding_key';
+    public const SHARDING_TYPE_KEY_NO_INDEX = 'sharding_key_no_index';
+    public const SHARDING_TYPE_VIRTUAL_BUCKET = 'virtual_bucket';
 
     /**
      * @var Cfg\ConfigInterface<int|string,mixed> $settings
@@ -58,13 +67,13 @@ class Config
      * Additional fields config for objects under rev. control
      * @var array<int|string,mixed>
      */
-    static protected $vcFields;
+    protected static $vcFields;
 
     /**
      * List of system fields used for encryption
      * @var array<int|string,mixed>
      */
-    static protected $cryptFields;
+    protected static $cryptFields;
 
     /**
      * List of system fields used for sharding
@@ -459,7 +468,8 @@ class Config
      * Get a list of fields linking to external objects
      * @param array<int|string,mixed> $linkTypes - optional link type filter
      * @param bool $groupByObject - group field by linked object, default true
-     * @return array<string,array>  [objectName=>[field => link_type]] | [field =>["object"=>objectName,"link_type"=>link_type]]
+     * @return array<string,array>
+     *  [objectName=>[field => link_type]] | [field =>["object"=>objectName,"link_type"=>link_type]]
      * @throws \Exception
      */
     public function getLinks(
@@ -537,11 +547,14 @@ class Config
             throw new Exception('Invalid property name');
         }
 
-        if (isset($this->config['fields'][$field]['validator']) && !empty($this->config['fields'][$field]['validator'])) {
+        if (
+            isset($this->config['fields'][$field]['validator']) &&
+            !empty($this->config['fields'][$field]['validator'])
+        ) {
             return $this->config['fields'][$field]['validator'];
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -919,11 +932,11 @@ class Config
      */
     public function isRelationsObject(): bool
     {
-        if ($this->isSystem() && $this->config->offsetExists('parent_object') && !empty(
-            $this->config->get(
-                'parent_object'
-            )
-            )) {
+        if (
+            $this->isSystem() &&
+            $this->config->offsetExists('parent_object') &&
+            !empty($this->config->get('parent_object'))
+        ) {
             return true;
         }
 
@@ -982,7 +995,7 @@ class Config
      * Set crypt service loader
      * @param callable $loader
      */
-    public function setCryptServiceLoader(callable $loader) : void
+    public function setCryptServiceLoader(callable $loader): void
     {
         $this->cryptServiceLoader = $loader;
     }
@@ -1041,7 +1054,7 @@ class Config
             case self::SHARDING_TYPE_VIRTUAL_BUCKET:
             case self::SHARDING_TYPE_KEY_NO_INDEX:
                 return true;
-            default :
+            default:
                 return false;
         }
     }
@@ -1062,7 +1075,7 @@ class Config
     /**
      * Check if object has global distributed index
      */
-    public function hasDistributedIndexRecord() : bool
+    public function hasDistributedIndexRecord(): bool
     {
         if ($this->isDistributed()) {
             $sharding = $this->getShardingType();
@@ -1156,7 +1169,7 @@ class Config
                 $key = $this->getPrimaryKey();
                 break;
             case self::SHARDING_TYPE_KEY:
-            case self::SHARDING_TYPE_KEY_NO_INDEX :
+            case self::SHARDING_TYPE_KEY_NO_INDEX:
                 if ($this->config->offsetExists('sharding_key')) {
                     $key = $this->config->get('sharding_key');
                 }

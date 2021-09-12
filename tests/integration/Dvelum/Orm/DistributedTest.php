@@ -1,7 +1,8 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
+namespace Dvelum\Orm;
 
+use PHPUnit\Framework\TestCase;
 use Dvelum\Orm\Orm;
 
 class DistributedTest extends TestCase
@@ -10,11 +11,12 @@ class DistributedTest extends TestCase
     {
         return \Dvelum\Test\ServiceLocator::factory()->getContainer()->get(Orm::class);
     }
+
     /**
      * @return \Dvelum\Orm\RecordInterface[]
      * @throws \Dvelum\Orm\Exception
      */
-    public function createBucketObjects():array
+    public function createBucketObjects(): array
     {
         $result = [];
         $object = $this->getOrm()->record('test_sharding_bucket');
@@ -43,7 +45,7 @@ class DistributedTest extends TestCase
 
         $this->assertEquals($object->get('bucket'), $object2->get('bucket'));
         $this->assertEquals($object->get('shard'), $object2->get('shard'));
-        $this->assertTrue($object->get('bucket')!==$object3->get('bucket'));
+        $this->assertTrue($object->get('bucket') !== $object3->get('bucket'));
 
         $loaded = $this->getOrm()->record('test_sharding_bucket', $object->getId(), $object->get('shard'));
         $this->assertEquals($loaded->get('value'), $object->get('value'));
@@ -60,9 +62,9 @@ class DistributedTest extends TestCase
         $code = uniqid('', true);
 
         $object->setValues([
-            'code' => $code,
-            'title' => 'Title'
-        ]);
+                               'code' => $code,
+                               'title' => 'Title'
+                           ]);
 
         $this->assertTrue((bool)$object->save());
         /**
@@ -70,11 +72,11 @@ class DistributedTest extends TestCase
          */
         $objectItem = $this->getOrm()->record('test_sharding_item');
         $objectItem->setValues([
-            'test_sharding' => $object->getId(),
-            'value' => time()
-        ]);
+                                   'test_sharding' => $object->getId(),
+                                   'value' => time()
+                               ]);
         $saved = $objectItem->save();
-        $this->assertTrue((bool)$saved );
+        $this->assertTrue((bool)$saved);
         $this->assertEquals($object->get('shard'), $objectItem->get('shard'));
 
         $record2 = $this->getOrm()->record('test_sharding_item', $objectItem->getId(), $objectItem->get('shard'));
@@ -94,14 +96,18 @@ class DistributedTest extends TestCase
     {
         $objects = $this->createBucketObjects();
         $distributed = \Dvelum\Test\ServiceLocator::factory()->getContainer()->get(\Dvelum\Orm\Distributed::class);
-        $shards = $distributed->findObjectsShards($this->getOrm()->config('test_sharding_bucket') , array_keys($objects));
+        $shards = $distributed->findObjectsShards(
+            $this->getOrm()->config('test_sharding_bucket'),
+            array_keys($objects)
+        );
 
-        foreach ($shards as $shard => $objectIdLsi){
-            foreach ($objectIdLsi as $objectId)
+        foreach ($shards as $shard => $objectIdLsi) {
+            foreach ($objectIdLsi as $objectId) {
                 $this->assertEquals($objects[$objectId]->get('shard'), $shard);
+            }
         }
 
-        foreach ($objects as $object){
+        foreach ($objects as $object) {
             $this->assertTrue($object->delete());
         }
     }

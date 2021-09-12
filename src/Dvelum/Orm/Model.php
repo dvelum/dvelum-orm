@@ -1,22 +1,33 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2017  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\Orm;
@@ -315,7 +326,7 @@ class Model
      * @return array<int|string,string>
      * @throws \Exception
      */
-    public function getCachedItem(int $id, $lifetime = false) : array
+    public function getCachedItem(int $id, $lifetime = false): array
     {
         if (!$this->cache) {
             return $this->getItem($id);
@@ -353,7 +364,9 @@ class Model
         if ($data !== false) {
             return $data;
         }
-
+        /**
+         * @var array<string,mixed> $data
+         */
         $data = $this->getItemByField($field, $value);
 
         if (empty($data)) {
@@ -371,11 +384,11 @@ class Model
      * Get Item by field value. Returns first occurrence
      * @param string $fieldName
      * @param mixed $value
-     * @param string|array<int|string,string> $fields
-     * @return array<int|string,mixed>
+     * @param array<int|string,string> $fields
+     * @return array<string,mixed>
      * @throws \Exception
      */
-    public function getItemByField(string $fieldName, $value, $fields = '*'): array
+    public function getItemByField(string $fieldName, $value, array $fields = ['*']): array
     {
         try {
             $sql = $this->db->select()->from($this->table(), $fields);
@@ -390,12 +403,12 @@ class Model
     /**
      * Get a number of entries a list of IDs
      * @param array<int> $ids - list of IDs
-     * @param mixed $fields - optional - the list of fields to retrieve
+     * @param array<int,string> $fields - optional - the list of fields to retrieve
      * @param bool $useCache - optional, defaul false
-     * @return array<int,array<int|string,mixed>>
+     * @return array<string,mixed>
      * @throws \Exception
      */
-    public function getItems(array $ids, $fields = '*', bool $useCache = false): array
+    public function getItems(array $ids, array $fields = ['*'], bool $useCache = false): array
     {
         $data = false;
         $cacheKey = '';
@@ -499,7 +512,7 @@ class Model
      */
     public function checkUnique(int $recordId, string $fieldName, $fieldValue): bool
     {
-        return !(boolean)$this->db->fetchOne(
+        return !(bool)$this->db->fetchOne(
             $this->db->select()
                 ->from($this->table(), ['count' => 'COUNT(*)'])
                 ->where($this->db->quoteIdentifier($this->getPrimaryKey()) . ' != ?', $recordId)
@@ -526,7 +539,7 @@ class Model
         }
     }
 
-    public function refreshTableInfo()
+    public function refreshTableInfo(): void
     {
         $config = $this->getObjectConfig();
         $conName = $this->lightConfig->get('connection');
@@ -583,8 +596,9 @@ class Model
 
     /**
      * Get list of search fields (get from ORM)
+     * @return array<string>
      */
-    public function getSearchFields()
+    public function getSearchFields(): array
     {
         if (is_null($this->searchFields)) {
             $this->searchFields = $this->getObjectConfig()->getSearchFields();
@@ -594,7 +608,7 @@ class Model
 
     /**
      * Set
-     * @param array $fields
+     * @param array<int|string,string> $fields
      * @return void
      */
     public function setSearchFields(array $fields): void
@@ -635,16 +649,5 @@ class Model
     public function insert(): Model\InsertInterface
     {
         return new Orm\Model\Insert($this);
-    }
-
-
-    /**
-     * @param string $name
-     * @return static
-     * @deprecated backward compatibility
-     */
-    public static function factory(string $name): self
-    {
-        return Orm::factory()->model($name);
     }
 }

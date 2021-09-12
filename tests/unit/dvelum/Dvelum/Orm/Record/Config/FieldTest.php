@@ -1,7 +1,8 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
+namespace Dvelum\Orm\Record\Config;
 
+use PHPUnit\Framework\TestCase;
 use Dvelum\Orm;
 
 class FieldTest extends TestCase

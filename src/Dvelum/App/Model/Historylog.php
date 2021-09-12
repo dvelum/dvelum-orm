@@ -1,21 +1,30 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
- *  Copyright (C) 2011-2019  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
  *
  */
 declare(strict_types=1);
@@ -46,13 +55,13 @@ class Historylog extends Model
         7 => 'New Version'
     ];
 
-    public const Delete = 1;
-    public const Create = 2;
-    public const Update = 3;
-    public const Publish = 4;
-    public const Sort = 5;
-    public const Unpublish = 6;
-    public const NewVersion = 7;
+    public const DELETE = 1;
+    public const CREATE = 2;
+    public const UPDATE = 3;
+    public const PUBLISH = 4;
+    public const SORT = 5;
+    public const UNPUBLISH = 6;
+    public const NEW_VERSION = 7;
 
     /**
      * Log action. Fill history table
@@ -63,7 +72,7 @@ class Historylog extends Model
      * @return bool
      * @throws Exception
      */
-    public function log(?int $userId, int $recordId, ?int $type, string $object): bool
+    public function log(?int $userId, ?int $recordId, ?int $type, string $object): bool
     {
         if (!is_int($type)) {
             throw new Exception('History::log Invalid type');
@@ -73,7 +82,7 @@ class Historylog extends Model
         $obj->setValues(
             [
                 'user_id' => (int)$userId,
-                'record_id' => (int)$recordId,
+                'record_id' => $recordId,
                 'type' => (int)$type,
                 'date' => date('Y-m-d H:i:s'),
                 'object' => $object
@@ -88,9 +97,9 @@ class Historylog extends Model
      * @param int $recordId
      * @param int $start - optional
      * @param int $limit - optional
-     * @return array
+     * @return array<int,array<string,mixed>>
      */
-    public function getLog($tableName, $recordId, $start = 0, $limit = 25): array
+    public function getLog(string $tableName, int $recordId, int $start = 0, int $limit = 25): array
     {
         $db = $this->getDbConnection();
         $sql = $db->select()

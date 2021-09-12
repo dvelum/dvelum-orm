@@ -1,14 +1,12 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
+namespace Dvelum\Orm;
 
-use Dvelum\Orm\Orm;
-use Dvelum\Orm\Record;
-use Dvelum\Orm\RecordInterface;
+use Dvelum\Orm\Record\Config\Field;
+use PHPUnit\Framework\TestCase;
 
 class RecordTest extends TestCase
 {
-
     protected function getOrm(): Orm
     {
         return \Dvelum\Test\ServiceLocator::factory()->getContainer()->get(Orm::class);
@@ -51,7 +49,7 @@ class RecordTest extends TestCase
         $this->assertTrue(!empty($fields));
         foreach ($fields as $field) {
             $field = $object->getConfig()->getField($field);
-            $this->assertTrue($field instanceof Dvelum\Orm\Record\Config\Field);
+            $this->assertTrue($field instanceof Field);
         }
     }
 
@@ -158,5 +156,4 @@ class RecordTest extends TestCase
         $object = $this->createObject();
         $this->assertTrue($object->getDataModel() instanceof Record\DataModel);
     }
-
 }

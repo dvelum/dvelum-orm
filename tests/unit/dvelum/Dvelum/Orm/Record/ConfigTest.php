@@ -1,5 +1,7 @@
 <?php
 
+namespace Dvelum\Orm\Record;
+
 use PHPUnit\Framework\TestCase;
 use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record;
@@ -126,7 +128,7 @@ class ConfigTest extends TestCase
     public function testIndexExists(): void
     {
         $cfg = $this->getOrm()->config('User');
-        $indexManager = new Record\Config\IndexManager;
+        $indexManager = new Record\Config\IndexManager();
 
         $this->assertTrue($indexManager->indexExists($cfg, 'PRIMARY'));
         $this->assertFalse($indexManager->indexExists($cfg, 'undefinedindex'));

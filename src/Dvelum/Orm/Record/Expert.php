@@ -1,20 +1,31 @@
 <?php
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2019  Kirill Yegorov
+
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
 
 namespace Dvelum\Orm\Record;
@@ -45,9 +56,9 @@ class Expert
     /**
      * @var array<string,mixed>|null
      */
-    static protected ?array $objectAssociations = null;
+    protected static ?array $objectAssociations = null;
 
-    protected function buildAssociations() : void
+    protected function buildAssociations(): void
     {
         if (self::$objectAssociations !== null) {
             return;
@@ -124,7 +135,7 @@ class Expert
      *  )
      * @return array<mixed>
      */
-     protected function getSingleLinks($objectId, $relatedObject, $links): array
+    protected function getSingleLinks($objectId, $relatedObject, $links): array
     {
         $relatedConfig = $this->orm->config($relatedObject);
         $relatedObjectModel = $this->orm->model($relatedObject);
@@ -173,7 +184,7 @@ class Expert
      * @param mixed $objectId
      * @return array<int|string,mixed>
      */
-     protected function getMultiLinks($objectName, $objectId): array
+    protected function getMultiLinks($objectName, $objectId): array
     {
         $ormConfig = $this->configStorage->get('orm.php');
         $linksModel = $this->orm->model($ormConfig->get('links_object'));
@@ -202,7 +213,7 @@ class Expert
      * @param string $objectName
      * @return array<int,array> - associations
      */
-     public function getAssociatedStructures(string $objectName) : array
+    public function getAssociatedStructures(string $objectName): array
     {
         $objectName = strtolower($objectName);
 

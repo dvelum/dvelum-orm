@@ -3,10 +3,9 @@
 namespace Dvelum\Orm;
 
 use PHPUnit\Framework\TestCase;
-
 use Dvelum\Orm\Orm;
 
-class RecordTest extends TestCase
+class RecordIntegrationTest extends TestCase
 {
 
     protected function getOrm(): Orm
@@ -58,7 +57,7 @@ class RecordTest extends TestCase
         $o = $this->getOrm()->record('page', $page->getId());
         $this->assertEquals($o->get('code'), $page->get('code'));
         $code = date('ymdHis') . 'testSave';
-       $o->set('code', $code);
+        $o->set('code', $code);
         $saved = $o->save();
         $this->assertTrue(!empty($saved));
 
@@ -157,7 +156,7 @@ class RecordTest extends TestCase
         $o->delete();
     }
 
-    public function test_hasRequired()
+    public function testHasRequired()
     {
         $somePage = $this->createPage();
         $page = $this->getOrm()->record('page');

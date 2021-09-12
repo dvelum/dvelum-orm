@@ -1,22 +1,33 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2017  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\Orm\Model;
@@ -43,24 +54,26 @@ class Query
     protected Adapter $db;
 
     protected ?string $search = null;
-    protected ?string  $searchType = self::SEARCH_TYPE_CONTAINS;
+
+    protected string $searchType = self::SEARCH_TYPE_CONTAINS;
     /**
      * @var array<int|string,mixed>|null
      */
     protected ?array $filters = null;
     /**
-     * @var array<int|string,mixed>|null
+     * @var array{sort:string,dir:string,start:int,limit:int}|null
+     * @phpstan-var array<string,int|string>| null
      */
     protected ?array $params = null;
     /**
-     * @var array<int|string,mixed>|null
+     * @var array<int|string,mixed>
      */
-    protected ?array $fields = ['*'];
+    protected array $fields = ['*'];
     /**
      * @var array<int|string,mixed>|null
      */
     protected ?array $joins = null;
-    protected ?string $table = null;
+    protected string $table;
     protected ?string $tableAlias = null;
 
     protected Orm $orm;
@@ -116,10 +129,10 @@ class Query
 
     /**
      * @param string|null $query
-     * @param string|null $queryType
+     * @param string $queryType
      * @return Query
      */
-    public function search(?string $query, ?string $queryType = self::SEARCH_TYPE_CONTAINS): Query
+    public function search(?string $query, string $queryType = self::SEARCH_TYPE_CONTAINS): Query
     {
         $this->search = $query;
         $this->searchType = $queryType;
@@ -127,10 +140,11 @@ class Query
     }
 
     /**
-     * @param array<int|string,mixed>|null $params
+     * @phpstan-param array<string,int|string> $params
+     * @param array{sort:string,dir:string,start:int,limit:int}|null $params
      * @return Query
      */
-    public function params(?array $params): Query
+    public function params(array $params): Query
     {
         $this->params = $params;
         return $this;
@@ -236,7 +250,8 @@ class Query
     /**
      * Apply query params (sorting and pagination)
      * @param Db\Select $sql
-     * @param array{limit:int,start:int,sort:string,dir:string} $params
+     * @param array{sort:string,dir:string,start:int,limit:int} $params
+     * @phpstan-param array<string,int|string> $params
      */
     public function applyParams(Db\Select $sql, array $params): void
     {
@@ -273,15 +288,15 @@ class Query
      * @param Db\Select $sql
      * @param array<array{joinType:string,table:mixed,condition:string,fields:array}> $joins
      */
-    public function applyJoins(Db\Select $sql, array $joins) : void
+    public function applyJoins(Db\Select $sql, array $joins): void
     {
         foreach ($joins as $config) {
             switch ($config['joinType']) {
-                case 'joinLeft' :
+                case 'joinLeft':
                 case 'left':
                     $sql->join($config['table'], $config['condition'], $config['fields'], Db\Select::JOIN_LEFT);
                     break;
-                case 'joinRight' :
+                case 'joinRight':
                 case 'right':
                     $sql->join($config['table'], $config['condition'], $config['fields'], Db\Select::JOIN_RIGHT);
                     break;
@@ -302,7 +317,12 @@ class Query
     {
         $fields = $this->model->getLightConfig()->get('fields');
         foreach ($filters as $field => $val) {
-            if ($val === false && isset($fields[$field]) && isset($fields[$field]['db_type']) && $fields[$field]['db_type'] === 'boolean') {
+            if (
+                $val === false &&
+                isset($fields[$field]) &&
+                isset($fields[$field]['db_type']) &&
+                $fields[$field]['db_type'] === 'boolean'
+            ) {
                 $filters[$field] = \Dvelum\Filter::filterValue(\Dvelum\Filter::FILTER_BOOLEAN, $val);
                 continue;
             }
@@ -312,7 +332,11 @@ class Query
                 continue;
             }
 
-            if (isset($fields[$field]) && isset($fields[$field]['db_type']) && $fields[$field]['db_type'] === 'boolean') {
+            if (
+                isset($fields[$field]) &&
+                isset($fields[$field]['db_type']) &&
+                $fields[$field]['db_type'] === 'boolean'
+            ) {
                 $filters[$field] = \Dvelum\Filter::filterValue(\Dvelum\Filter::FILTER_BOOLEAN, $val);
             }
         }
@@ -329,7 +353,7 @@ class Query
         $sql = $this->db->select();
 
         if (!empty($this->tableAlias)) {
-            $sql->from([$this->tableAlias => $this->table]);
+            $sql->from([$this->tableAlias => (string)$this->table]);
         } else {
             $sql->from($this->table);
         }
@@ -340,7 +364,7 @@ class Query
             $this->applyFilters($sql, $this->filters);
         }
 
-        if (!empty($this->search)) {
+        if ($this->search !== null) {
             $this->applySearch($sql, $this->search, $this->searchType);
         }
 
@@ -395,7 +419,7 @@ class Query
 
     /**
      * Fetch first result row
-     * @return array<int|string,mixed>
+     * @return array<string,mixed>
      * @throws \Exception
      */
     public function fetchRow(): array

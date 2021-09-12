@@ -1,9 +1,9 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
+namespace Dvelum\Orm\Record;
 
+use PHPUnit\Framework\TestCase;
 use Dvelum\Orm\Orm;
-use \Dvelum\Orm\Record\Manager;
 
 class ManagerTest extends TestCase
 {

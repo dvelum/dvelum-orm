@@ -1,22 +1,33 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2021  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\Orm\Distributed\Record;
@@ -25,7 +36,7 @@ use Dvelum\Orm\Distributed;
 use Dvelum\Orm;
 use Dvelum\Db;
 use Dvelum\Orm\Model;
-use \Exception;
+use Exception;
 use Psr\Log\LogLevel;
 
 class Store extends \Dvelum\Orm\Record\Store
@@ -36,9 +47,9 @@ class Store extends \Dvelum\Orm\Record\Store
     protected Distributed $sharding;
 
     /**
-     * @var string
+     * @var string|null
      */
-    protected string $shard = '';
+    protected ?string $shard = null;
 
     /**
      * @param Distributed $distributed
@@ -50,7 +61,7 @@ class Store extends \Dvelum\Orm\Record\Store
         $this->sharding = $distributed;
     }
 
-    public function setShard(string $shard): void
+    public function setShard(?string $shard): void
     {
         $this->shard = $shard;
     }
@@ -131,7 +142,11 @@ class Store extends \Dvelum\Orm\Record\Store
             $db->commit();
         } catch (Exception $e) {
             $sType = $object->getConfig()->getShardingType();
-            if ($insertId && $sType == Orm\Record\Config::SHARDING_TYPE_GLOABAL_ID || $sType == Orm\Record\Config::SHARDING_TYPE_KEY) {
+            if (
+                $insertId &&
+                $sType == Orm\Record\Config::SHARDING_TYPE_GLOABAL_ID ||
+                $sType == Orm\Record\Config::SHARDING_TYPE_KEY
+            ) {
                 $this->sharding->deleteIndex($object, $insertId);
             }
 
@@ -166,7 +181,10 @@ class Store extends \Dvelum\Orm\Record\Store
                 $obj->delete(false);
             } catch (Exception $e) {
                 if ($this->log) {
-                    $this->log->log(LogLevel::ERROR, $object->getName() . ' cant delete index' . $object->getId());
+                    $this->log->log(
+                        LogLevel::ERROR,
+                        $object->getName() . ' cant delete index' . $object->getId()
+                    );
                 }
                 return false;
             }
@@ -265,15 +283,15 @@ class Store extends \Dvelum\Orm\Record\Store
     }
 
     /**
-     *  Validate unique fields, object field groups
+     * Validate unique fields, object field groups
      * Returns array of errors or null .
      * @param string $objectName
-     * @param mixed $recordId
-     * @param array $groupsData
-     * @return array|null
+     * @param int|null $recordId
+     * @param array<string,mixed> $groupsData
+     * @return array<string,mixed>|null
      * @throws Orm\Exception
      */
-    public function validateUniqueValues(string $objectName, $recordId, array $groupsData): ?array
+    public function validateUniqueValues(string $objectName, ?int $recordId, array $groupsData): ?array
     {
         $objectConfig = $this->orm->config($objectName);
         $model = $this->orm->model($objectConfig->getDistributedIndexObject());
@@ -286,7 +304,7 @@ class Store extends \Dvelum\Orm\Record\Store
                 $sql = $db->select()
                     ->from($model->table(), array('count' => 'COUNT(*)'));
 
-                if ($recordId) {
+                if ($recordId !== null) {
                     $sql->where(' ' . $db->quoteIdentifier($primaryKey) . ' != ?', $recordId);
                 }
 
@@ -294,7 +312,6 @@ class Store extends \Dvelum\Orm\Record\Store
                     if ($k === $primaryKey) {
                         continue;
                     }
-
                     $sql->where($db->quoteIdentifier($k) . ' =?', $v);
                 }
 

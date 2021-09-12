@@ -1,20 +1,30 @@
 <?php
-/**
- *  DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
- *  Copyright (C) 2011-2016  Kirill A Egorov
+
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
  *
  */
 
@@ -27,7 +37,6 @@ use Dvelum\Orm;
 use Dvelum\Orm\Exception;
 use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Utils;
-
 
 /**
  * Advanced MySQL Builder
@@ -95,40 +104,33 @@ class MySQL extends AbstractAdapter
         $fields = $this->objectConfig->getFieldsConfig();
 
         switch (strtolower($newEngineType)) {
-            case 'myisam' :
+            case 'myisam':
                 break;
-            case 'memory' :
-
+            case 'memory':
                 foreach ($fields as $k => $v) {
                     $type = $v['db_type'];
 
-                    if (in_array($type, BuilderFactory::$textTypes, true) || in_array(
-                            $type,
-                            BuilderFactory::$blobTypes,
-                            true
-                        )) {
+                    if (
+                        in_array($type, BuilderFactory::$textTypes, true) ||
+                        in_array($type, BuilderFactory::$blobTypes, true)
+                    ) {
                         $restrictedFields[] = $k;
                     }
                 }
-
                 foreach ($indexes as $k => $v) {
                     if (isset($v['fulltext']) && $v['fulltext']) {
                         $restrictedIndexes[] = $k;
                     }
                 }
-
                 break;
-            case 'innodb' :
-
+            case 'innodb':
                 foreach ($indexes as $k => $v) {
                     if (isset($v['fulltext']) && $v['fulltext']) {
                         $restrictedIndexes[] = $k;
                     }
                 }
-
                 break;
-
-            default :
+            default:
                 throw new \Exception('Unknown db engine type');
         }
 
@@ -137,9 +139,9 @@ class MySQL extends AbstractAdapter
                 'indexes' => $restrictedIndexes,
                 'fields' => $restrictedFields
             );
-        } else {
-            return true;
         }
+
+        return true;
     }
 
 
@@ -265,8 +267,10 @@ class MySQL extends AbstractAdapter
             /**
              * @var \Dvelum\Db\Metadata\ColumnObject $column
              */
-            if ($name === $this->objectConfig->getPrimaryKey() && $column->isAutoIncrement(
-                ) !== (bool)$v['db_auto_increment']) {
+            if (
+                $name === $this->objectConfig->getPrimaryKey() &&
+                $column->isAutoIncrement() !== (bool)$v['db_auto_increment']
+            ) {
                 $incrementCmp = true;
             }
 
@@ -289,16 +293,15 @@ class MySQL extends AbstractAdapter
                     ) {
                         $lenCmp = true;
                     }
-                } elseif (in_array(
-                        $v['db_type'],
-                        BuilderFactory::$numTypes,
-                        true
-                    ) && isset(Orm\Record\Field\Property::$numberLength[$v['db_type']])) {
+                } elseif (
+                    in_array($v['db_type'], BuilderFactory::$numTypes, true) &&
+                    isset(Orm\Record\Field\Property::$numberLength[$v['db_type']])
+                ) {
                     /**
                      * @todo ZF gives getNumericPrecision 19 for bigint(20)
                      * int types length check disabled
                      */
-                    // $lenCmp = (int) Orm\Record\Field\Property::$numberLength[$v['db_type']] != (int) $column->getNumericPrecision();
+// $lenCmp = (int) Orm\Record\Field\Property::$numberLength[$v['db_type']] != (int) $column->getNumericPrecision();
                 } else {
                     if (isset($v['db_len'])) {
                         if ((int)$v['db_len'] !== (int)$column->getCharacterMaximumLength()) {
@@ -307,13 +310,14 @@ class MySQL extends AbstractAdapter
                     }
                 }
 
-                /*
-                  Auto set default '' for NOT NULL string properties
-                  if(in_array($v['db_type'] , self::$charTypes , true) && (! isset($v['db_isNull']) || ! $v['db_isNull']) && (! isset($v['db_default']) || $v['db_default'] === false))
-                  {
-                    $v['db_default'] = '';
-                  }
-                */
+/*
+  Auto set default '' for NOT NULL string properties
+  if(in_array($v['db_type'] , self::$charTypes , true) && (! isset($v['db_isNull']) || ! $v['db_isNull']) &&
+    (! isset($v['db_default']) || $v['db_default'] === false))
+  {
+    $v['db_default'] = '';
+  }
+*/
 
                 if (in_array($v['db_type'], BuilderFactory::$textTypes, true)) {
                     if (isset($v['required']) && $v['required']) {
@@ -323,7 +327,7 @@ class MySQL extends AbstractAdapter
                     }
                 }
 
-                $nullCmp = (boolean)$v['db_isNull'] !== $column->isNullable();
+                $nullCmp = (bool)$v['db_isNull'] !== $column->isNullable();
 
                 if ((!isset($v['db_unsigned']) || !$v['db_unsigned']) && $column->isNumericUnsigned()) {
                     $unsignedCmp = true;
@@ -335,9 +339,9 @@ class MySQL extends AbstractAdapter
             }
 
             if (
-                    !((bool)$v['db_isNull']) &&
-                    !in_array($v['db_type'], BuilderFactory::$dateTypes, true) &&
-                    !in_array($v['db_type'], BuilderFactory::$textTypes, true)
+                !((bool)$v['db_isNull']) &&
+                !in_array($v['db_type'], BuilderFactory::$dateTypes, true) &&
+                !in_array($v['db_type'], BuilderFactory::$textTypes, true)
             ) {
                 $columnDefault = $column->getColumnDefault();
                 // Zend Send '' as empty default for strings
@@ -439,7 +443,7 @@ class MySQL extends AbstractAdapter
         foreach ($realIndexes as $index => $conf) {
             if (!isset($configIndexes[$index]) && !isset($foreignKeys[$index])) {
                 $updates[] = array(
-                    'name' => $index,
+                    'name' => (string)$index,
                     'action' => 'drop'
                 );
             }
@@ -453,17 +457,17 @@ class MySQL extends AbstractAdapter
             foreach ($configIndexes as $index => $config) {
                 if (!array_key_exists((string)$index, $realIndexes)) {
                     $updates[] = array(
-                        'name' => $index,
+                        'name' => (string)$index,
                         'action' => 'add'
                     );
                 } else {
                     if (!$this->isSameIndexes($config, $realIndexes[$index])) {
                         $updates[] = array(
-                            'name' => $index,
+                            'name' => (string)$index,
                             'action' => 'drop'
                         );
                         $updates[] = array(
-                            'name' => $index,
+                            'name' => (string)$index,
                             'action' => 'add'
                         );
                     }
@@ -476,7 +480,8 @@ class MySQL extends AbstractAdapter
     /**
      * Prepare list of Foreign Keys to be updated
      * @param bool $dropOnly
-     * @return array<int,array{name:string,action:string,config:mixed}>
+     * @return array<int,array>
+     * @phpstan-return array<int,array{name:string,action:string,config:mixed}>
      */
     public function prepareKeysUpdate(bool $dropOnly = false): array
     {
@@ -496,8 +501,14 @@ class MySQL extends AbstractAdapter
         }
 
         if (!empty($configForeignKeys)) {
+            /**
+             * @var array<string,mixed> $configForeignKeys
+             */
             foreach ($configForeignKeys as $keyName => $item) {
                 $realKeysNames[] = $keyName;
+                /**
+                 * @var array<string,mixed> $realKeys
+                 */
                 if (!isset($realKeys[$keyName]) && !$dropOnly) {
                     $updates[] = array(
                         'name' => $keyName,
@@ -508,11 +519,15 @@ class MySQL extends AbstractAdapter
             }
         }
         if (!empty($realKeys)) {
+            /**
+             * @var array<string,mixed> $realKeys
+             */
             foreach ($realKeys as $name => $config) {
                 if (!in_array($name, $realKeysNames, true)) {
                     $updates[] = array(
                         'name' => $name,
-                        'action' => 'drop'
+                        'action' => 'drop',
+                        'config' => null
                     );
                 }
             }
@@ -526,7 +541,7 @@ class MySQL extends AbstractAdapter
      * @return array<int|string,mixed>
      * @todo refactor into Zend Metadata
      */
-    public function getForeignKeys(string $dbTable) : array
+    public function getForeignKeys(string $dbTable): array
     {
         $dbConfig = $this->db->getConfig();
         $sql = 'SELECT * FROM `information_schema`.`TABLE_CONSTRAINTS`
@@ -557,7 +572,12 @@ class MySQL extends AbstractAdapter
             $cfg2['unique'] = false;
         }
 
-        if ($cfg1['fulltext'] !== $cfg2['fulltext'] || $cfg1['unique'] !== $cfg2['unique'] || !empty($colDiff) || !empty($colDiffReverse)) {
+        if (
+            $cfg1['fulltext'] !== $cfg2['fulltext'] ||
+            $cfg1['unique'] !== $cfg2['unique'] ||
+            !empty($colDiff) ||
+            !empty($colDiffReverse)
+        ) {
             return false;
         }
 
@@ -642,6 +662,7 @@ class MySQL extends AbstractAdapter
         if (empty($fields)) {
             throw new \Exception('sqlCreate :: empty properties');
         }
+
         /*
        * Add columns
        */
@@ -670,6 +691,9 @@ class MySQL extends AbstractAdapter
     protected function createIndexes(): array
     {
         $cmd = [];
+        /**
+         * @var array<string,array> $configIndexes
+         */
         $configIndexes = $this->objectConfig->getIndexesConfig();
 
         foreach ($configIndexes as $index => $config) {
@@ -748,22 +772,18 @@ class MySQL extends AbstractAdapter
         if (!empty($colUpdates)) {
             foreach ($colUpdates as $info) {
                 switch ($info['action']) {
-                    case 'drop' :
+                    case 'drop':
                         $cmd[] = "\n" . 'DROP `' . $info['name'] . '`';
                         break;
-                    case 'add' :
+                    case 'add':
                         $cmd[] = "\n" . 'ADD ' . $this->getPropertySql(
-                                $info['name'],
-                                $this->objectConfig->getField($info['name'])
-                            );
+                            $info['name'],
+                            $this->objectConfig->getField($info['name'])
+                        );
                         break;
-                    case 'change' :
-                        $cmd[] = "\n" . 'CHANGE `' . $info['name'] . '`  ' . $this->getPropertySql(
-                                $info['name'],
-                                $this->objectConfig->getField(
-                                    $info['name']
-                                )
-                            );
+                    case 'change':
+                        $cmd[] = "\n" . 'CHANGE `' . $info['name'] . '`  ' .
+                            $this->getPropertySql($info['name'], $this->objectConfig->getField($info['name']));
                         break;
                 }
             }
@@ -774,14 +794,14 @@ class MySQL extends AbstractAdapter
 
             foreach ($indexUpdates as $info) {
                 switch ($info['action']) {
-                    case 'drop' :
-                        if ($info['name'] == 'PRIMARY') {
+                    case 'drop':
+                        if ($info['name'] === 'PRIMARY') {
                             $cmd[] = "\n" . 'DROP PRIMARY KEY';
                         } else {
                             $cmd[] = "\n" . 'DROP INDEX `' . $info['name'] . '`';
                         }
                         break;
-                    case 'add' :
+                    case 'add':
                         $cmd[] = $this->prepareIndex($info['name'], $indexConfig[$info['name']]);
                         break;
                 }
@@ -799,7 +819,8 @@ class MySQL extends AbstractAdapter
 
         if (!empty($cmd)) {
             $dbCfg = $this->db->getConfig();
-            $sql = 'ALTER TABLE `' . $dbCfg['dbname'] . '`.`' . $this->model->table() . '` ' . implode(',', $cmd) . ';';
+            $sql = 'ALTER TABLE `' . $dbCfg['dbname'] . '`.`' . $this->model->table() . '` ' .
+                implode(',', $cmd) . ';';
             try {
                 $this->db->query($sql);
                 $this->logSql($sql);
@@ -861,30 +882,33 @@ class MySQL extends AbstractAdapter
         if (!empty($keysUpdates)) {
             foreach ($keysUpdates as $info) {
                 switch ($info['action']) {
-                    case 'drop' :
+                    case 'drop':
                         if ($remove) {
                             $cmd[] = "\n" . 'DROP FOREIGN KEY `' . $info['name'] . '`';
                         }
                         break;
-                    case 'add' :
+                    case 'add':
                         if ($create) {
                             if ($this->objectConfig->isDistributed()) {
-                                $toObj = Orm\Record\Config::factory($info['config']['toObject']);
+                                $toObj = $this->orm->config($info['config']['toObject']);
 
                                 if ($toObj->isDistributed()) {
-                                    $cmd[] = 'ADD CONSTRAINT `' . $info['name'] . '`
-                                            FOREIGN KEY (`' . $info['config']['curField'] . '`)
-                                            REFERENCES `' . $this->db->getConfig(
-                                        )['dbname'] . '`.`' . $info['config']['toTable'] . '` (`' . $info['config']['toField'] . '`)
-                                            ON UPDATE ' . $info['config']['onUpdate'] . '
-                                            ON DELETE ' . $info['config']['onDelete'];
+                                    $cmd[] = 'ADD CONSTRAINT `' . $info['name'] .
+                                        '`FOREIGN KEY (`' . $info['config']['curField'] . '`) REFERENCES `' .
+                                        $this->db->getConfig()['dbname'] .
+                                        '`.`' . $info['config']['toTable'] .
+                                        '` (`' . $info['config']['toField'] . '`) ON UPDATE ' .
+                                        $info['config']['onUpdate'] .
+                                        ' ON DELETE ' . $info['config']['onDelete'];
                                 }
                             } else {
-                                $cmd[] = 'ADD CONSTRAINT `' . $info['name'] . '`
-                                            FOREIGN KEY (`' . $info['config']['curField'] . '`)
-                                            REFERENCES `' . $info['config']['toDb'] . '`.`' . $info['config']['toTable'] . '` (`' . $info['config']['toField'] . '`)
-                                            ON UPDATE ' . $info['config']['onUpdate'] . '
-                                            ON DELETE ' . $info['config']['onDelete'];
+                                $cmd[] = 'ADD CONSTRAINT `' . $info['name'] .
+                                    '` FOREIGN KEY (`' . $info['config']['curField'] . '`) REFERENCES `' .
+                                    $info['config']['toDb'] . '`.`' .
+                                    $info['config']['toTable'] . '` (`' .
+                                    $info['config']['toField'] . '`) ON UPDATE ' .
+                                    $info['config']['onUpdate'] . ' ON DELETE ' .
+                                    $info['config']['onDelete'];
                             }
                         }
                         break;
@@ -895,10 +919,8 @@ class MySQL extends AbstractAdapter
         if (!empty($cmd)) {
             $dbCfg = $this->db->getConfig();
             try {
-                $sql = 'ALTER TABLE `' . $dbCfg['dbname'] . '`.`' . $this->model->table() . '` ' . implode(
-                        ',',
-                        $cmd
-                    ) . ';';
+                $sql = 'ALTER TABLE `' . $dbCfg['dbname'] . '`.`' . $this->model->table() . '` ' .
+                    implode(',', $cmd) . ';';
                 $this->db->query($sql);
                 $this->logSql($sql);
                 return true;
@@ -918,7 +940,7 @@ class MySQL extends AbstractAdapter
      * @return bool
      * @throws \Exception
      */
-    public function renameTable(string $newName) : bool
+    public function renameTable(string $newName): bool
     {
         if ($this->objectConfig->isLocked() || $this->objectConfig->isReadOnly()) {
             $this->errors[] = 'Can not build locked object ' . $this->objectConfig->getName();

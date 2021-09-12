@@ -1,10 +1,11 @@
 <?php
 
+namespace Dvelum\Orm\Record;
+
 use PHPUnit\Framework\TestCase;
 use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record\Builder\BuilderInterface;
 use Dvelum\Orm\Orm;
-
 
 class BuilderTest extends TestCase
 {
@@ -25,44 +26,12 @@ class BuilderTest extends TestCase
         $this->assertTrue($o->tableExists());
     }
 
-
     public function testValidate(): void
     {
         $o = $this->getBuilder('Page');
         $o->build();
         $this->assertTrue($o->validate());
     }
-
-    /**
-     * @todo implement
-     */
-//	public function testRenameTable()
-//	{
-//		$cfg = Record\Config::factory('Page' , true);
-//
-//		$uniqName = uniqid();
-//		$o = Builder::factory('Page',false);
-//
-//		$renamed = $o->renameTable($uniqName);
-//
-//		if(!$renamed)
-//		    echo implode("\n", $o->getErrors());
-//
-//		$this->assertTrue($renamed);
-//		$cfg->getConfig()->set('table',$uniqName);
-//
-//		Model::factory('Page');
-//		$o = Builder::factory('Page',true);
-//
-//		$renamed = $o->renameTable('content');
-//
-//		if(!$renamed)
-//		  echo implode("\n", $o->getErrors());
-//
-// 		$this->assertTrue($renamed);
-//		$cfg->getConfig()->set('table','content');
-//
-//	}
 
     public function testCheckEngineCompatibility(): void
     {
@@ -77,7 +46,7 @@ class BuilderTest extends TestCase
         $invalidEngine = false;
         try {
             $o->checkEngineCompatibility('ksdhuis');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $invalidEngine = true;
         }
         $this->assertTrue($invalidEngine);

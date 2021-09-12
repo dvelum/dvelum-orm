@@ -1,22 +1,33 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2021  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\Orm\Record;
@@ -68,7 +79,7 @@ class DataModel
                 foreach ($fields as $field => $linkType) {
                     if ($recordConfig->getField($field)->isManyToManyLink()) {
                         $relationsObject = $recordConfig->getRelationsObject($field);
-                        $relationsData = Model::factory((string)$relationsObject)->query()
+                        $relationsData = $this->orm->model((string)$relationsObject)->query()
                             ->params(['sort' => 'order_no', 'dir' => 'ASC'])
                             ->filters(['source_id' => $recordId])
                             ->fields(['target_id'])->fetchAll();
@@ -115,7 +126,7 @@ class DataModel
         }
 
         if ($recordConfig->isReadOnly()) {
-            $message =  (new ErrorMessage())->readOnly($record);
+            $message = (new ErrorMessage())->readOnly($record);
             $record->addErrorMessage($message);
             if ($log) {
                 $log->log(LogLevel::ERROR, $message);
@@ -149,7 +160,7 @@ class DataModel
         $emptyFields = $this->getEmptyRequired($record);
 
         if (!empty($emptyFields)) {
-            $message =  (new ErrorMessage())->emptyFields($record, $emptyFields);
+            $message = (new ErrorMessage())->emptyFields($record, $emptyFields);
             $record->addErrorMessage($message);
             if ($log) {
                 $log->log(LogLevel::ERROR, $message);
@@ -161,7 +172,7 @@ class DataModel
 
         if (!empty($values)) {
             foreach ($values as $field => $value) {
-                $message =  (new ErrorMessage())->uniqueValue((string)$field, $record->get((string)$field));
+                $message = (new ErrorMessage())->uniqueValue((string)$field, $record->get((string)$field));
                 $record->addErrorMessage($message);
             }
 
@@ -220,7 +231,7 @@ class DataModel
         if (empty($emptyFields)) {
             return [];
         }
-            return $emptyFields;
+        return $emptyFields;
     }
 
     /**
@@ -233,7 +244,7 @@ class DataModel
     {
         $recordName = $record->getName();
         $recordConfig = $record->getConfig();
-        $model = Model::factory($recordName);
+        $model = $this->orm->model($recordName);
         $log = $model->getLogsAdapter();
         $store = $model->getStore();
 
@@ -272,7 +283,7 @@ class DataModel
     public function unpublish(RecordInterface $record, bool $useTransaction): bool
     {
         $recordName = $record->getName();
-        $model = Model::factory($recordName);
+        $model = $this->orm->model($recordName);
         $log = $model->getLogsAdapter();
         $store = $model->getStore();
 
@@ -283,12 +294,14 @@ class DataModel
         /**
          * @todo refactor
          */
-        $record->setValues([
-                               'published_version' => 0,
-                               'published' => false,
-                               'date_updated' => date('Y-m-d H:i:s'),
-                               'editor_id' => User::factory()->getId()
-                           ]);
+        $record->setValues(
+            [
+                'published_version' => 0,
+                'published' => false,
+                'date_updated' => date('Y-m-d H:i:s'),
+                'editor_id' => User::factory()->getId()
+            ]
+        );
 
         return $store->unpublish($record, $useTransaction);
     }
@@ -360,7 +373,7 @@ class DataModel
                         $record->set((string)$k, $v);
                     }
                 } catch (Exception $e) {
-                    $message =  (new ErrorMessage())->cantLoadVersionIncompatible($record, $vers, $e->getMessage());
+                    $message = (new ErrorMessage())->cantLoadVersionIncompatible($record, $vers, $e->getMessage());
                     $record->addErrorMessage($message);
                     if ($log) {
                         $log->log(LogLevel::ERROR, $message);
@@ -440,8 +453,8 @@ class DataModel
 
     /**
      * @param RecordInterface $record
-     * @param array<string> $uniqGroups
-     * @return array<int|string,mixed>|null
+     * @param array<string,mixed> $uniqGroups
+     * @return array<string,mixed>|null
      * @throws Exception
      */
     public function validateUniqueValues(RecordInterface $record, array $uniqGroups): ?array

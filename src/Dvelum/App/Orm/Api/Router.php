@@ -1,5 +1,33 @@
 <?php
 
+/*
+ *
+ * DVelum project https://github.com/dvelum/
+ *
+ * MIT License
+ *
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
+ */
+
 declare(strict_types=1);
 
 namespace Dvelum\App\Orm\Api;
@@ -8,17 +36,13 @@ use Dvelum\App\Orm\Api\Connections;
 use Dvelum\Config;
 use Dvelum\File;
 use Dvelum\Orm;
-
 use Dvelum\Lang;
 use Dvelum\Request;
 use Dvelum\Response\Response;
 use Dvelum\Response\ResponseInterface;
 use Dvelum\App\Router\RouterInterface;
-
 use Dvelum\Utils;
 use Psr\Container\ContainerInterface;
-
-;
 
 class Router implements RouterInterface
 {
@@ -281,7 +305,11 @@ class Router implements RouterInterface
      */
     public function connectionsListAction(): void
     {
-        $manager = new Connections($this->container->get('config.main')->get('db_configs'));
+        $manager = new Connections(
+            $this->container->get('config.main')->get('db_configs'),
+            $this->container->get(Config\Storage\StorageInterface::class),
+            $this->container->get(Lang::class)->getDictionary(),
+        );
         $list = $manager->getConnections(0);
         $data = [];
         if (!empty($list)) {
@@ -388,7 +416,7 @@ class Router implements RouterInterface
      * @param string $controller
      * @param null|string $action
      * @param Request $request
-     * @param Response $response
+     * @param ResponseInterface $response
      * @throws \Exception
      */
     public function runController(

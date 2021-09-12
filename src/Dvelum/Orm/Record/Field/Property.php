@@ -1,5 +1,33 @@
 <?php
 
+/*
+ *
+ * DVelum project https://github.com/dvelum/
+ *
+ * MIT License
+ *
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
+ */
+
 declare(strict_types=1);
 
 namespace Dvelum\Orm\Record\Field;
@@ -135,15 +163,15 @@ class Property
         $dbType = strtolower($this->data['db_type']);
 
         switch ($dbType) {
-            case 'boolean' :
+            case 'boolean':
                 $this->data['db_isNull'] = false;
                 $s .= '`' . $this->name . '` ' . $dbType . ' ';
                 break;
-            case 'tinyint' :
-            case 'smallint' :
-            case 'mediumint' :
-            case 'int' :
-            case 'bigint' :
+            case 'tinyint':
+            case 'smallint':
+            case 'mediumint':
+            case 'int':
+            case 'bigint':
                 $this->data['db_len'] = self::$numberLength[$dbType];
 
                 $s .= '`' . $this->name . '` ' . $dbType . ' (' . $this->data['db_len'] . ')';
@@ -156,14 +184,18 @@ class Property
                     $s .= ' UNSIGNED ';
                 }
 
-                if ($dbType !== 'boolean' && isset($this->data['db_auto_increment']) && $this->data['db_auto_increment']) {
+                if (
+                    $dbType !== 'boolean' &&
+                    isset($this->data['db_auto_increment']) &&
+                    $this->data['db_auto_increment']
+                ) {
                     $s .= ' AUTO_INCREMENT ';
                 }
 
                 $isNumber = true;
                 break;
 
-            case 'bit' :
+            case 'bit':
                 $s .= '`' . $this->name . '` ' . $dbType . ' ';
 
                 if (
@@ -176,12 +208,15 @@ class Property
 
                 $isNumber = true;
                 break;
-            case 'real' :
-            case 'float' :
-            case 'double' :
-            case 'decimal' :
-
-                $s .= '`' . $this->name . '` ' . $dbType . '(' . $this->data['db_scale'] . ',' . $this->data['db_precision'] . ') ';
+            case 'real':
+            case 'float':
+            case 'double':
+            case 'decimal':
+                $s .= '`' . $this->name . '` ' .
+                    $dbType .
+                    '(' . $this->data['db_scale'] . ',' .
+                    $this->data['db_precision'] .
+                    ') ';
 
                 if (isset($this->data['db_unsigned']) && $this->data['db_unsigned']) {
                     $s .= ' UNSIGNED ';
@@ -189,34 +224,29 @@ class Property
 
                 $isNumber = true;
                 break;
-            case 'char' :
-            case 'varchar' :
-
+            case 'char':
+            case 'varchar':
                 /*
-
                 Auto set default '' for NOT NULL string properties
                 if(!isset($this->data['db_isNull']) || !$this->data['db_isNull'])
                     if(!isset($this->data['db_default']) || $this->data['db_default'] === false)
                         $this->data['db_default'] = '';
                 */
-
                 $s = '`' . $this->name . '` ' . $dbType . ' (' . $this->data['db_len'] . ')  ';
-
                 break;
-            case 'date' :
-            case 'time' :
-            case 'timestamp' :
-            case 'datetime' :
+            case 'date':
+            case 'time':
+            case 'timestamp':
+            case 'datetime':
                 if (isset($this->data['db_default']) && !strlen((string)$this->data['db_default'])) {
                     unset($this->data['db_default']);
                 }
                 $s = '`' . $this->name . '` ' . $dbType . ' ';
                 break;
-            case 'tinytext' :
-            case 'text' :
-            case 'mediumtext' :
-            case 'longtext' :
-
+            case 'tinytext':
+            case 'text':
+            case 'mediumtext':
+            case 'longtext':
                 $s = '`' . $this->name . '` ' . $dbType . ' ';
                 if (isset($this->data['db_default'])) {
                     unset($this->data['db_default']);
@@ -224,13 +254,11 @@ class Property
                 if (!isset($this->data['required']) || !$this->data['required']) {
                     $this->data['db_isNull'] = true;
                 }
-
                 break;
         }
 
         if (!$this->data['db_isNull']) {
             $s .= 'NOT NULL ';
-
             if (isset($this->data['db_default']) && $this->data['db_default'] !== false) {
                 if ($isNumber) {
                     $s .= " DEFAULT " . $this->data['db_default'] . " ";
@@ -275,44 +303,42 @@ class Property
     public static function filter(array $fieldInfo, $value)
     {
         switch (strtolower($fieldInfo['db_type'])) {
-            case 'tinyint' :
-            case 'smallint' :
-            case 'mediumint' :
-            case 'int' :
-            case 'bigint' :
+            case 'tinyint':
+            case 'smallint':
+            case 'mediumint':
+            case 'int':
+            case 'bigint':
                 $value = \Dvelum\Filter::filterValue('int', $value);
                 break;
 
-            case 'float' :
-            case 'double' :
-            case 'decimal' :
+            case 'float':
+            case 'double':
+            case 'decimal':
                 $value = \Dvelum\Filter::filterValue('float', $value);
 
                 break;
-            case 'bool' :
-            case 'boolean' :
+            case 'bool':
+            case 'boolean':
                 $value = \Dvelum\Filter::filterValue('boolean', $value);
                 break;
-            case 'date' :
-            case 'time' :
-            case 'timestamp' :
-            case 'datetime' :
+            case 'date':
+            case 'time':
+            case 'timestamp':
+            case 'datetime':
                 $value = \Dvelum\Filter::filterValue('string', $value);
                 break;
-            case 'tinytext' :
-            case 'text' :
-            case 'bit' :
-            case 'mediumtext' :
-            case 'longtext' :
-            case 'char' :
-            case 'varchar' :
+            case 'tinytext':
+            case 'text':
+            case 'bit':
+            case 'mediumtext':
+            case 'longtext':
+            case 'char':
+            case 'varchar':
                 if (!isset($fieldInfo['allow_html']) || !$fieldInfo['allow_html']) {
                     $value = \Dvelum\Filter::filterValue('string', $value);
                 }
                 break;
-            //  case 'bit':
-            //		$value = preg_replace ('/[^01]*/', '', $value);
-            default :
+            default:
                 throw new \Exception('Invalid property type "' . $fieldInfo['db_type'] . '"');
         }
         return $value;

@@ -1,22 +1,33 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2017  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\Orm;
@@ -34,11 +45,15 @@ class Distributed
     /**
      * @var Distributed|false $instance
      */
-    static protected $instance = false;
-
-    protected $config;
-
-    protected $shards = [];
+    protected static $instance = false;
+    /**
+     * @var Config\ConfigInterface<string,mixed>
+     */
+    protected Config\ConfigInterface $config;
+    /**
+     * @var array<string,array>
+     */
+    protected array $shards = [];
 
     /**
      * @var Model $shardModel
@@ -87,8 +102,10 @@ class Distributed
             }
             $this->keyGenerators[$type] = new $adapterClass($this->orm, $this->config, $options);
         }
-
-        $this->shards = Utils::rekey(
+        /**
+         * @var array<string,mixed> $sorted
+         */
+        $sorted = Utils::rekey(
             'id',
             $this->configStorage->get(
                 $this->config->get('shards'),
@@ -96,7 +113,7 @@ class Distributed
                 false
             )->__toArray()
         );
-
+        $this->shards = $sorted;
         $this->weightMap = [];
         foreach ($this->shards as $index => $data) {
             $this->weightMap = array_merge(array_fill(0, $data['weight'], (string)$index), $this->weightMap);
@@ -167,15 +184,14 @@ class Distributed
     /**
      * Get shard info by id
      * @param mixed $id
-     * @return array|bool
+     * @return array<string,mixed>|null
      */
-    public function getShardInfo($id)
+    public function getShardInfo($id): ?array
     {
         if (isset($this->shards[$id])) {
             return $this->shards[$id];
         }
-
-        return false;
+        return null;
     }
 
     /**
@@ -217,7 +233,7 @@ class Distributed
 
     /**
      * Get random shard except shards in $execpt
-     * @param array $except
+     * @param array<string> $except
      * @return null|string
      */
     public function randomShardExcept(array $except): ?string
@@ -246,7 +262,7 @@ class Distributed
      */
     public function getKeyGenerator(string $objectName): GeneratorInterface
     {
-        $config = Record\Config::factory($objectName);
+        $config = $this->orm->config($objectName);
         $key = $config->getShardingType();
         if (!isset($this->keyGenerators[$key])) {
             throw new Exception('Undefined key generator for ' . $objectName);

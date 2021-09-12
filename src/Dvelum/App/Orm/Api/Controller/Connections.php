@@ -1,21 +1,31 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2017  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
 
 declare(strict_types=1);
@@ -28,7 +38,6 @@ use Dvelum\Config;
 use Dvelum\Db\Adapter;
 use Dvelum\Request;
 use Dvelum\Response\ResponseInterface;
-
 use Dvelum\Orm\Model;
 use Dvelum\Orm\Record\Manager;
 use Dvelum\Orm\Record\Import;
@@ -185,8 +194,8 @@ class Connections extends Controller
         if ($oldId === false || empty($oldId)) {
             $cfg = $this->connections->getConfig();
             foreach ($cfg as $type => $data) {
-                if ($this->connections->connectionExists($type, $id)) {
-                    $this->response->error($this->lang->get('FILL_FORM'), array('id' => $this->lang->get('SB_UNIQUE')));
+                if ($this->connections->connectionExists((int)$type, $id)) {
+                    $this->response->error($this->lang->get('FILL_FORM'), ['id' => $this->lang->get('SB_UNIQUE')]);
                     return;
                 }
             }
@@ -201,10 +210,10 @@ class Connections extends Controller
             if ($oldId !== $id) {
                 $cfg = $this->connections->getConfig();
                 foreach ($cfg as $type => $data) {
-                    if ($this->connections->connectionExists($type, $id)) {
+                    if ($this->connections->connectionExists((int)$type, $id)) {
                         $this->response->error(
                             $this->lang->get('FILL_FORM'),
-                            array('id' => $this->lang->get('SB_UNIQUE'))
+                            ['id' => $this->lang->get('SB_UNIQUE')]
                         );
                         return;
                     }
@@ -215,7 +224,6 @@ class Connections extends Controller
                 $this->response->error($this->lang->get('WRONG_REQUEST'));
                 return;
             }
-
             $con = $this->connections->getConnection($devType, (string)$oldId);
         }
 
@@ -223,7 +231,6 @@ class Connections extends Controller
             $this->response->error($this->lang->get('CANT_CREATE'));
             return;
         }
-
 
         if ($setpass) {
             $con->set('password', $pass);
@@ -333,10 +340,12 @@ class Connections extends Controller
             return;
         }
 
-
+        /**
+         * @var array<string,mixed>
+         */
         $cfg = $cfg->__toArray();
 
-        $conManager = new \Dvelum\Db\Manager($this->appConfig);
+        $conManager = new \Dvelum\Db\Manager($this->configStorage->get('config.main'));
         try {
             $connection = $conManager->initConnection($cfg);
         } catch (\Exception $e) {
@@ -374,9 +383,13 @@ class Connections extends Controller
             return;
         }
 
-        $conManager = new \Dvelum\Db\Manager($this->appConfig);
+        $conManager = new \Dvelum\Db\Manager($this->configStorage->get('config.main'));
+        /**
+         * @var array<string,mixed>
+         */
+        $cfgArray = $cfg->__toArray();
         try {
-            $connection = $conManager->initConnection($cfg->__toArray());
+            $connection = $conManager->initConnection($cfgArray);
         } catch (\Exception $e) {
             $this->response->error($this->lang->get('CANT_CONNECT') . ' ' . $e->getMessage());
             return;
@@ -412,7 +425,9 @@ class Connections extends Controller
             return;
         }
 
-
+        /**
+         * @var array<string,mixed>
+         */
         $cfg = $cfg->__toArray();
         try {
             $cfg['driver'] = $cfg['adapter'];
@@ -431,9 +446,10 @@ class Connections extends Controller
 
         $tablesObjects = [];
 
+        $orm = $this->container->get(\Dvelum\Orm\Orm::class);
         if (!empty($objects)) {
             foreach ($objects as $object) {
-                $model = Model::factory($object);
+                $model = $orm->model($object);
                 $tablesObjects[$model->table()][] = $object;
             }
         }
@@ -444,7 +460,7 @@ class Connections extends Controller
 
                 if (isset($tablesObjects[$table]) && !empty($tablesObjects[$table])) {
                     foreach ($tablesObjects[$table] as $oName) {
-                        $mCfg = Model::factory($oName)->getDbConnection()->getConfig();
+                        $mCfg = $orm->model($oName)->getDbConnection()->getConfig();
                         if ($mCfg['host'] === $cfg['host'] && $mCfg['dbname'] === $cfg['dbname']) {
                             $same = true;
                             break;
@@ -482,7 +498,9 @@ class Connections extends Controller
             $this->response->error($this->lang->get('WRONG_REQUEST'));
             return;
         }
-
+        /**
+         * @var array<string,mixed>
+         */
         $cfg = $cfg->__toArray();
         try {
             $cfg['driver'] = $cfg['adapter'];
@@ -534,11 +552,8 @@ class Connections extends Controller
         }
 
         $config = $import->createConfigByTable($db, $table, $cfg['prefix']);
-        $config['connection'] = $connectionId;
-
-        if (!$config) {
+        if (empty($config)) {
             $errors = $import->getErrors();
-
             if (!empty($errors)) {
                 $errors = '<br>' . implode('<br>', $errors);
             } else {
@@ -548,17 +563,18 @@ class Connections extends Controller
             $this->response->error($this->lang->get('DB_CANT_CONNECT_TABLE') . ' ' . $errors);
             return;
         } else {
-            $ormConfig = Config::storage()->get('orm.php');
+            $config['connection'] = $connectionId;
+            $ormConfig = $this->configStorage->get('orm.php');
             $path = $ormConfig->get('object_configs') . $newObjectName . '.php';
 
-            if (!Config::storage()->create($path)) {
+            if (!$this->configStorage->create($path)) {
                 $this->response->error($this->lang->get('CANT_WRITE_FS') . ' ' . $path);
                 return;
             }
 
-            $cfg = Config::storage()->get($path, true, true);
+            $cfg = $this->configStorage->get($path, true, true);
             $cfg->setData($config);
-            if (!Config::storage()->save($cfg)) {
+            if (!$this->configStorage->save($cfg)) {
                 $this->response->error($this->lang->get('CANT_WRITE_FS') . ' ' . $path);
                 return;
             }

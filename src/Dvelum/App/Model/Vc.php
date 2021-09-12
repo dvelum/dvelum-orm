@@ -1,27 +1,37 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
- *  Copyright (C) 2011-2019  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
  *
  */
 declare(strict_types=1);
 
 namespace Dvelum\App\Model;
 
+use Dvelum\Db\Select;
 use Dvelum\Orm;
 use Dvelum\Orm\Model;
 
@@ -54,7 +64,7 @@ class Vc extends Model
 
         $newData['id'] = $object->getId();
         try {
-            $vObject = Orm\Record::factory('vc');
+            $vObject = $this->orm->record('vc');
             $vObject->set('date', date('Y-m-d'));
             $vObject->set('data', base64_encode(serialize($newData)));
             $vObject->set('user_id', \Dvelum\App\Session\User::factory()->getId());
@@ -79,25 +89,25 @@ class Vc extends Model
     /**
      * Get last version
      * @param string $objectName
-     * @param mixed $record_id integer / array
+     * @param mixed $recordId integer / array
      * @return mixed integer / array
      */
-    public function getLastVersion($objectName, $record_id)
+    public function getLastVersion(string $objectName, $recordId)
     {
-        if (!is_array($record_id)) {
+        if (!is_array($recordId)) {
             $sql = $this->db->select()
                 ->from(
                     $this->table(),
                     ['max_version' => 'MAX(version)']
                 )
-                ->where('record_id =?', $record_id)
+                ->where('record_id =?', $recordId)
                 ->where('object_name =?', $objectName);
             return (int)$this->db->fetchOne($sql);
         }
 
         $sql = $this->db->select()
             ->from($this->table(), array('max_version' => 'MAX(version)', 'rec' => 'record_id'))
-            ->where('`record_id` IN(?)', $record_id)
+            ->where('`record_id` IN(?)', $recordId)
             ->where('`object_name` =?', $objectName)
             ->group('record_id');
 
@@ -116,26 +126,26 @@ class Vc extends Model
     }
 
     /**
-     * (non-PHPdoc)
-     * @see Model::_queryAddAuthor()
+     * @param Select $sql
+     * @param string $fieldAlias
      */
-    protected function _queryAddAuthor($sql, $fieldAlias): void
+    protected function queryAddAuthor(Select $sql, string $fieldAlias): void
     {
         $sql->joinLeft(
-            array('u1' => Model::factory('User')->table()),
+            array('u1' => $this->orm->model('User')->table()),
             'user_id = u1.id',
-            array($fieldAlias => 'u1.name')
+            [$fieldAlias => 'u1.name']
         );
     }
 
     /**
      * Get version data
      * @param string $objectName
-     * @param integer $recordId
-     * @param integer $version
-     * @return array
+     * @param int $recordId
+     * @param int $version
+     * @return array<string,mixed>
      */
-    public function getData($objectName, $recordId, $version)
+    public function getData(string $objectName, int $recordId, int $version): array
     {
         $sql = $this->db->select()
             ->from($this->table(), array('data'))
@@ -147,20 +157,19 @@ class Vc extends Model
 
         if (!empty($data)) {
             return unserialize(base64_decode($data));
-        } else {
-            return [];
         }
+        return [];
     }
 
     /**
      * Remove item from version control
      * @param string $object
-     * @param integer $recordId
+     * @param int $recordId
      */
-    public function removeItemVc($object, $recordId)
+    public function removeItemVc(string $object, int $recordId): void
     {
         $select = $this->db->select()
-            ->from($this->table(), 'id')
+            ->from($this->table(), ['id'])
             ->where('`object_name` = ?', $this->db->quote($object))
             ->where('`record_id` = ?', $recordId);
         $vcIds = $this->db->fetchCol($select);

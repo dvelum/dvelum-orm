@@ -1,22 +1,33 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2017  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
+
 declare(strict_types=1);
 
 namespace Dvelum\Orm\Distributed;
@@ -25,7 +36,7 @@ use Dvelum\Config;
 use Dvelum\Db\Select\Filter;
 use Dvelum\Orm;
 use Dvelum\Utils;
-use \Exception;
+use Exception;
 
 /**
  * Base class for data models
@@ -60,7 +71,7 @@ class Model extends Orm\Model
      * Get record by id
      * @param int $id
      * @param array<int|string,string> $fields — optional — the list of fields to retrieve
-     * @return array<int|string,mixed>
+     * @return array<string,mixed>
      * @throws \Exception
      */
     public function getItem(int $id, array $fields = ['*']): array
@@ -146,11 +157,11 @@ class Model extends Orm\Model
      * Get Item by field value. Returns first occurrence
      * @param string $fieldName
      * @param mixed $value
-     * @param string|array $fields
+     * @param array<int|string,string> $fields
      * @return array<string,mixed>
      * @throws Exception
      */
-    public function getItemByField(string $fieldName, $value, $fields = '*'): array
+    public function getItemByField(string $fieldName, $value, array $fields = ['*']): array
     {
         $model = $this->orm->model($this->getObjectConfig()->getDistributedIndexObject());
         $item = $model->getItemByField($fieldName, $value);
@@ -164,13 +175,13 @@ class Model extends Orm\Model
 
     /**
      * Get a number of entries a list of IDs
-     * @param array $ids - list of IDs
-     * @param mixed $fields - optional - the list of fields to retrieve
+     * @param array<int> $ids - list of IDs
+     * @param array<int|string,string> $fields - optional - the list of fields to retrieve
      * @param bool $useCache - optional, default false
      * @return array<string,mixed>
      * @throws Exception
      */
-    final public function getItems(array $ids, $fields = '*', bool $useCache = false): array
+    final public function getItems(array $ids, array $fields = ['*'], bool $useCache = false): array
     {
         $data = false;
         $cacheKey = '';
@@ -186,7 +197,7 @@ class Model extends Orm\Model
 
         if ($data === false) {
             $sharding = $this->distributed;
-            $shards = $sharding->findObjectsShards($this->getObjectName(), $ids);
+            $shards = $sharding->findObjectsShards($this->orm->config($this->getObjectName()), $ids);
 
             $data = [];
 
@@ -269,7 +280,7 @@ class Model extends Orm\Model
             $fieldName => $fieldValue
         ];
 
-        return !(boolean)$model->query()->fields(['count' => 'COUNT(*)'])->filters($filters)->fetchOne();
+        return !(bool)$model->query()->fields(['count' => 'COUNT(*)'])->filters($filters)->fetchOne();
     }
 
     /**

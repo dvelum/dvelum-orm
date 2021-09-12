@@ -1,20 +1,31 @@
 <?php
-/**
- *  DVelum project https://github.com/dvelum/dvelum
- *  Copyright (C) 2011-2018  Kirill Yegorov
+
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
  */
 
 declare(strict_types=1);
@@ -27,7 +38,7 @@ use Dvelum\App\Model\Links;
 use Dvelum\Orm;
 use Dvelum\Db;
 use Dvelum\Orm\Model;
-use \Exception as Exception;
+use Exception as Exception;
 use Psr\Log\LogLevel;
 use Psr\Log\LoggerInterface;
 
@@ -231,7 +242,7 @@ class Store
      * @param Orm\RecordInterface $object
      * @return bool
      */
-    protected function updateOperation(Orm\RecordInterface $object) : bool
+    protected function updateOperation(Orm\RecordInterface $object): bool
     {
         try {
             if (!$this->updateRecord($object)) {
@@ -424,7 +435,7 @@ class Store
                 }
 
                 if (!empty($v) && is_array($v)) {
-                    if (!$this->createLinks($object,(string) $k, $conf['link_config']['object'], $v)) {
+                    if (!$this->createLinks($object, (string)$k, $conf['link_config']['object'], $v)) {
                         return false;
                     }
                 }
@@ -483,8 +494,12 @@ class Store
      * @param array<mixed,mixed> $links
      * @return bool
      */
-    protected function createLinks(Orm\RecordInterface $object, string $objectField, string $targetObjectName, array $links): bool
-    {
+    protected function createLinks(
+        Orm\RecordInterface $object,
+        string $objectField,
+        string $targetObjectName,
+        array $links
+    ): bool {
         $order = 0;
         $data = [];
 
@@ -533,7 +548,7 @@ class Store
      * @param bool $transaction - optional , use transaction if available
      * @return bool
      */
-    public function insert(Orm\RecordInterface $object, bool $transaction = true) : bool
+    public function insert(Orm\RecordInterface $object, bool $transaction = true): bool
     {
         if ($object->getConfig()->isReadOnly()) {
             if ($this->log) {
@@ -613,10 +628,10 @@ class Store
             foreach ($encFields as $field) {
                 $data[$field] = $cryptService->encrypt($object->get($field), $iv);
             }
-        } /*
-         * Encrypt values
-         */
-        else {
+        } else {
+            /*
+            * Encrypt values
+            */
             foreach ($data as $field => &$value) {
                 if (in_array($field, $encFields, true)) {
                     $value = $cryptService->encrypt($value, $iv);
@@ -701,7 +716,7 @@ class Store
      * @param array<int|string,mixed> $data
      * @return int|null - record id
      */
-    protected function insertRecord(Orm\RecordInterface $object, array $data) : ?int
+    protected function insertRecord(Orm\RecordInterface $object, array $data): ?int
     {
         $db = $this->getDbConnection($object);
         $objectTable = $this->orm->model($object->getName())->table();
@@ -908,7 +923,7 @@ class Store
                 if (empty($linkedObject)) {
                     return false;
                 }
-                if (!$this->clearLinks($object, (string) $field, $linkedObject)) {
+                if (!$this->clearLinks($object, (string)$field, $linkedObject)) {
                     return false;
                 }
             }
@@ -1016,7 +1031,7 @@ class Store
          */
         if ($objectConfig->hasHistory()) {
             foreach ($ids as $v) {
-                $history->log($userId, $v, Historylog::Delete, $tableName);
+                $history->log($userId, $v, Historylog::DELETE, $tableName);
             }
         }
 
@@ -1036,11 +1051,11 @@ class Store
      * Validate unique fields, object field groups
      * Returns array of errors or null .
      * @param string $objectName
-     * @param mixed $recordId
+     * @param int|null $recordId
      * @param array<mixed,mixed> $groupsData
-     * @return array<int|string,mixed>|null
+     * @return array<string,mixed>|null
      */
-    public function validateUniqueValues(string $objectName, $recordId, array $groupsData): ?array
+    public function validateUniqueValues(string $objectName, ?int $recordId, array $groupsData): ?array
     {
         $model = $this->orm->model($objectName);
         $db = $model->getDbConnection();
@@ -1051,7 +1066,7 @@ class Store
             $sql = $db->select()
                 ->from($model->table(), ['count' => 'COUNT(*)']);
 
-            if ($recordId) {
+            if ($recordId !== null) {
                 $sql->where(' ' . $db->quoteIdentifier($primaryKey) . ' != ?', $recordId);
             }
 

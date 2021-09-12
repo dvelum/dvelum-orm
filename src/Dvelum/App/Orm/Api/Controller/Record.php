@@ -1,21 +1,30 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
- *  Copyright (C) 2011-2017  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
  *
  */
 declare(strict_types=1);
@@ -30,7 +39,6 @@ use Dvelum\Orm;
 
 class Record extends Controller
 {
-
     public function indexAction(): void
     {
     }
@@ -84,7 +92,7 @@ class Record extends Controller
 
         try {
             /**
-             * @var Orm\Record\Config $obj
+             * @var Orm\Record\Config $objConfig
              */
             $objConfig = $this->ormService->config($name);
         } catch (\Exception $e) {
@@ -93,7 +101,6 @@ class Record extends Controller
         }
 
         $builder = $this->ormService->getBuilder($name);
-
 
         $colUpd = [];
         $indUpd = [];
@@ -135,7 +142,15 @@ class Record extends Controller
             $shardObjects = $builder->getDistributedObjectsUpdatesInfo();
         }
 
-        if (empty($colUpd) && empty($indUpd) && empty($keyUpd) && $tableExists && !$engineUpdate && empty($objects) && empty($shardObjects)) {
+        if (
+            empty($colUpd) &&
+            empty($indUpd) &&
+            empty($keyUpd) &&
+            $tableExists &&
+            !$engineUpdate &&
+            empty($objects) &&
+            empty($shardObjects)
+        ) {
             $this->response->success([], ['nothingToDo' => true]);
             return;
         }
@@ -225,7 +240,7 @@ class Record extends Controller
         }
 
         $builder = $this->ormService->getBuilder($object);
-        $brokenFields = $builder->hasBrokenLinks();
+        $brokenFields = $builder->getBrokenLinks();
 
         $fieldsCfg = $objectConfig->getFieldsConfig();
 
@@ -240,7 +255,7 @@ class Record extends Controller
             }
 
             if (isset($v['type']) && !empty($v['type'])) {
-                if ($v['type'] == 'link') {
+                if ($v['type'] === 'link') {
                     $v['type'] .= ' (' . $v['link_config']['object'] . ')';
                     $v['link_type'] = $v['link_config']['link_type'];
                     $v['object'] = $v['link_config']['object'];
@@ -318,7 +333,7 @@ class Record extends Controller
             return;
         }
 
-        $manager = new Manager($this->ormService);
+        $manager = new Manager($this->ormService, $this->container->get(Lang::class), $this->configStorage);
 
         $result = $manager->removeObject($objectName, $deleteTable);
 
@@ -586,11 +601,17 @@ class Record extends Controller
         $this->response->success();
     }
 
-    protected function updateObject($recordId, $name, array $data): void
+    /**
+     * @param string $objectName
+     * @param string $name
+     * @param array<string,mixed> $data
+     * @throws Orm\Exception
+     */
+    protected function updateObject(string $objectName, string $name, array $data): void
     {
         $ormConfig = $this->configStorage->get('orm.php');
         $dataDir = $this->configStorage->getWrite() . $ormConfig->get('object_configs');
-        $objectConfigPath = $dataDir . $recordId . '.php';
+        $objectConfigPath = $dataDir . $objectName . '.php';
 
         if (!is_writable($dataDir)) {
             $this->response->error($this->lang->get('CANT_WRITE_FS') . ' ' . $dataDir);
@@ -605,8 +626,8 @@ class Record extends Controller
         /*
          * Rename object
         */
-        if ($recordId !== $name) {
-            $this->renameObject($recordId, $name);
+        if ($objectName !== $name) {
+            $this->renameObject($objectName, $name);
         }
 
         try {

@@ -1,21 +1,30 @@
 <?php
 
-/**
- *  DVelum project https://github.com/dvelum/dvelum , https://github.com/k-samuel/dvelum , http://dvelum.net
- *  Copyright (C) 2011-2017  Kirill Yegorov
+/*
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * DVelum project https://github.com/dvelum/
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * MIT License
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  Copyright (C) 2011-2021  Kirill Yegorov https://github.com/dvelum/dvelum-orm
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
  *
  */
 declare(strict_types=1);
@@ -60,9 +69,12 @@ class Manager
      */
     public function removeObject($name, $deleteTable = true)
     {
-        //$assoc = Db_Object_Expert::getAssociatedStructures($name);
-        //if(!empty($assoc))
-        //	return self::ERROR_HAS_LINKS;
+        /*
+        $assoc = Db_Object_Expert::getAssociatedStructures($name);
+        if (!empty($assoc)) {
+            return self::ERROR_HAS_LINKS;
+        }
+        */
 
         $objectConfig = $this->orm->config($name);
 
@@ -152,7 +164,7 @@ class Manager
      * Get list of localization files
      * @return array<string>
      */
-    public function getLocalisations() : array
+    public function getLocalisations(): array
     {
         $paths = $this->lanService->getStorage()->getPaths();
         $dirs = [];
@@ -210,7 +222,9 @@ class Manager
                 $fieldCfg[$k] = $v;
             }
         }
-
+        /**
+         * @var array<string,mixed> $fieldCfg
+         */
         return $fieldCfg;
     }
 
@@ -220,7 +234,7 @@ class Manager
      * @param string $index
      * @return array<string,mixed>|null
      */
-    public function getIndexConfig(string $object, string $index) : ?array
+    public function getIndexConfig(string $object, string $index): ?array
     {
         try {
             $cfg = $this->orm->config($object);
@@ -235,6 +249,9 @@ class Manager
 
         $data = $cfg->getIndexConfig($index);
         $data['name'] = $index;
+        /**
+         * @var array<string,mixed> $data
+         */
         return $data;
     }
 
@@ -377,7 +394,11 @@ class Manager
         /*
          * Check fs write permissions for associated objects
          */
-        $expert = new Orm\Record\Expert($this->orm, $this->configStorage, new Orm\Record\Manager($this->configStorage, $this->orm));
+        $expert = new Orm\Record\Expert(
+            $this->orm,
+            $this->configStorage,
+            new Orm\Record\Manager($this->configStorage, $this->orm)
+        );
         $assoc = $expert->getAssociatedStructures($oldName);
 
         if (!empty($assoc)) {
@@ -488,6 +509,9 @@ class Manager
                 continue;
             }
 
+            /**
+             * @var array<string,mixed>
+             */
             $cfg = $oConfig->getFieldConfig((string)$name);
             $cfg['system'] = false;
             $cfg['db_isNull'] = true;
@@ -496,12 +520,17 @@ class Manager
             if (isset($cfg['unique']) && $cfg['unique']) {
                 $unique = true;
             }
-            $fieldManager->setFieldConfig($idObjectConfig, $name, $cfg);
-            $indexManager->setIndexConfig($idObjectConfig, $name, [
-                'columns' => [$name],
-                'fulltext' => false,
-                'unique' => $unique,
-            ]);
+            $fieldManager->setFieldConfig($idObjectConfig, (string)$name, $cfg);
+
+            $indexManager->setIndexConfig(
+                $idObjectConfig,
+                (string)$name,
+                [
+                    'columns' => [$name],
+                    'fulltext' => false,
+                    'unique' => $unique,
+                ]
+            );
         }
         return $idObjectConfig->save();
     }

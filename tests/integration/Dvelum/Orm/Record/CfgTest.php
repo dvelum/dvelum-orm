@@ -1,5 +1,7 @@
 <?php
 
+namespace Dvelum\Orm\Record;
+
 use PHPUnit\Framework\TestCase;
 use Dvelum\Orm\Record\BuilderFactory;
 use Dvelum\Orm\Record;
@@ -11,7 +13,8 @@ class CfgTest extends TestCase
     {
         return \Dvelum\Test\ServiceLocator::factory()->getContainer()->get(Orm::class);
     }
-    public function testRenameField() : void
+
+    public function testRenameField(): void
     {
         $orm = $this->getOrm();
 
@@ -19,7 +22,7 @@ class CfgTest extends TestCase
         $cfg = $orm->config('page_rename');
 
         $fieldManager = new Record\Config\FieldManager();
-        $fieldManager->renameField($cfg,'page_title', 'untitle');
+        $fieldManager->renameField($cfg, 'page_title', 'untitle');
 
         $this->assertTrue($cfg->fieldExists('untitle'));
         $this->assertFalse($cfg->fieldExists('page_title'));
