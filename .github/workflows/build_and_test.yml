@@ -28,9 +28,6 @@ jobs:
         coverage: xdebug  
         tools: php-cs-fixer, phpunit 
 
-    - name: Shutdown Ubuntu MySQL (SUDO)
-      run: sudo service mysql stop # Shutdown the Default MySQL, "sudo" is necessary, please not remove it
-
     - name: Validate composer.json and composer.lock
       run: composer validate
       

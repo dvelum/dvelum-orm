@@ -114,7 +114,7 @@ class Uml extends Controller
         }
 
         foreach ($names as $objectName) {
-            foreach ($data[$objectName]['links'] as $link => $link_value) {
+            foreach ($data[$objectName]['links'] as $link => $linkValue) {
                 if (!isset($data[$link])) {
                     continue;
                 }
