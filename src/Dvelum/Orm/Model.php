@@ -393,6 +393,9 @@ class Model
         try {
             $sql = $this->db->select()->from($this->table(), $fields);
             $sql->where($this->db->quoteIdentifier($fieldName) . ' = ?', $value)->limit(1);
+            /**
+             * @var array<string,mixed>
+             */
             return $this->db->fetchRow($sql);
         } catch (\Exception $e) {
             $this->logError($e->getMessage());

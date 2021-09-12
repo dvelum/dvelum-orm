@@ -425,6 +425,9 @@ class Query
     public function fetchRow(): array
     {
         try {
+            /**
+             * @var array<string,mixed> $result
+             */
             $result = $this->db->fetchRow($this->__toString());
             if (empty($result)) {
                 $result = [];
