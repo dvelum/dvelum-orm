@@ -11,4 +11,5 @@ return [
     'uml' => \Dvelum\App\Orm\Api\Controller\Uml::class,
     'crypt' => \Dvelum\App\Orm\Api\Controller\Crypt::class,
     'distributed' => \Dvelum\App\Orm\Api\Controller\Distributed::class,
+    'history' => \Dvelum\App\Orm\Api\Controller\History::class
 ];

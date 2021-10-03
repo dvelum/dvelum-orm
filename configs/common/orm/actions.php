@@ -48,5 +48,9 @@ return [
     'deleteDistIndex' => 'distributed/deletedistributedindex',
     'acceptedDistFields' => 'distributed/acceptedDistributedFields',
     'listShardingTypes' => 'distributed/listShardingTypes',
-    'listShardingFields' => 'distributed/listShardingFields'
+    'listShardingFields' => 'distributed/listShardingFields',
+
+    //history
+
+    'history' => 'history/'
 ];

@@ -767,7 +767,7 @@ abstract class Controller
         $id = $this->request->post('id', 'int', false);
         $objectName = $this->getObjectName();
         $objectConfig = $this->orm->config($objectName);
-        $shard = false;
+        $shard = null;
         if ($objectConfig->isShardRequired()) {
             $shard = $this->request->post('shard', 'string', '');
             if (empty($shard)) {
