@@ -120,11 +120,13 @@ class History extends Controller
         }
 
         $links = $cfg->getLinks(
-              [
-                  Orm\Record\Config::LINK_OBJECT,
-                  Orm\Record\Config::LINK_OBJECT_LIST,
-                  Orm\Record\Config::LINK_DICTIONARY
-              ], false);
+            [
+                Orm\Record\Config::LINK_OBJECT,
+                Orm\Record\Config::LINK_OBJECT_LIST,
+                Orm\Record\Config::LINK_DICTIONARY
+            ],
+            false
+        );
 
         /*
         foreach ($fieldsToShow as $objectField) {
